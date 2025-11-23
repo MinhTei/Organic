@@ -1,258 +1,270 @@
 <?php
 /**
- * admin/dashboard.php - Admin Dashboard
+ * index.php - Trang chủ với slideshow banner và menu admin
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
-// Check if user is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    redirect(SITE_URL . '/auth.php');
-}
+// Get featured products
+$featuredProducts = getFeaturedProducts(4);
 
-$conn = getConnection();
+// Get categories
+$categories = getCategories();
 
-// Get statistics
-$stats = [];
+// Get new products
+$newProducts = getProducts(['is_new' => 1, 'limit' => 4])['products'];
 
-// Total products
-$stmt = $conn->query("SELECT COUNT(*) as total FROM products");
-$stats['total_products'] = $stmt->fetch()['total'];
-
-// Total orders
-$stmt = $conn->query("SELECT COUNT(*) as total, SUM(total_amount) as revenue FROM orders");
-$orderStats = $stmt->fetch();
-$stats['total_orders'] = $orderStats['total'];
-$stats['total_revenue'] = $orderStats['revenue'] ?? 0;
-
-// Total customers
-$stmt = $conn->query("SELECT COUNT(*) as total FROM users WHERE role = 'customer'");
-$stats['total_customers'] = $stmt->fetch()['total'];
-
-// New orders today
-$stmt = $conn->query("SELECT COUNT(*) as total FROM orders WHERE DATE(created_at) = CURDATE()");
-$stats['orders_today'] = $stmt->fetch()['total'];
-
-// Recent orders
-$stmt = $conn->query("SELECT o.*, u.name as customer_name FROM orders o 
-                      LEFT JOIN users u ON o.user_id = u.id 
-                      ORDER BY o.created_at DESC LIMIT 10");
-$recentOrders = $stmt->fetchAll();
-
-// Top products
-$stmt = $conn->query("SELECT p.*, COUNT(oi.id) as order_count 
-                      FROM products p 
-                      LEFT JOIN order_items oi ON p.id = oi.product_id 
-                      GROUP BY p.id 
-                      ORDER BY order_count DESC 
-                      LIMIT 5");
-$topProducts = $stmt->fetchAll();
-
-// Recent activities
-$stmt = $conn->query("SELECT al.*, u.name as admin_name 
-                      FROM admin_logs al 
-                      LEFT JOIN users u ON al.admin_id = u.id 
-                      ORDER BY al.created_at DESC LIMIT 10");
-$recentActivities = $stmt->fetchAll();
-
-$pageTitle = 'Dashboard Admin';
-include '../includes/header.php';
+$pageTitle = 'Rau Sạch Tận Nhà';
+include __DIR__ . '/../includes/header.php';
 ?>
 
-<main style="min-height: calc(100vh - 220px); padding: 2rem 1rem; background: var(--background-light);">
-    <div style="max-width: 1400px; margin: 0 auto;">
-        <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-        <!-- Admin management toolbar (visible only to admins) -->
-        <div style="background: white; border: 1px solid var(--border-light); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.5rem; display:flex; gap:1rem; align-items:center;">
-            <strong style="font-weight:700;">Quản lý Admin:</strong>
-            <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/dashboard.php' : SITE_URL . '/admin/dashboard.php' ?>" style="padding:0.5rem 0.75rem; border-radius:0.5rem; background:var(--background-light);">Dashboard</a>
-            <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/products.php' : SITE_URL . '/admin/products.php' ?>" style="padding:0.5rem 0.75rem; border-radius:0.5rem;">Sản phẩm</a>
-            <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/orders.php' : SITE_URL . '/admin/orders.php' ?>" style="padding:0.5rem 0.75rem; border-radius:0.5rem;">Đơn hàng</a>
-            <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/customers.php' : SITE_URL . '/admin/customers.php' ?>" style="padding:0.5rem 0.75rem; border-radius:0.5rem;">Khách hàng</a>
-        </div>
-        <?php endif; ?>
-            
-            <!-- Header -->
-            <div style="margin-bottom: 2rem;">
-                <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Dashboard</h1>
-                <p style="color: var(--muted-light);">Chào mừng trở lại, <?= sanitize($_SESSION['user_name']) ?>! 👋</p>
-            </div>
-            
-            <!-- Stats Cards -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                
-                <!-- Total Revenue -->
-                <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 1.5rem; border-radius: 1rem; color: white; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                        <div>
-                            <p style="opacity: 0.9; font-size: 0.875rem; margin-bottom: 0.5rem;">Doanh thu</p>
-                            <h3 style="font-size: 1.75rem; font-weight: 700;"><?= formatPrice($stats['total_revenue']) ?></h3>
-                        </div>
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 1.75rem;">payments</span>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">
-                        <span style="font-weight: 700;">+12.5%</span> so với tháng trước
-                    </p>
-                </div>
-                
-                <!-- Total Orders -->
-                <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 1.5rem; border-radius: 1rem; color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                        <div>
-                            <p style="opacity: 0.9; font-size: 0.875rem; margin-bottom: 0.5rem;">Đơn hàng</p>
-                            <h3 style="font-size: 1.75rem; font-weight: 700;"><?= $stats['total_orders'] ?></h3>
-                        </div>
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 1.75rem;">shopping_cart</span>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">
-                        <span style="font-weight: 700;"><?= $stats['orders_today'] ?></span> đơn hôm nay
-                    </p>
-                </div>
-                
-                <!-- Total Products -->
-                <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 1.5rem; border-radius: 1rem; color: white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                        <div>
-                            <p style="opacity: 0.9; font-size: 0.875rem; margin-bottom: 0.5rem;">Sản phẩm</p>
-                            <h3 style="font-size: 1.75rem; font-weight: 700;"><?= $stats['total_products'] ?></h3>
-                        </div>
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 1.75rem;">inventory_2</span>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">
-                        <a href="products.php" style="color: white; font-weight: 700;">Quản lý sản phẩm →</a>
-                    </p>
-                </div>
-                
-                <!-- Total Customers -->
-                <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 1.5rem; border-radius: 1rem; color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                        <div>
-                            <p style="opacity: 0.9; font-size: 0.875rem; margin-bottom: 0.5rem;">Khách hàng</p>
-                            <h3 style="font-size: 1.75rem; font-weight: 700;"><?= $stats['total_customers'] ?></h3>
-                        </div>
-                        <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 1.75rem;">groups</span>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">
-                        <a href="customers.php" style="color: white; font-weight: 700;">Xem danh sách →</a>
-                    </p>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-                
-                <!-- Recent Orders -->
-                <div style="background: white; border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--border-light);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 style="font-size: 1.25rem; font-weight: 700;">Đơn hàng gần đây</h2>
-                        <a href="orders.php" style="color: var(--primary-dark); font-weight: 600; font-size: 0.875rem;">Xem tất cả →</a>
-                    </div>
-                    
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border-light);">
-                                    <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; color: var(--muted-light);">Mã ĐH</th>
-                                    <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; color: var(--muted-light);">Khách hàng</th>
-                                    <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; color: var(--muted-light);">Số tiền</th>
-                                    <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; color: var(--muted-light);">Trạng thái</th>
-                                    <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; color: var(--muted-light);">Ngày đặt</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentOrders as $order): 
-                                    $statusColors = [
-                                        'pending' => '#f59e0b',
-                                        'confirmed' => '#3b82f6',
-                                        'shipping' => '#8b5cf6',
-                                        'delivered' => '#22c55e',
-                                        'cancelled' => '#ef4444'
-                                    ];
-                                    $statusLabels = [
-                                        'pending' => 'Chờ xác nhận',
-                                        'confirmed' => 'Đã xác nhận',
-                                        'shipping' => 'Đang giao',
-                                        'delivered' => 'Đã giao',
-                                        'cancelled' => 'Đã hủy'
-                                    ];
-                                ?>
-                                <tr style="border-bottom: 1px solid var(--border-light);">
-                                    <td style="padding: 1rem; font-weight: 600;">#<?= $order['id'] ?></td>
-                                    <td style="padding: 1rem;"><?= sanitize($order['customer_name'] ?? 'Khách') ?></td>
-                                    <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);"><?= formatPrice($order['total_amount']) ?></td>
-                                    <td style="padding: 1rem;">
-                                        <span style="padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; 
-                                                     background: <?= $statusColors[$order['status']] ?>20; color: <?= $statusColors[$order['status']] ?>;">
-                                            <?= $statusLabels[$order['status']] ?>
-                                        </span>
-                                    </td>
-                                    <td style="padding: 1rem; color: var(--muted-light); font-size: 0.875rem;">
-                                        <?= date('d/m/Y', strtotime($order['created_at'])) ?>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <!-- Top Products & Activities -->
-                <div style="display: flex; flex-direction: column; gap: 2rem;">
-                    
-                    <!-- Top Products -->
-                    <div style="background: white; border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--border-light);">
-                        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Sản phẩm bán chạy</h2>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <?php foreach ($topProducts as $product): ?>
-                            <div style="display: flex; gap: 1rem; align-items: center;">
-                                <img src="<?= $product['image'] ?>" alt="<?= sanitize($product['name']) ?>"
-                                     style="width: 50px; height: 50px; border-radius: 0.5rem; object-fit: cover;">
-                                <div style="flex: 1;">
-                                    <p style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">
-                                        <?= sanitize($product['name']) ?>
-                                    </p>
-                                    <p style="font-size: 0.75rem; color: var(--muted-light);">
-                                        <?= $product['order_count'] ?> đơn hàng
-                                    </p>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Activities -->
-                    <div style="background: white; border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--border-light);">
-                        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Hoạt động gần đây</h2>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <?php foreach ($recentActivities as $activity): ?>
-                            <div style="display: flex; gap: 0.75rem;">
-                                <div style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 0.5rem; flex-shrink: 0;"></div>
-                                <div style="flex: 1;">
-                                    <p style="font-size: 0.875rem; margin-bottom: 0.25rem;">
-                                        <strong><?= sanitize($activity['admin_name']) ?></strong> <?= sanitize($activity['description']) ?>
-                                    </p>
-                                    <p style="font-size: 0.75rem; color: var(--muted-light);">
-                                        <?= date('d/m/Y H:i', strtotime($activity['created_at'])) ?>
-                                    </p>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
+<!-- Hero Slideshow Section -->
+<section style="padding: 0 1rem;">
+    <div style="max-width: 1280px; margin: 2rem auto;">
+        <div class="hero-slideshow" style="position: relative; min-height: 520px; border-radius: 1rem; overflow: hidden;">
+            <!-- Slide 1 -->
+            <div class="hero-slide active" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+                        background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
+                        url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7jBmepfv88TypDQhRfqPxr2kmUbJLD14A9wrRaJgs5oN8_9kdiwZZM4z-ttEZx2B0haPe0Vuzp1-llKvaDmMOmAwg8huUPWtNWdnftkhN6NgZUv6DzH2yll7zsjj-jkixFIHGTE7EmvzHzi2QKDBA9gTXmD562if_DmN4u1kTCOqtqPuhPXa3hKgM-TLZVKZNq3gjxpqe3v2RTteRlstGEXRYha6AR0HDT5pUNGoLXh10RKGE5pKNEzaIm57UClSF1sFUoa5x55Og') center/cover no-repeat;">
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px; animation: slideInLeft 1s ease;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Rau Sạch Tận Nhà,<br>Cho Bữa Cơm Lành
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Khám phá rau củ quả 100% hữu cơ, được nuôi trồng bền vững từ các nông trại địa phương.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary">
+                            Mua sắm ngay
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-</div>
 
-<?php include '../includes/footer.php'; ?>
+            <!-- Slide 2 -->
+            <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+                        background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
+                        url('https://lh3.googleusercontent.com/aida-public/AB6AXuArr-q9KwzloOdRgoz6xxREcL6v_q_RX6EIBJAP-j5JTZsY2iajUTTnKaZ6evwiX17TyFr1w9q7mEuz2KbFPCIKsBivjHgaFoknvDoEfbWnrhVibxS-6YPcVr6JkgwLe3GTCSCt1DSS7iaxG0yET27xYyGCA-RO_yr_GAhzuCTxXWm3svbPfqCyP8tOSKpidAJtxDcIV3K1rdvWtc3E7XKfwaJDeSwelGnAkUlOIH0qV65tTVBsv56ijVGSnrsm2qbf1z_ibND92c3V') center/cover no-repeat;">
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Tươi Ngon Từ Nông Trại
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Giao hàng trong ngày, đảm bảo độ tươi ngon tối đa cho mọi sản phẩm.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php?is_new=1" class="btn btn-primary">
+                            Xem hàng mới
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+                        background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
+                        url('https://lh3.googleusercontent.com/aida-public/AB6AXuCVWBtAAXz_MHFMzXpn_hL-zvY2OO0MuxsmMvlzM-0q_pFKgWeutioN__AGyk9FYYwrW--4un68KrRmhgxyStSkk97ooIszU8eLgzOOT6pAr5l31M3kZFjjCmTXAkfhS_jKeuCjp_NEKJgVgAC04EKWj9L2iYd7QXNp4oLulaDQtChnDO3kRaezsEfHAqCE4Q-MDGcEwFYDXXZ8AX4x0HpUTpzZSdsU_cqEwye5buJa2SxMe6vvIbo_cNsNasYK-NQTLtGzJgVrH9LC') center/cover no-repeat;">
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Ưu Đãi Đặc Biệt
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Miễn phí giao hàng cho đơn từ 500.000₫. Giảm giá đến 30% cho sản phẩm chọn lọc.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php?on_sale=1" class="btn btn-primary">
+                            Khám phá ưu đãi
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button onclick="changeSlide(-1)" aria-label="Previous slide" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); 
+                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button onclick="changeSlide(1)" aria-label="Next slide" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); 
+                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+
+            <!-- Dots Indicator -->
+            <div style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem;">
+                <span class="slide-dot active" onclick="goToSlide(0)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: var(--primary); cursor: pointer; transition: all 0.3s;"></span>
+                <span class="slide-dot" onclick="goToSlide(1)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
+                <span class="slide-dot" onclick="goToSlide(2)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+@keyframes slideInLeft {
+    from { transform: translateX(-50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.hero-slide.active {
+    opacity: 1 !important;
+    z-index: 1;
+}
+
+.slide-dot.active {
+    background: var(--primary) !important;
+    transform: scale(1.3);
+}
+</style>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.slide-dot');
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        if (dots[i]) dots[i].classList.remove('active');
+    });
+    
+    if (index >= slides.length) currentSlide = 0;
+    else if (index < 0) currentSlide = slides.length - 1;
+    else currentSlide = index;
+    
+    slides[currentSlide].classList.add('active');
+    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+}
+
+function changeSlide(direction) {
+    currentSlide += direction;
+    showSlide(currentSlide);
+}
+
+function goToSlide(index) {
+    showSlide(index);
+}
+
+// Initialize slideshow state
+showSlide(0);
+
+// Auto slide every 4 seconds
+setInterval(() => {
+    currentSlide++;
+    showSlide(currentSlide);
+}, 4000);
+</script>
+
+<!-- Featured Products -->
+<section style="padding: 3rem 1rem;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <div class="section-header">
+            <h2 class="section-title">Nông Sản Tươi Mới</h2>
+            <a href="<?= SITE_URL ?>/products.php" style="color: var(--primary-dark); font-weight: 600;">
+                Xem tất cả →
+            </a>
+        </div>
+        
+        <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            <?php foreach ($featuredProducts as $product): ?>
+                <?= renderProductCard($product) ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section style="padding: 3rem 1rem; background: var(--card-light);">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; text-align: center;">
+            <div style="padding: 2rem;">
+                <div style="width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--primary-dark);">eco</span>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-top: 1rem;">100% Hữu Cơ</h3>
+                <p style="color: var(--muted-light); margin-top: 0.5rem; font-size: 0.875rem;">
+                    Sản phẩm được chứng nhận hữu cơ, không thuốc trừ sâu và phân bón hóa học.
+                </p>
+            </div>
+            
+            <div style="padding: 2rem;">
+                <div style="width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--primary-dark);">local_shipping</span>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-top: 1rem;">Giao Hàng Nhanh</h3>
+                <p style="color: var(--muted-light); margin-top: 0.5rem; font-size: 0.875rem;">
+                    Miễn phí giao hàng cho đơn từ 500.000₫. Giao trong ngày tại TP.HCM.
+                </p>
+            </div>
+            
+            <div style="padding: 2rem;">
+                <div style="width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--primary-dark);">agriculture</span>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-top: 1rem;">Đối Tác Nông Dân</h3>
+                <p style="color: var(--muted-light); margin-top: 0.5rem; font-size: 0.875rem;">
+                    Thu mua trực tiếp từ các nông trại gia đình địa phương, đảm bảo tươi ngon.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories -->
+<section style="padding: 3rem 1rem;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <h2 class="section-title" style="margin-bottom: 1.5rem;">Khám Phá Danh Mục</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+            <?php 
+            $categoryImages = [
+                'rau-cu' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuB3seKjZ3UVPyBtBaUNc3gLk7ilBU6Fvaw4n83akDv-M9TDBJ7bO_MqmtY0sAhu8HYeOvnbOuHU3-Vd8JWuy7UqMNMLFpGdlQdhoReYOeAFvWyI9SVV63BH9r3tXWAD8lINdb9qiHAdGBMuF22uPxkv2gAuMXVAUaPH9cLCtKKXV7Chir779Zb7Q2qJ-YGJhwZ04cYsYgzWGvGpQpqbOg3wHuCdTUkaKcnY6EcGx3XaSmdJkaI5ruqkq_Yxe2puXmOgnSVcB2qQU1iw',
+                'trai-cay' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuBPxxmz6EBJ-w7Z0cXdtGI2aKaBv2Rx9VqUNfb2-5HBmbSme8aEBD_J8B1g48-3tMQwGqaK9ivvGf7FXzVsVqOEj6ly_LQx-e0N-ppB0TgbapbsNIlYYAsO4H0T4BpUQiu5lAPR0uc5yHxe-UIE6wJrKKH8lx15C46gnsHHV3fIbn_GFLF1IHj9FMy3mb5-Igt2tlxp4cYcHmJlxFX_6tS82VVgVCfY-ocIKF_hYT8fr_PXYnlQY500V8LwjMNYClclQY_ORnlg2Ngw',
+                'trung-bo-sua' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuAfAvrPmFPvvvwD7dcXq2eZnZjoX7EYUAT6EFexTlj004WO0kGblbvQEQzIcacCao9nFDQarpv0_2x7ho0h6sjsct4jYVRCXLkY6dyjy4f_uI0I49rgPHWw65i2lcYj0H8TSPEoz_WSoYyI-ZGRqFos-5UpCsNrfFZa3Mb9_0zneJAIRI5neBuqgIxGKIdeNkn9rEQBJOd9wuFP4q8ngaA8L8SYsl6qRbI4TFUFd2tCGav2DueJMlIMt8CYUXnl5-Xwpsaj8c-3pZO5',
+                'banh-mi' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuCDsDF7gC8PtX9mPt2jSALFbwr58iui_Ld1R98p8srS77omhyvNDDPTXG4P7c_8fL1K27JY_y8B7MZEl6-U_8r3pDPPx3A611K2fSDWYot7u-8BjyUxU7SRVVe8ovPobD32RJz6nxPuHFUgqdPbC3s_EioEfeDhM11PL8Df8yqVPK8HZm9hrgKklLh_bb8Olp1TRHKpRfExW3uEZ7qgSiJvJcGYSnKehPHDlt-OWJr0CUBE4OB5GtyZYFWWsEfxmwLryH9l1c2Ih8g6'
+            ];
+            
+            foreach ($categories as $index => $cat): 
+                if ($index >= 4) break;
+                $img = $categoryImages[$cat['slug']] ?? $categoryImages['rau-cu'];
+            ?>
+            <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>" 
+               style="position: relative; aspect-ratio: 1; border-radius: 0.75rem; overflow: hidden; display: block; transition: transform 0.3s;">
+                <img src="<?= $img ?>" alt="<?= sanitize($cat['name']) ?>" 
+                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
+                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); transition: background 0.3s;"></div>
+                <h3 style="position: absolute; bottom: 1rem; left: 1rem; color: white; font-size: 1.25rem; font-weight: 700;">
+                    <?= sanitize($cat['name']) ?>
+                </h3>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section style="padding: 3rem 1rem;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; 
+                    background: rgba(182, 230, 51, 0.15); border-radius: 1rem; padding: 2rem 3rem;">
+            <div>
+                <h2 style="font-size: 1.5rem; font-weight: 700;">Miễn Phí Giao Hàng Cho Đơn Từ 500.000₫!</h2>
+                <p style="color: var(--muted-light); margin-top: 0.5rem;">
+                    Mua sắm thả ga, Xanh Organic giao hàng tận cửa miễn phí.
+                </p>
+            </div>
+            <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary">
+                Bắt đầu mua sắm
+            </a>
+        </div>
+    </div>
+</section>
+
+<?php include __DIR__ . '/../includes/footer.php'; ?>
