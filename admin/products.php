@@ -1,6 +1,16 @@
+
 <?php
 /**
- * admin/products.php - Quản lý sản phẩm (Cải tiến với ảnh và tên)
+ * admin/products.php - Trang Quản lý Sản phẩm
+ *
+ * Chức năng:
+ * - Hiển thị danh sách sản phẩm, tìm kiếm, lọc theo danh mục, trạng thái
+ * - Thêm, sửa, xóa sản phẩm, cập nhật trạng thái nổi bật/mới
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
 require_once '../config.php';
@@ -15,9 +25,9 @@ $conn = getConnection();
 $success = '';
 $error = '';
 
-// Handle product actions
+// Xử lý các hành động với sản phẩm (xóa, chuyển trạng thái nổi bật/mới)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Delete product
+    // Xóa sản phẩm
     if (isset($_POST['delete_product'])) {
         $productId = (int)$_POST['product_id'];
         $stmt = $conn->prepare("DELETE FROM products WHERE id = :id");
@@ -28,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Toggle featured status
+    // Chuyển trạng thái nổi bật
     if (isset($_POST['toggle_featured'])) {
         $productId = (int)$_POST['product_id'];
         $stmt = $conn->prepare("UPDATE products SET is_featured = NOT is_featured WHERE id = :id");
@@ -37,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Toggle new status
+    // Chuyển trạng thái mới
     if (isset($_POST['toggle_new'])) {
         $productId = (int)$_POST['product_id'];
         $stmt = $conn->prepare("UPDATE products SET is_new = NOT is_new WHERE id = :id");
@@ -47,12 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get filter parameters
+// Lấy tham số lọc, tìm kiếm
 $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
 $search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
 $status = isset($_GET['status']) ? $_GET['status'] : 'all';
 
-// Build query
+// Xây dựng điều kiện truy vấn theo bộ lọc
 $where = ['1=1'];
 $params = [];
 
@@ -78,7 +88,7 @@ if ($status === 'featured') {
 
 $whereClause = implode(' AND ', $where);
 
-// Get products with category info
+// Lấy danh sách sản phẩm kèm tên danh mục
 $sql = "SELECT p.*, c.name as category_name
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
@@ -89,10 +99,10 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
-// Get categories for filter
+// Lấy danh sách danh mục để lọc
 $categories = getCategories();
 
-// Get statistics
+// Thống kê số lượng sản phẩm theo trạng thái
 $stats = [
     'total' => $conn->query("SELECT COUNT(*) FROM products")->fetchColumn(),
     'featured' => $conn->query("SELECT COUNT(*) FROM products WHERE is_featured = 1")->fetchColumn(),
@@ -148,51 +158,7 @@ $pageTitle = 'Quản lý sản phẩm';
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Tổng quan</span>
-                </a>
-                
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">category</span>
-                    <span>Danh mục</span>
-                </a>
-                
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Sản phẩm</span>
-                </a>
-                
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Đơn hàng</span>
-                </a>
-                
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">people</span>
-                    <span>Khách hàng</span>
-                </a>
-                
-                <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">star</span>
-                    <span>Đánh giá</span>
-                </a>
-                
-                <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span>Thống kê</span>
-                </a>
-                
-                <hr class="my-4">
-                
-                <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">settings</span>
-                    <span>Cài đặt</span>
-                </a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-6">

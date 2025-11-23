@@ -190,3 +190,58 @@ function debounce(func, wait) {
 window.addToCart = addToCart;
 window.toggleFavorite = toggleFavorite;
 window.showNotification = showNotification;
+
+/**
+ * Toggle wishlist
+ */
+function toggleWishlist(productId) {
+    fetch(`${window.location.origin}/organic/api/wishlist.php`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=toggle&product_id=${productId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const btn = event.currentTarget;
+            const icon = btn.querySelector('.material-symbols-outlined');
+            
+            if (data.action === 'added') {
+                icon.style.fontVariationSettings = "'FILL' 1";
+                icon.style.color = '#ef4444';
+            } else {
+                icon.style.fontVariationSettings = "'FILL' 0";
+                icon.style.color = '';
+            }
+            
+            showNotification(data.message, 'success');
+            updateWishlistCount(data.count);
+        } else {
+            showNotification(data.message, 'error');
+            
+            // Redirect to login if not logged in
+            if (data.message.includes('đăng nhập')) {
+                setTimeout(() => {
+                    window.location.href = '/organic/auth.php';
+                }, 1500);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Có lỗi xảy ra', 'error');
+    });
+}
+
+/**
+ * Update wishlist count in header
+ */
+function updateWishlistCount(count) {
+    // Implement if you add wishlist count to header
+    console.log('Wishlist count:', count);
+}
+
+// Export for global use
+window.toggleWishlist = toggleWishlist;

@@ -1,6 +1,16 @@
+
 <?php
 /**
- * admin/dashboard.php - Dashboard quản lý tổng quan
+ * admin/dashboard.php - Trang Tổng quan quản trị
+ *
+ * Chức năng:
+ * - Hiển thị tổng quan số liệu: sản phẩm, đơn hàng, doanh thu, khách hàng
+ * - Thống kê đơn hàng theo trạng thái, sản phẩm bán chạy, đơn gần đây
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
 require_once '../config.php';
@@ -13,37 +23,37 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $conn = getConnection();
 
-// Get statistics
+// Lấy các số liệu tổng quan
 $stats = [];
 
-// Total products
+// Tổng số sản phẩm
 $stmt = $conn->query("SELECT COUNT(*) as total FROM products");
 $stats['total_products'] = $stmt->fetch()['total'];
 
-// Total orders
+// Tổng số đơn hàng và doanh thu
 $stmt = $conn->query("SELECT COUNT(*) as total, SUM(total_amount) as revenue FROM orders");
 $orderStats = $stmt->fetch();
 $stats['total_orders'] = $orderStats['total'];
 $stats['total_revenue'] = $orderStats['revenue'] ?? 0;
 
-// Total customers
+// Tổng số khách hàng
 $stmt = $conn->query("SELECT COUNT(*) as total FROM users WHERE role = 'customer'");
 $stats['total_customers'] = $stmt->fetch()['total'];
 
-// Orders by status
+// Thống kê đơn hàng theo trạng thái
 $stmt = $conn->query("SELECT status, COUNT(*) as count FROM orders GROUP BY status");
 $ordersByStatus = [];
 while ($row = $stmt->fetch()) {
     $ordersByStatus[$row['status']] = $row['count'];
 }
 
-// Recent orders
+// Lấy 10 đơn hàng gần nhất
 $stmt = $conn->query("SELECT o.*, u.name as customer_name FROM orders o 
                       LEFT JOIN users u ON o.user_id = u.id 
                       ORDER BY o.created_at DESC LIMIT 10");
 $recentOrders = $stmt->fetchAll();
 
-// Top products
+// Lấy top 5 sản phẩm bán chạy
 $stmt = $conn->query("SELECT p.*, COUNT(oi.id) as order_count 
                       FROM products p 
                       LEFT JOIN order_items oi ON p.id = oi.product_id 
@@ -51,6 +61,17 @@ $stmt = $conn->query("SELECT p.*, COUNT(oi.id) as order_count
                       ORDER BY order_count DESC 
                       LIMIT 5");
 $topProducts = $stmt->fetchAll();
+
+// Tổng số khách hàng đang hoạt động (nếu có cột status)
+try {
+    $stmt = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'customer' AND status = 'active'");
+    $stats['active_customers'] = (int)$stmt->fetchColumn();
+} catch (PDOException $e) {
+    // Nếu không có cột status thì đếm tất cả khách hàng
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+    $stmt->execute(['customer']);
+    $stats['active_customers'] = (int)$stmt->fetchColumn();
+}
 
 $pageTitle = 'Dashboard Admin';
 ?>
@@ -102,24 +123,25 @@ $pageTitle = 'Dashboard Admin';
 
     <div class="flex">
         <!-- Sidebar -->
+        <?php $adminCurrent = basename($_SERVER['PHP_SELF']); ?>
         <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
             <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
+                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'dashboard.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">dashboard</span>
                     <span>Tổng quan</span>
                 </a>
-                
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'categories.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">category</span>
                     <span>Danh mục</span>
                 </a>
-                
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'products.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">inventory_2</span>
                     <span>Sản phẩm</span>
                 </a>
-                
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'orders.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">shopping_cart</span>
                     <span>Đơn hàng</span>
                     <?php if (!empty($ordersByStatus['pending'])): ?>
@@ -128,25 +150,25 @@ $pageTitle = 'Dashboard Admin';
                         </span>
                     <?php endif; ?>
                 </a>
-                
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'customers.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">people</span>
                     <span>Khách hàng</span>
                 </a>
-                
-                <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'reviews.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">star</span>
                     <span>Đánh giá</span>
                 </a>
-                
-                <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'statistics.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">analytics</span>
                     <span>Thống kê</span>
                 </a>
-                
+
                 <hr class="my-4">
-                
-                <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+
+                <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'settings.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">settings</span>
                     <span>Cài đặt</span>
                 </a>

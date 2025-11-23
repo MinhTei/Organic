@@ -1,6 +1,17 @@
+
 <?php
 /**
- * admin/orders.php - Quản lý đơn hàng
+ * admin/orders.php - Trang Quản lý Đơn hàng
+ *
+ * Chức năng:
+ * - Hiển thị danh sách đơn hàng, lọc theo trạng thái, tìm kiếm
+ * - Cập nhật trạng thái đơn hàng (chờ, xác nhận, giao, hoàn thành, hủy)
+ * - Xem chi tiết đơn hàng
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
 require_once '../config.php';
@@ -14,7 +25,7 @@ $conn = getConnection();
 $success = '';
 $error = '';
 
-// Handle status update
+// Xử lý cập nhật trạng thái đơn hàng
 if (isset($_POST['update_status'])) {
     $orderId = (int)$_POST['order_id'];
     $status = sanitize($_POST['status']);
@@ -25,14 +36,14 @@ if (isset($_POST['update_status'])) {
     }
 }
 
-// Get filters
+// Lấy các tham số lọc, tìm kiếm, phân trang
 $status = $_GET['status'] ?? '';
 $search = $_GET['search'] ?? '';
 $page = max(1, (int)($_GET['page'] ?? 1));
 $limit = 20;
 $offset = ($page - 1) * $limit;
 
-// Build query
+// Xây dựng điều kiện truy vấn theo bộ lọc
 $where = [];
 $params = [];
 
@@ -50,13 +61,13 @@ if ($search) {
 
 $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Get total
+// Lấy tổng số đơn hàng (phục vụ phân trang)
 $countStmt = $conn->prepare("SELECT COUNT(*) FROM orders o LEFT JOIN users u ON o.user_id = u.id $whereClause");
 $countStmt->execute($params);
 $total = $countStmt->fetchColumn();
 $totalPages = ceil($total / $limit);
 
-// Get orders
+// Lấy danh sách đơn hàng theo trang, bộ lọc
 $stmt = $conn->prepare("
     SELECT o.*, u.name as customer_name, u.email as customer_email
     FROM orders o 
@@ -68,6 +79,7 @@ $stmt = $conn->prepare("
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 
+// Nhãn và màu cho các trạng thái đơn hàng
 $statusLabels = [
     'pending' => 'Chờ xác nhận',
     'confirmed' => 'Đã xác nhận',
@@ -98,18 +110,28 @@ $pageTitle = 'Quản lý Đơn hàng';
 </head>
 <body class="bg-gray-50 font-['Be_Vietnam_Pro']">
     
-    <!-- Header -->
+    <!-- Header (match admin style) -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
                     <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <h1 class="text-lg font-bold">Admin Dashboard</h1>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+                        <p class="text-xs text-gray-500">Xanh Organic</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900">
-                        Về trang chủ
+                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-lg">storefront</span>
+                        <span>Về trang chủ</span>
                     </a>
+                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -117,30 +139,7 @@ $pageTitle = 'Quản lý Đơn hàng';
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Tổng quan</span>
-                </a>
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">category</span>
-                    <span>Danh mục</span>
-                </a>
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Sản phẩm</span>
-                </a>
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Đơn hàng</span>
-                </a>
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">people</span>
-                    <span>Khách hàng</span>
-                </a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-6">

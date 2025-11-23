@@ -1,6 +1,17 @@
+
 <?php
 /**
- * admin/reviews.php - Quản lý đánh giá sản phẩm
+ * admin/reviews.php - Trang Quản lý Đánh giá sản phẩm
+ *
+ * Chức năng:
+ * - Hiển thị danh sách đánh giá, lọc theo trạng thái, tìm kiếm
+ * - Duyệt, từ chối, xóa đánh giá
+ * - Thống kê số lượng đánh giá theo trạng thái
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
 require_once '../config.php';
@@ -15,7 +26,7 @@ $conn = getConnection();
 $success = '';
 $error = '';
 
-// Provide CREATE TABLE SQL suggestion (used when table is missing)
+// Gợi ý lệnh SQL tạo bảng nếu thiếu bảng product_reviews
 $createTableSQL = <<<'SQL'
 CREATE TABLE product_reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -30,7 +41,7 @@ CREATE TABLE product_reviews (
 );
 SQL;
 
-// Default values in case of DB errors (so the page can still render)
+// Giá trị mặc định an toàn khi lỗi DB (để trang vẫn hiển thị)
 $reviews = [];
 $stats = [
     'total' => 0,
@@ -39,9 +50,9 @@ $stats = [
     'rejected' => 0,
 ];
 
-// Wrap DB operations in a try/catch to avoid fatal errors when schema is incomplete
+// Bọc toàn bộ thao tác DB trong try/catch để tránh lỗi khi thiếu bảng
 try {
-    // Handle review actions
+    // Xử lý các hành động với đánh giá (duyệt, từ chối, xóa)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['approve_review'])) {
             $reviewId = (int)$_POST['review_id'];
@@ -64,11 +75,11 @@ try {
         }
     }
 
-    // Get filter parameters
+    // Lấy tham số lọc, tìm kiếm
     $status = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
 
-    // Build query
+    // Xây dựng điều kiện truy vấn
     $where = ['1=1'];
     $params = [];
 
@@ -84,7 +95,7 @@ try {
 
     $whereClause = implode(' AND ', $where);
 
-    // Get reviews with product and user info
+    // Lấy danh sách đánh giá kèm thông tin sản phẩm, user
     $sql = "SELECT pr.*, 
         p.name as product_name, p.image as product_image, p.slug as product_slug,
         u.name as user_name, u.email as user_email
@@ -98,7 +109,7 @@ try {
     $stmt->execute($params);
     $reviews = $stmt->fetchAll();
 
-    // Get statistics
+    // Thống kê số lượng đánh giá theo trạng thái
     $stats = [
         'total' => $conn->query("SELECT COUNT(*) FROM product_reviews")->fetchColumn(),
         'pending' => $conn->query("SELECT COUNT(*) FROM product_reviews WHERE status = 'pending'")->fetchColumn(),
@@ -107,11 +118,11 @@ try {
     ];
 
 } catch (PDOException $e) {
-    // Friendly error for admins - do not show stack traces
+    // Thông báo lỗi thân thiện cho admin (không show stacktrace)
     $msg = $e->getMessage();
     $error = "Lỗi cơ sở dữ liệu: " . sanitize($msg) . ". Có vẻ bảng <code>product_reviews</code> chưa tồn tại. Bạn có thể tạo bảng bằng SQL sau:";
     $error .= "\n\n" . $createTableSQL;
-    // $reviews and $stats already have safe defaults above
+    // $reviews và $stats đã có giá trị mặc định an toàn phía trên
 }
 
 $pageTitle = 'Quản lý đánh giá';
@@ -162,56 +173,7 @@ $pageTitle = 'Quản lý đánh giá';
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Tổng quan</span>
-                </a>
-                
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">category</span>
-                    <span>Danh mục</span>
-                </a>
-                
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Sản phẩm</span>
-                </a>
-                
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Đơn hàng</span>
-                </a>
-                
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">people</span>
-                    <span>Khách hàng</span>
-                </a>
-                
-                <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
-                    <span class="material-symbols-outlined">star</span>
-                    <span>Đánh giá</span>
-                    <?php if ($stats['pending'] > 0): ?>
-                        <span class="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            <?= $stats['pending'] ?>
-                        </span>
-                    <?php endif; ?>
-                </a>
-                
-                <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span>Thống kê</span>
-                </a>
-                
-                <hr class="my-4">
-                
-                <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">settings</span>
-                    <span>Cài đặt</span>
-                </a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-6">

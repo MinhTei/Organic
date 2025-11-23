@@ -11,8 +11,9 @@ define('DB_NAME', 'organic_db');
 define('SITE_NAME', 'Xanh Organic');
 define('SITE_URL', 'http://localhost/organic');
 define('ITEMS_PER_PAGE', 6);
-// Admin panel URL (can be a separate domain like admin.oho)
-define('ADMIN_URL', 'http://admin.oho');
+// Admin panel URL. By default point to local admin folder so links work on localhost.
+// If you deploy admin to a separate domain, override this value.
+define('ADMIN_URL', SITE_URL . '/admin');
 
 // Database Connection
 function getConnection() {
@@ -63,8 +64,19 @@ function redirect($url) {
     exit;
 }
 
+// Thiết lập timezone cho PHP về Việt Nam
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 // Start session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Thêm vào config.php
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_PORT', 587);
+define('MAIL_USERNAME', 'your-email@gmail.com');
+define('MAIL_PASSWORD', 'your-app-password');
+define('MAIL_FROM_ADDRESS', 'noreply@xanhorganic.vn');
+define('MAIL_FROM_NAME', 'Xanh Organic');
 ?>
+

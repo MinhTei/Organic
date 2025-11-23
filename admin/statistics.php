@@ -1,6 +1,19 @@
+
 <?php
 /**
- * admin/statistics.php - Thống kê và báo cáo
+ * admin/statistics.php - Trang Thống kê & Báo cáo doanh thu, đơn hàng, sản phẩm bán chạy
+ *
+ * Chức năng:
+ * - Thống kê doanh thu, số đơn hàng, giá trị TB đơn hàng
+ * - Hiển thị biểu đồ doanh thu, trạng thái đơn hàng
+ * - Liệt kê top sản phẩm bán chạy
+ * - Lọc theo khoảng ngày
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
+ * - Nếu không có dữ liệu, sẽ hiển thị dữ liệu mẫu để xem giao diện
  */
 
 require_once '../config.php';
@@ -12,11 +25,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $conn = getConnection();
 
-// Get date range from query params
-$startDate = $_GET['start'] ?? date('Y-m-01'); // First day of current month
-$endDate = $_GET['end'] ?? date('Y-m-d'); // Today
+// Lấy khoảng ngày lọc thống kê (mặc định: từ đầu tháng đến hôm nay)
+$startDate = $_GET['start'] ?? date('Y-m-01'); // Ngày đầu tháng
+$endDate = $_GET['end'] ?? date('Y-m-d'); // Hôm nay
 
-// Revenue statistics
+// Thống kê doanh thu theo ngày
 $revenueStmt = $conn->prepare("
     SELECT 
         DATE(created_at) as date,
@@ -31,7 +44,7 @@ $revenueStmt = $conn->prepare("
 $revenueStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 $revenueData = $revenueStmt->fetchAll();
 
-// Total stats
+// Tổng hợp số liệu: tổng đơn, tổng doanh thu, giá trị TB đơn hàng
 $totalStmt = $conn->prepare("
     SELECT 
         COUNT(*) as total_orders,
@@ -44,7 +57,7 @@ $totalStmt = $conn->prepare("
 $totalStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 $totals = $totalStmt->fetch();
 
-// Top products
+// Lấy top 10 sản phẩm bán chạy nhất
 $topProductsStmt = $conn->prepare("
     SELECT 
         p.name,
@@ -63,7 +76,7 @@ $topProductsStmt = $conn->prepare("
 $topProductsStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 $topProducts = $topProductsStmt->fetchAll();
 
-// Order status breakdown
+// Thống kê số lượng đơn theo trạng thái
 $statusStmt = $conn->prepare("
     SELECT status, COUNT(*) as count
     FROM orders
@@ -75,11 +88,11 @@ $orderStatus = $statusStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
 $pageTitle = 'Thống kê & Báo cáo';
 
-// If there's no data (fresh install), provide sample data in English so admin UI can be previewed
+// Nếu không có dữ liệu thực tế (DB trống), sinh dữ liệu mẫu để xem giao diện
 $isSample = false;
 if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0) === 0) {
     $isSample = true;
-    // last 7 days
+    // 7 ngày gần nhất
     $dates = [];
     for ($i = 6; $i >= 0; $i--) {
         $dates[] = date('Y-m-d', strtotime("-{$i} days"));
@@ -128,7 +141,7 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
 </head>
 <body class="bg-gray-50 font-['Be_Vietnam_Pro']">
     
-    <!-- Header -->
+    <!-- Header (match admin style) -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -140,7 +153,16 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900">Về trang chủ</a>
+                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-lg">storefront</span>
+                        <span>Về trang chủ</span>
+                    </a>
+                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,34 +170,7 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Tổng quan</span>
-                </a>
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">category</span>
-                    <span>Danh mục</span>
-                </a>
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Sản phẩm</span>
-                </a>
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Đơn hàng</span>
-                </a>
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">people</span>
-                    <span>Khách hàng</span>
-                </a>
-                <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span>Thống kê</span>
-                </a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-6">

@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_membership'] = $user['membership'];
-            $_SESSION['user_role'] = $user['role']; // Thêm role vào session
+            $_SESSION['user_role'] = $user['role'];
             
             // Log admin login
             if ($user['role'] === 'admin') {
@@ -44,10 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             
             // Redirect based on role
             if ($user['role'] === 'admin') {
-                // Redirect admins to the admin domain (ADMIN_URL)
-                redirect(defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/dashboard.php' : SITE_URL . '/admin/dashboard.php');
+                // Redirect to admin dashboard
+                redirect(SITE_URL . '/admin/dashboard.php');
             } else {
-                redirect(SITE_URL . '/user_info.php');
+                // Redirect to customer homepage
+                redirect(SITE_URL . '/index.php');
             }
         } else {
             $error = 'Email hoặc mật khẩu không đúng.';
@@ -162,7 +163,7 @@ include 'includes/header.php';
                             <input type="checkbox" name="remember" style="width: 18px; height: 18px; accent-color: var(--primary);">
                             <span style="font-size: 0.875rem;">Ghi nhớ đăng nhập</span>
                         </label>
-                        <a href="#" style="font-size: 0.875rem; color: var(--primary-dark); font-weight: 600;">Quên mật khẩu?</a>
+                        <a href="forgot_password.php" style="font-size: 0.875rem; color: var(--primary-dark); font-weight: 600;">Quên mật khẩu?</a>
                     </div>
                     
                     <button type="submit" name="login" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">

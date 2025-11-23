@@ -1,5 +1,5 @@
 -- =====================================
--- RESET DATABASE
+-- ORGANIC DB - COMPLETE DATABASE SCHEMA
 -- =====================================
 DROP DATABASE IF EXISTS organic_db;
 CREATE DATABASE organic_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -14,9 +14,15 @@ CREATE TABLE categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     slug VARCHAR(100) NOT NULL UNIQUE,
-    icon VARCHAR(50) DEFAULT 'grass',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    icon VARCHAR(255) DEFAULT 'grass',
+    description TEXT,
+    parent_id INT DEFAULT NULL,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
 -- 2. BẢNG PRODUCTS (SẢN PHẨM)
@@ -27,17 +33,36 @@ CREATE TABLE products (
     name VARCHAR(200) NOT NULL,
     slug VARCHAR(200) NOT NULL UNIQUE,
     description TEXT,
+    short_description VARCHAR(500),
     price DECIMAL(10,0) NOT NULL,
     sale_price DECIMAL(10,0),
+    cost_price DECIMAL(10,0),
     unit VARCHAR(50) DEFAULT 'kg',
+    weight DECIMAL(8,2),
     image VARCHAR(255),
+    gallery TEXT, -- JSON array of image URLs
     stock INT DEFAULT 0,
+    sku VARCHAR(50) UNIQUE,
+    barcode VARCHAR(50),
     is_organic BOOLEAN DEFAULT TRUE,
     is_new BOOLEAN DEFAULT FALSE,
     is_featured BOOLEAN DEFAULT FALSE,
+    is_bestseller BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    view_count INT DEFAULT 0,
+    sold_count INT DEFAULT 0,
+    rating_avg DECIMAL(3,2) DEFAULT 0,
+    rating_count INT DEFAULT 0,
+    meta_title VARCHAR(200),
+    meta_description VARCHAR(500),
+    meta_keywords VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+    INDEX idx_slug (slug),
+    INDEX idx_category (category_id),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
 -- 3. BẢNG USERS (NGƯỜI DÙNG)
@@ -49,13 +74,38 @@ CREATE TABLE users (
     phone VARCHAR(20),
     password VARCHAR(255) NOT NULL,
     avatar VARCHAR(255),
-    membership ENUM('bronze','silver','gold') DEFAULT 'bronze',
-    role ENUM('customer','admin') DEFAULT 'customer',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    gender ENUM('male','female','other') DEFAULT NULL,
+    birthdate DATE,
+    membership ENUM('bronze','silver','gold','platinum') DEFAULT 'bronze',
+    points INT DEFAULT 0,
+    role ENUM('customer','admin','staff') DEFAULT 'customer',
+    is_active BOOLEAN DEFAULT TRUE,
+    email_verified BOOLEAN DEFAULT FALSE,
+    email_verified_at TIMESTAMP NULL,
+    last_login_at TIMESTAMP NULL,
+    last_login_ip VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_role (role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 4. BẢNG ADDRESSES (ĐỊA CHỈ)
+-- 4. BẢNG PASSWORD_RESETS (ĐẶT LẠI MẬT KHẨU)
+-- =====================================
+CREATE TABLE password_resets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_token (token),
+    INDEX idx_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 5. BẢNG ADDRESSES (ĐỊA CHỈ)
 -- =====================================
 CREATE TABLE addresses (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -63,80 +113,227 @@ CREATE TABLE addresses (
     full_name VARCHAR(100),
     phone VARCHAR(20),
     address TEXT,
+    ward VARCHAR(100),
+    district VARCHAR(100),
+    city VARCHAR(100),
+    postal_code VARCHAR(20),
+    address_type ENUM('home','office','other') DEFAULT 'home',
     is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 5. BẢNG ORDERS (ĐƠN HÀNG)
+-- 6. BẢNG WISHLISTS (YÊU THÍCH)
+-- =====================================
+CREATE TABLE wishlists (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_wishlist (user_id, product_id),
+    INDEX idx_user (user_id),
+    INDEX idx_product (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 7. BẢNG CARTS (GIỎ HÀNG)
+-- =====================================
+CREATE TABLE carts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_cart_item (user_id, product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 8. BẢNG COUPONS (MÃ GIẢM GIÁ)
+-- =====================================
+CREATE TABLE coupons (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    discount_type ENUM('percentage','fixed') DEFAULT 'percentage',
+    discount_value DECIMAL(10,0) NOT NULL,
+    min_order_value DECIMAL(10,0) DEFAULT 0,
+    max_discount DECIMAL(10,0),
+    usage_limit INT,
+    used_count INT DEFAULT 0,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 9. BẢNG ORDERS (ĐƠN HÀNG)
 -- =====================================
 CREATE TABLE orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
+    order_code VARCHAR(50) UNIQUE,
     total_amount DECIMAL(12,0) NOT NULL,
+    discount_amount DECIMAL(10,0) DEFAULT 0,
     shipping_fee DECIMAL(10,0) DEFAULT 25000,
-    status ENUM('pending','confirmed','shipping','delivered','cancelled') DEFAULT 'pending',
+    tax_amount DECIMAL(10,0) DEFAULT 0,
+    final_amount DECIMAL(12,0) NOT NULL,
+    status ENUM('pending','confirmed','processing','shipping','delivered','cancelled','refunded') DEFAULT 'pending',
     payment_method VARCHAR(50) DEFAULT 'cod',
+    payment_status ENUM('pending','paid','failed','refunded') DEFAULT 'pending',
+    shipping_name VARCHAR(100),
+    shipping_phone VARCHAR(20),
     shipping_address TEXT,
+    shipping_ward VARCHAR(100),
+    shipping_district VARCHAR(100),
+    shipping_city VARCHAR(100),
     note TEXT,
+    coupon_code VARCHAR(50),
+    tracking_number VARCHAR(100),
+    cancelled_reason TEXT,
+    cancelled_at TIMESTAMP NULL,
+    delivered_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_status (status),
+    INDEX idx_order_code (order_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 6. BẢNG ORDER_ITEMS (CHI TIẾT ĐƠN)
+-- 10. BẢNG ORDER_ITEMS (CHI TIẾT ĐƠN)
 -- =====================================
 CREATE TABLE order_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
     product_id INT,
+    product_name VARCHAR(200),
+    product_image VARCHAR(255),
     quantity INT NOT NULL,
-    price DECIMAL(10,0) NOT NULL,
+    unit_price DECIMAL(10,0) NOT NULL,
+    total_price DECIMAL(12,0) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 7. BẢNG PRODUCT_REVIEWS (ĐÁNH GIÁ)
+-- 11. BẢNG PRODUCT_REVIEWS (ĐÁNH GIÁ)
 -- =====================================
 CREATE TABLE product_reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
     product_id INT NOT NULL,
     user_id INT NOT NULL,
+    order_id INT,
     rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    title VARCHAR(200),
     comment TEXT,
+    images TEXT, -- JSON array of image URLs
+    helpful_count INT DEFAULT 0,
     status ENUM('pending','approved','rejected') DEFAULT 'pending',
+    admin_reply TEXT,
+    replied_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    INDEX idx_product (product_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 8. BẢNG DASHBOARD STATS (THỐNG KÊ)
+-- 12. BẢNG NOTIFICATIONS (THÔNG BÁO)
 -- =====================================
-CREATE TABLE dashboard_stats (
+CREATE TABLE notifications (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    stat_date DATE NOT NULL,
-    total_orders INT DEFAULT 0,
-    total_revenue DECIMAL(12,0) DEFAULT 0,
-    total_customers INT DEFAULT 0,
-    new_customers INT DEFAULT 0,
+    user_id INT NOT NULL,
+    type VARCHAR(50),
+    title VARCHAR(200),
+    message TEXT,
+    link VARCHAR(255),
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY (stat_date)
-);
+    read_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_read (is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================
--- 9. BẢNG ADMIN LOGS (LỊCH SỬ HOẠT ĐỘNG)
+-- 13. BẢNG ACTIVITY_LOGS (LỊCH SỬ HOẠT ĐỘNG)
 -- =====================================
-CREATE TABLE admin_logs (
+CREATE TABLE activity_logs (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    admin_id INT,
+    user_id INT,
     action VARCHAR(100),
     description TEXT,
+    entity_type VARCHAR(50),
+    entity_id INT,
     ip_address VARCHAR(45),
+    user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
-);
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_entity (entity_type, entity_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 14. BẢNG BLOG_POSTS (BÀI VIẾT)
+-- =====================================
+CREATE TABLE blog_posts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    author_id INT,
+    title VARCHAR(200) NOT NULL,
+    slug VARCHAR(200) NOT NULL UNIQUE,
+    excerpt VARCHAR(500),
+    content TEXT,
+    featured_image VARCHAR(255),
+    status ENUM('draft','published','archived') DEFAULT 'draft',
+    view_count INT DEFAULT 0,
+    published_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_slug (slug),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 15. BẢNG NEWSLETTER_SUBSCRIBERS (ĐĂNG KÝ NHẬN TIN)
+-- =====================================
+CREATE TABLE newsletter_subscribers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100),
+    status ENUM('active','unsubscribed') DEFAULT 'active',
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unsubscribed_at TIMESTAMP NULL,
+    INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================
+-- 16. BẢNG SETTINGS (CÀI ĐẶT HỆ THỐNG)
+-- =====================================
+CREATE TABLE settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    setting_value TEXT,
+    setting_type VARCHAR(50) DEFAULT 'text',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -145,51 +342,43 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =====================================
 
 -- DANH MỤC
-INSERT INTO categories (name, slug, icon) VALUES
-('Rau củ', 'rau-cu', 'grass'),
-('Trái cây', 'trai-cay', 'nutrition'),
-('Trứng & Bơ sữa', 'trung-bo-sua', 'egg'),
-('Bánh mì & Bánh ngọt', 'banh-mi', 'bakery_dining'),
-('Thịt & Hải sản', 'thit-hai-san', 'lunch_dining');
+INSERT INTO categories (name, slug, icon, description, display_order) VALUES
+('Rau củ', 'rau-cu', 'grass', 'Rau củ tươi ngon hữu cơ', 1),
+('Trái cây', 'trai-cay', 'nutrition', 'Trái cây nhập khẩu và trong nước', 2),
+('Trứng & Bơ sữa', 'trung-bo-sua', 'egg', 'Sản phẩm từ trứng và sữa', 3),
+('Bánh mì & Bánh ngọt', 'banh-mi', 'bakery_dining', 'Bánh mì và bánh ngọt tươi mỗi ngày', 4),
+('Thịt & Hải sản', 'thit-hai-san', 'lunch_dining', 'Thịt và hải sản tươi sống', 5);
 
--- SẢN PHẨM (VỚI HÌNH ẢNH)
-INSERT INTO products (category_id, name, slug, description, price, sale_price, unit, image, stock, is_organic, is_new, is_featured) VALUES
-(1, 'Cà rốt hữu cơ', 'ca-rot-huu-co', 'Cà rốt tươi ngon từ Đà Lạt, giàu vitamin A tốt cho mắt', 35000, NULL, '500g', 'https://lh3.googleusercontent.com/aida-public/AB6AXuD8RQdsr0IximrJ-Jrgorj_zPyyroI6Dfs6HIvNjkaBWujWCp1k403nRwFWbA-978540FUkW06k7__NSW5KuH6-A9MTyRw70Hu__Rk8XU6KqzblZfeNan9A213sE7dpE2T5qxiFCsFMLtglz5MaeGIXm6qVO2dINWCKpDp7iuJkAYXmdYaIipZ14OGkBroPgSNBkwK29zgtnRvMSz99jJ_hnUbrmXStVHe1tqaggBMdSstRCxKgwzx1aZ-eDfdBt9FRLN0tbUVJIKxb', 100, TRUE, FALSE, TRUE),
+-- SẢN PHẨM
+INSERT INTO products (category_id, name, slug, description, price, sale_price, unit, image, stock, sku, is_organic, is_new, is_featured) VALUES
+(1, 'Cà rốt hữu cơ', 'ca-rot-huu-co', 'Cà rốt tươi ngon từ Đà Lạt, giàu vitamin A tốt cho mắt', 35000, NULL, '500g', 'https://lh3.googleusercontent.com/aida-public/AB6AXuD8RQdsr0IximrJ-Jrgorj_zPyyroI6Dfs6HIvNjkaBWujWCp1k403nRwFWbA-978540FUkW06k7__NSW5KuH6-A9MTyRw70Hu__Rk8XU6KqzblZfeNan9A213sE7dpE2T5qxiFCsFMLtglz5MaeGIXm6qVO2dINWCKpDp7iuJkAYXmdYaIipZ14OGkBroPgSNBkwK29zgtnRvMSz99jJ_hnUbrmXStVHe1tqaggBMdSstRCxKgwzx1aZ-eDfdBt9FRLN0tbUVJIKxb', 100, 'VEG001', TRUE, FALSE, TRUE),
 
-(1, 'Bông cải xanh', 'bong-cai-xanh', 'Bông cải xanh giàu vitamin C và chất xơ', 33000, 28000, 'cái', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCi-qYnuvm_o9cLZcWAgaHjDNi-FfvsUtsFHmy7roZruCCjnvI3SYGQ31RjCJYsfXMObJ69_ikZtVNmFxE9E2rquQouggfdgVQMePbFD2ZP_B-M3nUzGxMatNmdNNTn0ka-HF2FGTfq8red1tEHAVRaej_6rwaJY67ypfBCDdHcmh8f1LUhVGATdrJ0u0-kiUzQ58WIYJMyWsBPMC7uJkcEy5yP0CkKNTpJcZSSXFz3lU__lwfhovuOg3QHvYew7l8B9MG3Kgjprb0W', 50, TRUE, FALSE, TRUE),
+(1, 'Bông cải xanh', 'bong-cai-xanh', 'Bông cải xanh giàu vitamin C và chất xơ', 33000, 28000, 'cái', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCi-qYnuvm_o9cLZcWAgaHjDNi-FfvsUtsFHmy7roZruCCjnvI3SYGQ31RjCJYsfXMObJ69_ikZtVNmFxE9E2rquQouggfdgVQMePbFD2ZP_B-M3nUzGxMatNmdNNTn0ka-HF2FGTfq8red1tEHAVRaej_6rwaJY67ypfBCDdHcmh8f1LUhVGATdrJ0u0-kiUzQ58WIYJMyWsBPMC7uJkcEy5yP0CkKNTpJcZSSXFz3lU__lwfhovuOg3QHvYew7l8B9MG3Kgjprb0W', 50, 'VEG002', TRUE, FALSE, TRUE),
 
-(1, 'Cà chua bi', 'ca-chua-bi', 'Cà chua bi ngọt tự nhiên, hoàn hảo cho salad', 25000, NULL, 'hộp 250g', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAcW2HNJaXm2Hngpw8wlfQOnYzGj6Vk2MZZwybZWW9mnoGm4PVs6n9ky8EfPy6Q_uLgh_NfMPOBlhqoUMNcNgXK0OFojINJ9VgYGh1zirkereSiTYzFhT6qwnkWyNu5jwrtFCrDNXS0D3IPN2HpB7xyHXCMBIG-zNJMOYxtPXe4fPvvAa3n_tn1Zcdq919h7Uv6CQB9xA2WbjZG7iOM5xFisT03o28EuEb-6IungXj-OnJTrwpM-71D56Ydi9xZ_fHA90qPfgjUDHZP', 80, TRUE, TRUE, FALSE),
+(1, 'Cà chua bi', 'ca-chua-bi', 'Cà chua bi ngọt tự nhiên, hoàn hảo cho salad', 25000, NULL, 'hộp 250g', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAcW2HNJaXm2Hngpw8wlfQOnYzGj6Vk2MZZwybZWW9mnoGm4PVs6n9ky8EfPy6Q_uLgh_NfMPOBlhqoUMNcNgXK0OFojINJ9VgYGh1zirkereSiTYzFhT6qwnkWyNu5jwrtFCrDNXS0D3IPN2HpB7xyHXCMBIG-zNJMOYxtPXe4fPvvAa3n_tn1Zcdq919h7Uv6CQB9xA2WbjZG7iOM5xFisT03o28EuEb-6IungXj-OnJTrwpM-71D56Ydi9xZ_fHA90qPfgjUDHZP', 80, 'VEG003', TRUE, TRUE, FALSE),
 
-(1, 'Xà lách Romaine', 'xa-lach-romaine', 'Xà lách tươi giòn, lý tưởng cho món cuốn', 22000, NULL, 'bó', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDipCSuVQ1rsWO4VKep0oIgAITPHsX37S6UNDHuijZ_rlve8-3tciA812xLsgJJe6_U_QBbyGiy6t16NjY1WbKsZmP-Un64UyAXKQLgqs66jS24XuOSyvgByemasHZGH_BwEoQg4WSafG8Bew8S6bkwywIP9nFZSP6a_RGEJgZSID-1WY1VyQQ5wxg-Kzg70JVxPdoSxDLAVCnHmPkKeIFFI8c9mwDtAGo00jtV_Gns0kOzi95QJhhwvaXIhk-x2N__gXTiTLnsRG1q', 60, TRUE, FALSE, FALSE),
+(2, 'Táo Envy', 'tao-envy', 'Táo nhập khẩu New Zealand, giòn ngọt', 99000, NULL, '0.5kg', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDL1oD5Rm1pJzhuBoIP8cVv0Rw5LKGxaBh7fZzF7-Zf2iPG-mowIxwmZ0BjGE3aLcYyv_p6JHEID2ac0HlP2i27PJdLp-ATBRcqrMK1BT-HHTgOxzgOvjRhvWuI1NjeHWAjeMZjDhdFsJp0TpPrE8wjjXE_DRO6lb0QQI2A98xQdIrLuwgToS6MBgCKhVz6PnbN_ESFCG6ugRFsKn6Imd0jDSiXHR5lv9T0U-1i7aHt3gyaToK1SnIAVfth4Fq6QpAWvokI_HKqbA21', 30, 'FRU001', TRUE, TRUE, TRUE),
 
-(1, 'Ớt chuông xanh', 'ot-chuong-xanh', 'Ớt chuông giòn ngọt, vitamin C cao', 60000, NULL, 'kg', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAh-B37016MLaDfe16JPune1RvSgrgW4SE6DlPsZCkm7qej0wRTRfHAZPnslU_Bh_99wzaeD2_i-vtFaGx5RY6AGQIlT30pO_Scsknysn-qtPQl7YV81s-d2e-fD88F9GXsB7D0VJmIxbvPKjH1nO3FvA4TFNqCviVNtID4AHue15cvqoyBXdtKit4VSBR5is-ibxqAcUFaXZjI9CBGAwSgdXsyXf6Wa5AkbILB6x2GuwpEzRzeKzsxgLtISLonvzPJEdMOpTJFRngS', 40, TRUE, FALSE, FALSE),
+(3, 'Trứng gà thả vườn', 'trung-ga-tha-vuon', 'Trứng gà sạch tự nhiên, giàu dinh dưỡng', 129000, NULL, 'vỉ 10 trứng', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBuA9DZITldWcLa8MFwbJDp5M-Synk_oaI5vkJxQ2RuPzCaxXle_I09wP2wdJui1vcu06ceBV2QT_8xkZpBzsM6wQq-MYtUm8O-s30Mf357aOaVR7yVl0nKbBW_WTjdro2ARhtM1OFYhLlBrnJLvzG4AsmowaqTICUFwfQkAjltESBR5iFenqyMWSgbvIklCcdjMTRQX7GOI5AxpCPykaZ5k_GtmT9e9SkXbfz-0jRKGnYzbgHMehlx_T4UQ4y10N4khmF2B-qTQSqi', 45, 'DAI001', TRUE, FALSE, TRUE);
 
-(1, 'Cà tím', 'ca-tim', 'Cà tím tươi ngon, thích hợp nướng và xào', 30000, NULL, 'kg', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbQ7Q9YfT8GidplHLKrUTSHfAJGMbHjdcWFD13xMUtq360grjaQz7GmOsnI2je5NijG9bBF5BH7YVk816HdwHtJKlqAX7OGBxJvQS6IDId5OgxtYvGTUpUX1L3FMWpINx7YOZwYIfmQ5P_kf0-qsQj9B3bZf0NaxqT41pLK4SnarlVdKWelNUkXEyQJzqd8Ee-Eb7zZE1XSI8JHxpcJ0uJM95yg6DMOhOIMRxnvVb4QHyx8QhyybkKprdSqmanUuBi-IKTK4nnBeUE', 70, TRUE, FALSE, FALSE),
-
-(1, 'Cà chua hữu cơ', 'ca-chua-huu-co', 'Cà chua Đà Lạt chín đỏ, ngọt tự nhiên', 55000, NULL, '500g', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBtfqum7cUdnpkiBziy4_WyFot6zjfgOKciAGklNBII27EmhDWhh980xb-0MUDK55SktK15qzEIFgJyLA0Tc1CBhaorhJR1OJ6slqdVq9de1tfrjvdSRbhalQp51saWmcZpY2wY-7TbSiUtjj0SpJ3Ybpgk_vfGmBVXTtZRDIaTdvWPg0KNSECYtTL7OfOrGEJCJh5NSDUV8-gGLDgfY-q7fP8xKk3kanOgcOZwfcnE-TN9V7ww8uy0dWBCziuDwgV8tL8E9ZlJgYSW', 90, TRUE, TRUE, TRUE),
-
-(1, 'Dưa leo hữu cơ', 'dua-leo-huu-co', 'Dưa leo giòn mát, tốt cho da', 30000, NULL, 'kg', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCt_Efz-7BAipjyE3oiYLYvwil-NQ_hB3MwlpgoeJpU6zTE3KcKi7Lrp4UblbbAd3TvnZj0pOP0C4S6Suh7j418zrTZLOvAgXA8GSKbcTQkQlnvHhHONKdR7RE0LWMlL0Tuy9Yku-_BiccyRuLWgMac6WqpcJkbf6-HiAebgzWCSseOfEo_EAmUr4PaMXg5Vk6GLe_k8xwHeVNpoAiVjge0mXyy3d2uSMNaEieYbVdlCjx5PCdCGyXAynBcYb2JPEDTvXKeIYKCnPn_', 55, TRUE, FALSE, FALSE),
-
-(2, 'Táo Envy', 'tao-envy', 'Táo nhập khẩu New Zealand, giòn ngọt', 99000, NULL, '0.5kg', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDL1oD5Rm1pJzhuBoIP8cVv0Rw5LKGxaBh7fZzF7-Zf2iPG-mowIxwmZ0BjGE3aLcYyv_p6JHEID2ac0HlP2i27PJdLp-ATBRcqrMK1BT-HHTgOxzgOvjRhvWuI1NjeHWAjeMZjDhdFsJp0TpPrE8wjjXE_DRO6lb0QQI2A98xQdIrLuwgToS6MBgCKhVz6PnbN_ESFCG6ugRFsKn6Imd0jDSiXHR5lv9T0U-1i7aHt3gyaToK1SnIAVfth4Fq6QpAWvokI_HKqbA21', 30, TRUE, TRUE, TRUE),
-
-(3, 'Trứng gà thả vườn', 'trung-ga-tha-vuon', 'Trứng gà sạch tự nhiên, giàu dinh dưỡng', 129000, NULL, 'vỉ 10 trứng', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBuA9DZITldWcLa8MFwbJDp5M-Synk_oaI5vkJxQ2RuPzCaxXle_I09wP2wdJui1vcu06ceBV2QT_8xkZpBzsM6wQq-MYtUm8O-s30Mf357aOaVR7yVl0nKbBW_WTjdro2ARhtM1OFYhLlBrnJLvzG4AsmowaqTICUFwfQkAjltESBR5iFenqyMWSgbvIklCcdjMTRQX7GOI5AxpCPykaZ5k_GtmT9e9SkXbfz-0jRKGnYzbgHMehlx_T4UQ4y10N4khmF2B-qTQSqi', 45, TRUE, FALSE, TRUE),
-
-(4, 'Bánh mì nguyên cám', 'banh-mi-nguyen-cam', 'Bánh mì tốt cho sức khỏe, nhiều chất xơ', 159000, NULL, 'ổ', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCDXonP1XXwFIVPMxeexkAYPIWND9PkSLuVJSuvJHT-eNqoMLeeEvdQAtpjfoVHKjwwVaTjsW0dVV76_UastoOJW6JTRdNEMalCUzPunFeidE5LU5urq54oC9tYzhwaMi9qppiR56bXAEFVtAESe0GKwmgSP2yjSAduOnWdKBfr8SiHF1R_zKPapaF35tluFVnLOC_9RcIN-4nnJPC1GVTw9ENvdVC4VrYqVRT-oNEJ9Nd_bN7SP9QvGFYd__tfwzq0RE5D4tTNfxaz', 25, TRUE, TRUE, TRUE);
-
--- USERS (PASSWORD MẶC ĐỊNH: 123456)
+-- USERS (PASSWORD: 123456)
 INSERT INTO users (name, email, phone, password, membership, role) VALUES
-('Lê An', 'lean@email.com', '0901234567',
- '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
- 'silver', 'customer'),
+('Lê An', 'lean@email.com', '0901234567', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'silver', 'customer'),
+('Admin', 'admin@xanhorganic.vn', '0900000000', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'gold', 'admin');
 
-('Admin Xanh Organic', 'admin@xanhorganic.vn', '0900000000',
- '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
- 'gold', 'admin');
+-- COUPONS
+INSERT INTO coupons (code, description, discount_type, discount_value, min_order_value, max_discount, usage_limit, start_date, end_date) VALUES
+('WELCOME10', 'Giảm 10% cho đơn hàng đầu tiên', 'percentage', 10, 200000, 50000, 100, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY)),
+('FREESHIP', 'Miễn phí vận chuyển cho đơn từ 500k', 'fixed', 25000, 500000, NULL, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 60 DAY));
 
--- ĐÁNH GIÁ MẪU
-INSERT INTO product_reviews (product_id, user_id, rating, comment, status) VALUES
-(1, 1, 5, 'Cà rốt rất tươi và ngon! Gia đình tôi rất hài lòng.', 'approved'),
-(1, 1, 4, 'Chất lượng tốt, giao hàng nhanh', 'approved'),
-(7, 1, 5, 'Cà chua ngọt lắm, con tôi rất thích ăn', 'pending'),
-(9, 1, 5, 'Táo giòn và ngọt, đúng chuẩn New Zealand', 'approved'),
-(10, 1, 4, 'Trứng tươi, lòng đỏ đậm màu', 'approved');
+-- SETTINGS
+INSERT INTO settings (setting_key, setting_value, setting_type, description) VALUES
+('site_name', 'Xanh Organic', 'text', 'Tên website'),
+('site_email', 'info@xanhorganic.vn', 'email', 'Email liên hệ'),
+('site_phone', '1900123456', 'text', 'Số điện thoại'),
+('smtp_host', 'smtp.gmail.com', 'text', 'SMTP Host'),
+('smtp_port', '587', 'text', 'SMTP Port'),
+('smtp_username', '', 'text', 'SMTP Username'),
+('smtp_password', '', 'password', 'SMTP Password'),
+('free_shipping_threshold', '500000', 'number', 'Miễn phí ship từ'),
+('default_shipping_fee', '25000', 'number', 'Phí ship mặc định');

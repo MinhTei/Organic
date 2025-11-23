@@ -1,6 +1,17 @@
+
 <?php
 /**
- * admin/categories.php - Quản lý danh mục
+ * admin/categories.php - Trang Quản lý Danh mục
+ *
+ * Chức năng:
+ * - Hiển thị danh sách danh mục, thêm, sửa, xóa danh mục
+ * - Upload icon (ảnh) cho danh mục
+ * - Sinh slug tự động từ tên danh mục
+ * - Giao diện đồng bộ với các trang quản trị khác
+ *
+ * Hướng dẫn:
+ * - Sử dụng sidebar chung (_sidebar.php)
+ * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
 require_once '../config.php';
@@ -14,21 +25,21 @@ $conn = getConnection();
 $success = '';
 $error = '';
 
-// Handle add/edit
+// Xử lý thêm/sửa danh mục
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
     $name = sanitize($_POST['name']);
     $slug = sanitize($_POST['slug']);
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
-    // Server-side slug generation as fallback
+    // Sinh slug phía server nếu chưa có
     if (empty($slug)) {
         $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
         $slug = trim($slug, '-');
     }
 
-    // Handle icon upload (image) if provided
+    // Xử lý upload icon (ảnh) nếu có
     $iconPath = '';
-        if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_OK) {
+    if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../images/categories/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -39,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
         $targetPath = $uploadDir . $safeName;
 
         if (move_uploaded_file($_FILES['icon']['tmp_name'], $targetPath)) {
-            // store a relative path in DB for portability
+            // Lưu đường dẫn tương đối vào DB cho dễ di chuyển
             $iconPath = 'images/categories/' . $safeName;
         }
     }
@@ -48,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
         $error = 'Vui lòng điền đầy đủ thông tin.';
     } else {
         if ($id > 0) {
-            // Keep existing icon unless a new upload provided
+            // Giữ icon cũ nếu không upload mới
             $stmt = $conn->prepare("SELECT icon FROM categories WHERE id = ?");
             $stmt->execute([$id]);
             $existingIcon = $stmt->fetchColumn();
@@ -56,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
                 $iconPath = $existingIcon;
             }
 
-            // Update
+            // Cập nhật
             $stmt = $conn->prepare("UPDATE categories SET name = ?, slug = ?, icon = ? WHERE id = ?");
             if ($stmt->execute([$name, $slug, $iconPath, $id])) {
                 $success = 'Cập nhật danh mục thành công!';
@@ -64,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
                 $error = 'Có lỗi xảy ra.';
             }
         } else {
-            // Insert (icon may be empty)
+            // Thêm mới (icon có thể rỗng)
             $stmt = $conn->prepare("INSERT INTO categories (name, slug, icon) VALUES (?, ?, ?)");
             if ($stmt->execute([$name, $slug, $iconPath])) {
                 $success = 'Thêm danh mục thành công!';
@@ -75,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
     }
 }
 
-// Handle delete
+// Xử lý xóa danh mục
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     $stmt = $conn->prepare("DELETE FROM categories WHERE id = ?");
@@ -86,10 +97,10 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Get all categories
+// Lấy tất cả danh mục
 $categories = getCategories();
 
-// Get category for edit
+// Lấy thông tin danh mục để sửa (nếu có)
 $editCategory = null;
 if (isset($_GET['edit'])) {
     $id = (int)$_GET['edit'];
@@ -144,34 +155,7 @@ $pageTitle = 'Quản lý Danh mục';
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <nav class="p-4 space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Tổng quan</span>
-                </a>
-                
-                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
-                    <span class="material-symbols-outlined">category</span>
-                    <span>Danh mục</span>
-                </a>
-                
-                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Sản phẩm</span>
-                </a>
-                
-                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Đơn hàng</span>
-                </a>
-                
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span class="material-symbols-outlined">people</span>
-                    <span>Khách hàng</span>
-                </a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
         <main class="flex-1 p-6">
