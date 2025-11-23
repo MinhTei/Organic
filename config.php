@@ -11,6 +11,8 @@ define('DB_NAME', 'organic_db');
 define('SITE_NAME', 'Xanh Organic');
 define('SITE_URL', 'http://localhost/organic');
 define('ITEMS_PER_PAGE', 6);
+// Admin panel URL (can be a separate domain like admin.oho)
+define('ADMIN_URL', 'http://admin.oho');
 
 // Database Connection
 function getConnection() {

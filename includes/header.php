@@ -1,11 +1,15 @@
 <?php
-// includes/header.php
+// includes/header.php - Updated
 if (!defined('SITE_NAME')) {
     require_once __DIR__ . '/../config.php';
 }
 
 // Get cart count
 $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
+
+// Check if user is logged in
+$isLoggedIn = isset($_SESSION['user_id']);
+$userName = $isLoggedIn ? $_SESSION['user_name'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -48,6 +52,62 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+        
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            min-width: 200px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            transition: background 0.2s;
+        }
+        
+        .dropdown-menu a:hover {
+            background: rgba(182, 230, 51, 0.1);
+        }
+        
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--border-light);
+            padding: 1rem;
+            z-index: 999;
+        }
+        
+        .mobile-menu.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-background-light font-display text-text-light">
@@ -68,7 +128,13 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                 <a href="<?= SITE_URL ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>">Trang chủ</a>
                 <a href="<?= SITE_URL ?>/products.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>">Sản phẩm</a>
                 <a href="<?= SITE_URL ?>/about.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'about.php' ? 'active' : '' ?>">Về chúng tôi</a>
-                <a href="<?= SITE_URL ?>/contact.php" class="nav-link">Liên hệ</a>
+                <a href="<?= SITE_URL ?>/contact.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : '' ?>">Liên hệ</a>
+                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                    <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/dashboard.php' : SITE_URL . '/admin/dashboard.php' ?>" 
+                       class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin') !== false ? 'active' : '' ?>">
+                        Quản lý
+                    </a>
+                <?php endif; ?>
             </nav>
         </div>
         
@@ -82,10 +148,41 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                 </form>
             </div>
             
-            <!-- User -->
-            <a href="<?= SITE_URL ?>/user_info.php" class="icon-btn">
-                <span class="material-symbols-outlined">person</span>
-            </a>
+            <!-- User Account -->
+            <?php if ($isLoggedIn): ?>
+                <div class="dropdown">
+                    <button class="icon-btn" style="position: relative;">
+                        <span class="material-symbols-outlined">person</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--border-light);">
+                            <p style="font-weight: 700; margin-bottom: 0.25rem;"><?= sanitize($userName) ?></p>
+                            <p style="font-size: 0.75rem; color: var(--muted-light);"><?= sanitize($_SESSION['user_email']) ?></p>
+                        </div>
+                        <a href="<?= SITE_URL ?>/user_info.php">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">account_circle</span>
+                            <span>Thông tin cá nhân</span>
+                        </a>
+                        <a href="<?= SITE_URL ?>/user_info.php?tab=orders">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">receipt_long</span>
+                            <span>Đơn hàng của tôi</span>
+                        </a>
+                        <a href="<?= SITE_URL ?>/user_info.php?tab=settings">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">settings</span>
+                            <span>Cài đặt</span>
+                        </a>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid var(--border-light);">
+                        <a href="<?= SITE_URL ?>/user_info.php?logout=1" style="color: var(--danger);">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">logout</span>
+                            <span>Đăng xuất</span>
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <a href="<?= SITE_URL ?>/auth.php" class="icon-btn">
+                    <span class="material-symbols-outlined">person</span>
+                </a>
+            <?php endif; ?>
             
             <!-- Cart -->
             <a href="<?= SITE_URL ?>/giohang.php" class="icon-btn" style="position: relative;">
@@ -96,6 +193,34 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                 </span>
                 <?php endif; ?>
             </a>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="icon-btn md:hidden" onclick="toggleMobileMenu()">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
         </div>
     </div>
 </header>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+    <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <a href="<?= SITE_URL ?>" style="padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;">Trang chủ</a>
+        <a href="<?= SITE_URL ?>/products.php" style="padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;">Sản phẩm</a>
+        <a href="<?= SITE_URL ?>/about.php" style="padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;">Về chúng tôi</a>
+        <a href="<?= SITE_URL ?>/contact.php" style="padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;">Liên hệ</a>
+        <?php if (!$isLoggedIn): ?>
+        <hr style="margin: 0.5rem 0;">
+        <a href="<?= SITE_URL ?>/auth.php" style="padding: 0.75rem; border-radius: 0.5rem; background: var(--primary); color: white; text-align: center; font-weight: 700;">
+            Đăng nhập / Đăng ký
+        </a>
+        <?php endif; ?>
+    </nav>
+</div>
+
+<script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('active');
+}
+</script>
