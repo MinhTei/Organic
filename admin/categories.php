@@ -1,0 +1,346 @@
+<?php
+/**
+ * admin/categories.php - Quản lý danh mục
+ */
+
+require_once '../config.php';
+require_once '../includes/functions.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    redirect(SITE_URL . '/auth.php');
+}
+
+$conn = getConnection();
+$success = '';
+$error = '';
+
+// Handle add/edit
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
+    $name = sanitize($_POST['name']);
+    $slug = sanitize($_POST['slug']);
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+
+    // Server-side slug generation as fallback
+    if (empty($slug)) {
+        $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
+        $slug = trim($slug, '-');
+    }
+
+    // Handle icon upload (image) if provided
+    $iconPath = '';
+        if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../images/categories/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $origName = basename($_FILES['icon']['name']);
+        $safeName = time() . '_' . preg_replace('/[^a-z0-9_\-\.]/i', '_', $origName);
+        $targetPath = $uploadDir . $safeName;
+
+        if (move_uploaded_file($_FILES['icon']['tmp_name'], $targetPath)) {
+            // store a relative path in DB for portability
+            $iconPath = 'images/categories/' . $safeName;
+        }
+    }
+
+    if (empty($name) || empty($slug)) {
+        $error = 'Vui lòng điền đầy đủ thông tin.';
+    } else {
+        if ($id > 0) {
+            // Keep existing icon unless a new upload provided
+            $stmt = $conn->prepare("SELECT icon FROM categories WHERE id = ?");
+            $stmt->execute([$id]);
+            $existingIcon = $stmt->fetchColumn();
+            if (empty($iconPath)) {
+                $iconPath = $existingIcon;
+            }
+
+            // Update
+            $stmt = $conn->prepare("UPDATE categories SET name = ?, slug = ?, icon = ? WHERE id = ?");
+            if ($stmt->execute([$name, $slug, $iconPath, $id])) {
+                $success = 'Cập nhật danh mục thành công!';
+            } else {
+                $error = 'Có lỗi xảy ra.';
+            }
+        } else {
+            // Insert (icon may be empty)
+            $stmt = $conn->prepare("INSERT INTO categories (name, slug, icon) VALUES (?, ?, ?)");
+            if ($stmt->execute([$name, $slug, $iconPath])) {
+                $success = 'Thêm danh mục thành công!';
+            } else {
+                $error = 'Có lỗi xảy ra.';
+            }
+        }
+    }
+}
+
+// Handle delete
+if (isset($_GET['delete'])) {
+    $id = (int)$_GET['delete'];
+    $stmt = $conn->prepare("DELETE FROM categories WHERE id = ?");
+    if ($stmt->execute([$id])) {
+        $success = 'Xóa danh mục thành công!';
+    } else {
+        $error = 'Không thể xóa danh mục này.';
+    }
+}
+
+// Get all categories
+$categories = getCategories();
+
+// Get category for edit
+$editCategory = null;
+if (isset($_GET['edit'])) {
+    $id = (int)$_GET['edit'];
+    foreach ($categories as $cat) {
+        if ($cat['id'] == $id) {
+            $editCategory = $cat;
+            break;
+        }
+    }
+}
+
+$pageTitle = 'Quản lý Danh mục';
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-gray-50 font-['Be_Vietnam_Pro']">
+    
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+                        <p class="text-xs text-gray-500">Xanh Organic</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-lg">storefront</span>
+                        <span>Về trang chủ</span>
+                    </a>
+                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                
+                <a href="categories.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-700 font-medium">
+                    <span class="material-symbols-outlined">category</span>
+                    <span>Danh mục</span>
+                </a>
+                
+                <a href="products.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                
+                <a href="orders.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                
+                <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <span class="material-symbols-outlined">people</span>
+                    <span>Khách hàng</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <?php if ($success): ?>
+                <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
+                    <?= $success ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($error): ?>
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+                    <?= $error ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Page Header -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Quản lý Danh mục</h2>
+                <p class="text-gray-600 mt-1">Tổng cộng <?= count($categories) ?> danh mục</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Add/Edit -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl border border-gray-200 p-6">
+                        <h3 class="text-lg font-bold mb-4">
+                            <?= $editCategory ? 'Sửa danh mục' : 'Thêm danh mục mới' ?>
+                        </h3>
+                        
+                        <form method="POST" enctype="multipart/form-data">
+                            <?php if ($editCategory): ?>
+                                <input type="hidden" name="id" value="<?= $editCategory['id'] ?>">
+                            <?php endif; ?>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Tên danh mục <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" name="name" required
+                                           value="<?= $editCategory ? sanitize($editCategory['name']) : '' ?>"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Slug <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" name="slug" id="slugInput" required
+                                           value="<?= $editCategory ? sanitize($editCategory['slug']) : '' ?>"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <p class="text-xs text-gray-500 mt-1">VD: rau-cu, trai-cay — will be auto-filled from name</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Icon (Image)
+                                    </label>
+                                    <?php if ($editCategory && !empty($editCategory['icon'])): ?>
+                                        <div class="mb-3">
+                                            <?php $ic = $editCategory['icon']; ?>
+                                            <?php if (preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $ic) || strpos($ic, '/images/') !== false || strpos($ic, 'http') === 0): ?>
+                                                <img src="<?= imageUrl($ic) ?>" alt="icon" class="w-16 h-16 object-cover rounded-md border">
+                                            <?php else: ?>
+                                                <div class="w-16 h-16 rounded-md bg-green-50 flex items-center justify-center text-green-600">
+                                                    <span class="material-symbols-outlined"><?= sanitize($editCategory['icon']) ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" name="icon" accept="image/*"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <p class="text-xs text-gray-500 mt-1">Upload an image file (jpg, png, svg). Leave empty to keep current icon.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3 mt-6">
+                                <?php if ($editCategory): ?>
+                                    <a href="categories.php" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center hover:bg-gray-50">
+                                        Hủy
+                                    </a>
+                                <?php endif; ?>
+                                <button type="submit" name="save_category" 
+                                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                    <?= $editCategory ? 'Cập nhật' : 'Thêm mới' ?>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Categories List -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="text-left py-3 px-4 font-semibold text-sm text-gray-600">ID</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-sm text-gray-600">Icon</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-sm text-gray-600">Tên danh mục</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-sm text-gray-600">Slug</th>
+                                    <th class="text-center py-3 px-4 font-semibold text-sm text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($categories as $cat): ?>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-4 px-4 font-medium text-gray-900"><?= $cat['id'] ?></td>
+                                    <td class="py-4 px-4">
+                                        <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center overflow-hidden">
+                                            <?php $iconVal = $cat['icon'] ?? ''; ?>
+                                            <?php if ($iconVal && (preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $iconVal) || strpos($iconVal, '/images/') !== false || strpos($iconVal, 'http') === 0)): ?>
+                                                <img src="<?= imageUrl($iconVal) ?>" alt="icon" class="w-full h-full object-cover">
+                                            <?php else: ?>
+                                                <span class="material-symbols-outlined text-green-600"><?= sanitize($iconVal ?: 'category') ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4 font-medium text-gray-900"><?= sanitize($cat['name']) ?></td>
+                                    <td class="py-4 px-4 text-gray-600 text-sm font-mono"><?= sanitize($cat['slug']) ?></td>
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="?edit=<?= $cat['id'] ?>" 
+                                               class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                <span class="material-symbols-outlined text-lg">edit</span>
+                                            </a>
+                                            <button onclick="deleteCategory(<?= $cat['id'] ?>)" 
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    function deleteCategory(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa danh mục này?\nLưu ý: Các sản phẩm thuộc danh mục này sẽ không có danh mục.')) {
+            window.location.href = '?delete=' + id;
+        }
+    }
+    </script>
+
+    <script>
+    // Auto-generate slug from name for convenience
+    function slugify(text) {
+        return text.toString().toLowerCase()
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    const nameInput = document.querySelector('input[name="name"]');
+    const slugInput = document.getElementById('slugInput');
+    if (nameInput && slugInput) {
+        nameInput.addEventListener('input', function() {
+            // Only auto-fill when slug is empty or matches previous auto slug
+            slugInput.value = slugify(this.value);
+        });
+    }
+    </script>
+
+</body>
+</html>

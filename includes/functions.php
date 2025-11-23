@@ -6,7 +6,8 @@
  */
 function getCategories() {
     $conn = getConnection();
-    $stmt = $conn->query("SELECT * FROM categories ORDER BY name");
+    // Order by id so displayed sequence matches DB primary keys
+    $stmt = $conn->query("SELECT * FROM categories ORDER BY id ASC");
     return $stmt->fetchAll();
 }
 
@@ -139,6 +140,29 @@ function getFeaturedProducts($limit = 4) {
 }
 
 /**
+ * Normalize an image path or URL for display
+ * - If full URL provided (http/https) return as-is
+ * - If absolute path (/images/...) prefix SITE_URL
+ * - If relative path (images/...) prefix SITE_URL
+ * - If empty, return a placeholder path
+ */
+function imageUrl($path) {
+    if (empty($path)) {
+        return rtrim(SITE_URL, '/') . '/images/placeholder.png';
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    if (strpos($path, '/') === 0) {
+        return rtrim(SITE_URL, '/') . $path;
+    }
+
+    return rtrim(SITE_URL, '/') . '/' . ltrim($path, '/');
+}
+
+/**
  * Lấy sản phẩm liên quan
  */
 function getRelatedProducts($productId, $categoryId, $limit = 4) {
@@ -216,7 +240,7 @@ function renderProductCard($product) {
     <div class="product-card">
         <div class="product-image">
             <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $product['slug'] ?>">
-                <img src="<?= $product['image'] ?>" alt="<?= sanitize($product['name']) ?>">
+                <img src="<?= imageUrl($product['image']) ?>" alt="<?= sanitize($product['name']) ?>">
             </a>
             
             <?php if ($hasDiscount): ?>

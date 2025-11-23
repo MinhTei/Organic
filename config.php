@@ -38,10 +38,23 @@ function getConnection() {
 
 // Helper Functions
 function formatPrice($price) {
-    return number_format($price, 0, ',', '.') . '₫';
+    // Ensure we don't pass null to number_format (PHP 8.1+ deprecates passing null)
+    if ($price === null || $price === '') {
+        return '0₫';
+    }
+
+    // If price is not numeric, try to cast; otherwise default to 0
+    if (!is_numeric($price)) {
+        $price = 0;
+    }
+
+    return number_format((float)$price, 0, ',', '.') . '₫';
 }
 
 function sanitize($data) {
+    // Safely handle null or non-string values to avoid trim(null) deprecation
+    if ($data === null) return '';
+    if (!is_string($data)) $data = (string)$data;
     return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
 }
 
