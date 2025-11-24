@@ -191,6 +191,16 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
                     <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                         Xem báo cáo
                     </button>
+                    <div class="relative">
+                        <button type="button" id="exportBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ml-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">download</span>
+                            Xuất báo cáo
+                        </button>
+                        <div id="exportDropdown" class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                            <button type="button" class="w-full px-4 py-2 text-left hover:bg-gray-100" onclick="exportReport('pdf')">Xuất PDF</button>
+                            <button type="button" class="w-full px-4 py-2 text-left hover:bg-gray-100" onclick="exportReport('excel')">Xuất Excel</button>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -287,6 +297,32 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
     </div>
 
     <script>
+    // Export report dropdown logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportBtn = document.getElementById('exportBtn');
+        const exportDropdown = document.getElementById('exportDropdown');
+        if (exportBtn && exportDropdown) {
+            exportBtn.addEventListener('click', function(e) {
+                exportDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                if (!exportBtn.contains(e.target) && !exportDropdown.contains(e.target)) {
+                    exportDropdown.classList.add('hidden');
+                }
+            });
+        }
+    });
+
+    // Dummy export functions (to be implemented)
+    function exportReport(type) {
+        if (type === 'pdf') {
+            alert('Chức năng xuất PDF sẽ được bổ sung!');
+            // TODO: Implement PDF export (jsPDF, html2pdf, etc.)
+        } else if (type === 'excel') {
+            alert('Chức năng xuất Excel sẽ được bổ sung!');
+            // TODO: Implement Excel export (SheetJS, etc.)
+        }
+    }
     // Revenue Chart
     // Ensure revenue values are numeric and compute a sensible suggested max so the line doesn't appear as a near-vertical line
     const revenueLabels = <?= json_encode(array_column($revenueData, 'date')) ?>;

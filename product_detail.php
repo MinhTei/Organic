@@ -6,11 +6,36 @@
 require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
-// Get product by slug or ID
+// Lấy sản phẩm trước khi xử lý đánh giá
 $slug = isset($_GET['slug']) ? sanitize($_GET['slug']) : '';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
 $product = $slug ? getProduct($slug) : getProduct($id);
+
+// Đánh giá sản phẩm
+$reviewSuccess = '';
+$reviewError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    if (!isset($_SESSION['user_id'])) {
+        $reviewError = 'Bạn cần đăng nhập để đánh giá.';
+    } else {
+        $rating = (int)($_POST['rating'] ?? 0);
+        $comment = sanitize($_POST['comment'] ?? '');
+        if ($rating < 1 || $rating > 5) {
+            $reviewError = 'Vui lòng chọn số sao từ 1 đến 5.';
+        } elseif (empty($comment)) {
+            $reviewError = 'Vui lòng nhập nội dung đánh giá.';
+        } else {
+            try {
+                $conn = getConnection();
+                $stmt = $conn->prepare("INSERT INTO product_reviews (product_id, user_id, rating, comment, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
+                $stmt->execute([$product['id'], $_SESSION['user_id'], $rating, $comment]);
+                $reviewSuccess = 'Đánh giá của bạn đã được gửi và chờ duyệt!';
+            } catch (PDOException $e) {
+                $reviewError = 'Lỗi gửi đánh giá: ' . $e->getMessage();
+            }
+        }
+    }
+}
 
 if (!$product) {
     header('HTTP/1.0 404 Not Found');
@@ -27,6 +52,15 @@ if (!$product) {
 
 // Get related products
 $relatedProducts = getRelatedProducts($product['id'], $product['category_id'], 4);
+$approvedReviews = [];
+try {
+    $conn = getConnection();
+    $stmt = $conn->prepare("SELECT r.*, u.name as user_name FROM product_reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ? AND r.status = 'approved' ORDER BY r.created_at DESC");
+    $stmt->execute([$product['id']]);
+    $approvedReviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // Có thể log lỗi nếu cần
+}
 
 // Calculate prices
 $currentPrice = $product['sale_price'] ?? $product['price'];
@@ -152,6 +186,98 @@ include 'includes/header.php';
         </div>
     </div>
     
+    <!-- Đánh giá sản phẩm -->
+    <section style="margin-top: 4rem; display: flex; gap: 2rem; align-items: flex-start;">
+        <div style="flex: 1; min-width: 320px;">
+            <h2 class="section-title">Đánh giá sản phẩm</h2>
+            <?php if ($reviewSuccess): ?>
+                <div style="margin-bottom:1rem; padding:1rem; background:#e7fbe7; color:#166534; border-radius:0.5rem;">
+                    <?= $reviewSuccess ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($reviewError): ?>
+                <div style="margin-bottom:1rem; padding:1rem; background:#fee2e2; color:#b91c1c; border-radius:0.5rem;">
+                    <?= $reviewError ?>
+                </div>
+            <?php endif; ?>
+            <form method="POST" style="margin-bottom:2rem; background:#f7f8f6; border-radius:0.75rem; padding:2rem; max-width:500px;">
+                <div style="margin-bottom:1rem;">
+                    <label for="rating" style="font-weight:600;">Đánh giá của bạn:</label><br>
+                    <div id="star-rating" style="display:flex; gap:0.5rem; margin-top:0.5rem; cursor:pointer;">
+                        <?php for ($i=1; $i<=5; $i++): ?>
+                            <span class="star" data-value="<?= $i ?>" style="font-size:2rem; color:#d1d5db;">★</span>
+                        <?php endfor; ?>
+                    </div>
+                    <input type="hidden" name="rating" id="review_rating" value="5" required>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label for="comment" style="font-weight:600;">Nội dung đánh giá:</label><br>
+                    <textarea name="comment" rows="4" style="width:100%; padding:0.75rem; border-radius:0.5rem; border:1px solid #e5e7eb;" required></textarea>
+                </div>
+                <button type="submit" name="submit_review" class="btn btn-primary">Gửi đánh giá</button>
+            </form>
+            <script>
+            // Xử lý chọn sao
+            document.addEventListener('DOMContentLoaded', function() {
+                const stars = document.querySelectorAll('#star-rating .star');
+                const ratingInput = document.getElementById('review_rating');
+                let currentRating = 5;
+                function setStars(rating) {
+                    stars.forEach((star, idx) => {
+                        if (idx < rating) {
+                            star.style.color = '#fbbf24';
+                        } else {
+                            star.style.color = '#d1d5db';
+                        }
+                    });
+                }
+                setStars(currentRating);
+                stars.forEach(star => {
+                    star.addEventListener('click', function() {
+                        const rating = parseInt(this.getAttribute('data-value'));
+                        currentRating = rating;
+                        ratingInput.value = rating;
+                        setStars(rating);
+                    });
+                    star.addEventListener('mouseover', function() {
+                        setStars(parseInt(this.getAttribute('data-value')));
+                    });
+                    star.addEventListener('mouseout', function() {
+                        setStars(currentRating);
+                    });
+                });
+            });
+            </script>
+        </div>
+        <div style="flex: 1; min-width: 320px;">
+            <h3 style="font-size:1.25rem; font-weight:600; margin-bottom:1rem;">Đánh giá đã duyệt</h3>
+            <?php if (empty($approvedReviews)): ?>
+                <div style="color:#6b7280;">Chưa có đánh giá nào cho sản phẩm này.</div>
+            <?php else: ?>
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <?php foreach ($approvedReviews as $review): ?>
+                        <div style="background:#fff; border-radius:0.75rem; box-shadow:0 1px 4px rgba(0,0,0,0.04); padding:1rem;">
+                            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                                <span style="font-weight:600; color:#2563eb;">
+                                    <?= htmlspecialchars($review['user_name']) ?>
+                                </span>
+                                <span style="color:#fbbf24; font-size:1.2rem;">
+                                    <?php for ($i=1; $i<=5; $i++): ?>
+                                        <?= $i <= $review['rating'] ? '★' : '☆' ?>
+                                    <?php endfor; ?>
+                                </span>
+                                <span style="color:#6b7280; font-size:0.9rem; margin-left:auto;">
+                                    <?= date('d/m/Y', strtotime($review['created_at'])) ?>
+                                </span>
+                            </div>
+                            <div style="color:#374151; font-size:1rem;">"<?= htmlspecialchars($review['comment']) ?>"</div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
     <!-- Related Products -->
     <?php if (!empty($relatedProducts)): ?>
     <section style="margin-top: 4rem;">

@@ -307,11 +307,10 @@ $pageTitle = 'Dashboard Admin';
                 <!-- Top Products -->
                 <div class="bg-white rounded-xl border border-gray-200 p-6">
                     <h3 class="text-lg font-bold text-gray-900 mb-6">Sản phẩm bán chạy</h3>
-                    
                     <div class="space-y-4">
                         <?php foreach ($topProducts as $product): ?>
                         <div class="flex items-center gap-3">
-                            <img src="<?= $product['image'] ?>" alt="<?= sanitize($product['name']) ?>"
+                            <img src="<?= imageUrl($product['image']) ?>" alt="<?= sanitize($product['name']) ?>"
                                  class="w-12 h-12 rounded-lg object-cover">
                             <div class="flex-1">
                                 <p class="font-medium text-gray-900 text-sm"><?= sanitize($product['name']) ?></p>

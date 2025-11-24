@@ -29,7 +29,7 @@ include 'includes/header.php';
 ?>
 
 <main class="container" style="max-width: 700px; margin: 3rem auto; padding: 2rem 1rem;">
-    <div style="background: white; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 2.5rem 2rem;">
+    <div style="background: linear-gradient(135deg, #e7fbe7 0%, #b6e633 100%); border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 2.5rem 2rem;">
         <div style="text-align:center; margin-bottom:2rem;">
             <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;">check_circle</span>
             <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color:var(--success);">Đặt Hàng Thành Công!</h1>

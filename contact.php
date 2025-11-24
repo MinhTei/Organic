@@ -23,12 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Email không hợp lệ.';
     } else {
-        // Here you would typically save to database or send email
-        // For now, we'll just show success message
-        $success = 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.';
-        
-        // Clear form
-        $name = $email = $phone = $subject = $message = '';
+        // Lưu vào bảng contact_messages
+        try {
+            $conn = getConnection();
+            $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, phone, subject, message, created_at, status) VALUES (?, ?, ?, ?, ?, NOW(), 'pending')");
+            $stmt->execute([$name, $email, $phone, $subject, $message]);
+            $success = 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.';
+            // Clear form
+            $name = $email = $phone = $subject = $message = '';
+        } catch (PDOException $e) {
+            $error = 'Lỗi lưu tin nhắn: ' . $e->getMessage();
+        }
     }
 }
 

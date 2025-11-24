@@ -43,6 +43,7 @@ SQL;
 
 // Giá trị mặc định an toàn khi lỗi DB (để trang vẫn hiển thị)
 $reviews = [];
+$contactMessages = [];
 $stats = [
     'total' => 0,
     'pending' => 0,
@@ -79,22 +80,18 @@ try {
     $status = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
 
-    // Xây dựng điều kiện truy vấn
+    // Xây dựng điều kiện truy vấn cho đánh giá
     $where = ['1=1'];
     $params = [];
-
     if ($status !== 'all') {
         $where[] = "pr.status = :status";
         $params[':status'] = $status;
     }
-
     if ($search) {
         $where[] = "(p.name LIKE :search OR u.name LIKE :search OR pr.comment LIKE :search)";
         $params[':search'] = "%$search%";
     }
-
     $whereClause = implode(' AND ', $where);
-
     // Lấy danh sách đánh giá kèm thông tin sản phẩm, user
     $sql = "SELECT pr.*, 
         p.name as product_name, p.image as product_image, p.slug as product_slug,
@@ -104,10 +101,14 @@ try {
         LEFT JOIN users u ON pr.user_id = u.id
         WHERE $whereClause
         ORDER BY pr.created_at DESC";
-
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $reviews = $stmt->fetchAll();
+
+    // Lấy tin nhắn liên hệ
+    $contactStmt = $conn->prepare("SELECT * FROM contact_messages ORDER BY created_at DESC");
+    $contactStmt->execute();
+    $contactMessages = $contactStmt->fetchAll();
 
     // Thống kê số lượng đánh giá theo trạng thái
     $stats = [
@@ -270,7 +271,7 @@ $pageTitle = 'Quản lý đánh giá';
             </div>
 
             <!-- Reviews List -->
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-8">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-50 border-b border-gray-200">
@@ -372,6 +373,47 @@ $pageTitle = 'Quản lý đánh giá';
                                                 </button>
                                             </form>
                                         </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Contact Messages List -->
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Họ tên</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">SĐT</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Chủ đề</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Nội dung</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Ngày gửi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($contactMessages)): ?>
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center text-gray-500">
+                                        <span class="material-symbols-outlined text-5xl mb-2">mail</span>
+                                        <p>Không có tin nhắn liên hệ nào</p>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($contactMessages as $msg): ?>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-4 px-4 font-medium text-gray-900"><?= sanitize($msg['name']) ?></td>
+                                    <td class="py-4 px-4 text-gray-700"><?= sanitize($msg['email']) ?></td>
+                                    <td class="py-4 px-4 text-gray-700"><?= sanitize($msg['phone']) ?></td>
+                                    <td class="py-4 px-4 text-gray-700"><?= sanitize($msg['subject']) ?></td>
+                                    <td class="py-4 px-4 text-gray-700 max-w-xs"><?= nl2br(sanitize($msg['message'])) ?></td>
+                                    <td class="py-4 px-4 text-gray-700">
+                                        <?= date('d/m/Y H:i', strtotime($msg['created_at'])) ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
