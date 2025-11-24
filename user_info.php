@@ -26,6 +26,31 @@ if (!$user) {
     redirect(SITE_URL . '/auth.php');
 }
 
+// Xử lý thêm địa chỉ mới (sau khi $conn đã có)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_address'])) {
+    $address = sanitize($_POST['address']);
+    $note = sanitize($_POST['note'] ?? '');
+    if ($address) {
+        $stmt = $conn->prepare("INSERT INTO user_addresses (user_id, address, note) VALUES (:user_id, :address, :note)");
+        $stmt->execute([':user_id' => $userId, ':address' => $address, ':note' => $note]);
+        $success = 'Đã thêm địa chỉ mới!';
+        // Redirect để tránh submit lại
+        header('Location: ?tab=addresses');
+        exit;
+    } else {
+        $error = 'Vui lòng nhập địa chỉ.';
+    }
+}
+$conn = getConnection();
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = :id");
+$stmt->execute([':id' => $userId]);
+$user = $stmt->fetch();
+
+if (!$user) {
+    session_destroy();
+    redirect(SITE_URL . '/auth.php');
+}
+
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $name = sanitize($_POST['name']);
@@ -222,8 +247,7 @@ include 'includes/header.php';
                 ?>
                         <!-- Profile Tab -->
                         <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Thông tin cá nhân</h2>
-                            
+                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Thông tin cá nhân</h2>                  
                             <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.5rem;">
                                 <div style="display:flex; gap:1rem; align-items:center;">
                                     <label style="display:block; font-weight:600;">Ảnh đại diện</label>
@@ -263,6 +287,21 @@ include 'includes/header.php';
                                     </div>
                                 </div>
                                 
+                                   <!-- Địa chỉ mới nhất dưới ô email -->
+                                <?php
+                                $stmt = $conn->prepare("SELECT * FROM user_addresses WHERE user_id = :user_id ORDER BY id DESC LIMIT 1");
+                                $stmt->execute([':user_id' => $userId]);
+                                $firstAddr = $stmt->fetch();
+                                if ($firstAddr): ?>
+                                    <div style="margin-bottom:2rem;">
+                                        <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ hiện tại</h3>
+                                        <div style="padding:0.75rem 1rem; background:#f7f8f6; border-radius:0.5rem;">
+                                            <div style="font-weight:600; color:#222;"><?= htmlspecialchars($firstAddr['address']) ?></div>
+                                            <div style="color:var(--muted-light); font-size:0.95rem; margin-top:0.25rem;">Ghi chú: Địa chỉ 1</div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div style="display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
                                     <button type="button" class="btn btn-secondary">Hủy</button>
                                     <button type="submit" name="update_profile" class="btn btn-primary">Lưu thay đổi</button>
@@ -341,12 +380,30 @@ include 'includes/header.php';
                         <div style="background: white; border-radius: 1rem; padding: 2rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                                 <h2 style="font-size: 1.5rem; font-weight: 700;">Địa chỉ đã lưu</h2>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" id="showAddAddress" type="button">
                                     <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.25rem;">add</span>
                                     Thêm địa chỉ mới
                                 </button>
                             </div>
-                            
+                            <div id="addAddressForm" style="display:none; margin-bottom:2rem;">
+                                <form method="POST" action="?tab=addresses">
+                                    <div style="margin-bottom:1rem;">
+                                        <label for="address" style="font-weight:600;">Địa chỉ</label>
+                                        <input type="text" name="address" id="address" required class="form-input" style="width:100%;margin-top:0.5rem;">
+                                    </div>
+                                    <div style="margin-bottom:1rem;">
+                                        <label for="note" style="font-weight:600;">Ghi chú (tuỳ chọn)</label>
+                                        <input type="text" name="note" id="note" class="form-input" style="width:100%;margin-top:0.5rem;">
+                                    </div>
+                                    <button type="submit" name="add_address" class="btn btn-primary" style="width:100%;">Lưu địa chỉ</button>
+                                </form>
+                            </div>
+                            <script>
+                            document.getElementById('showAddAddress').onclick = function() {
+                                var f = document.getElementById('addAddressForm');
+                                f.style.display = f.style.display === 'none' ? 'block' : 'none';
+                            };
+                            </script>
                             <p style="text-align: center; padding: 3rem; color: var(--muted-light);">
                                 Bạn chưa có địa chỉ nào được lưu.
                             </p>

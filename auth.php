@@ -24,16 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         $user = $stmt->fetch();
         
         if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_membership'] = $user['membership'];
-            $_SESSION['user_role'] = $user['role'];
-            
-            if ($user['role'] === 'admin') {
-                redirect(SITE_URL . '/admin/dashboard.php');
+            if (isset($user['status']) && $user['status'] !== 'active') {
+                $error = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.';
             } else {
-                redirect(SITE_URL . '/index.php');
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_membership'] = $user['membership'];
+                $_SESSION['user_role'] = $user['role'];
+                if ($user['role'] === 'admin') {
+                    redirect(SITE_URL . '/admin/dashboard.php');
+                } else {
+                    redirect(SITE_URL . '/index.php');
+                }
             }
         } else {
             $error = 'Email hoặc mật khẩu không đúng.';

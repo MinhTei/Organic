@@ -224,16 +224,9 @@ setInterval(() => {
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
             <?php 
-            $categoryImages = [
-                'rau-cu' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuB3seKjZ3UVPyBtBaUNc3gLk7ilBU6Fvaw4n83akDv-M9TDBJ7bO_MqmtY0sAhu8HYeOvnbOuHU3-Vd8JWuy7UqMNMLFpGdlQdhoReYOeAFvWyI9SVV63BH9r3tXWAD8lINdb9qiHAdGBMuF22uPxkv2gAuMXVAUaPH9cLCtKKXV7Chir779Zb7Q2qJ-YGJhwZ04cYsYgzWGvGpQpqbOg3wHuCdTUkaKcnY6EcGx3XaSmdJkaI5ruqkq_Yxe2puXmOgnSVcB2qQU1iw',
-                'trai-cay' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuBPxxmz6EBJ-w7Z0cXdtGI2aKaBv2Rx9VqUNfb2-5HBmbSme8aEBD_J8B1g48-3tMQwGqaK9ivvGf7FXzVsVqOEj6ly_LQx-e0N-ppB0TgbapbsNIlYYAsO4H0T4BpUQiu5lAPR0uc5yHxe-UIE6wJrKKH8lx15C46gnsHHV3fIbn_GFLF1IHj9FMy3mb5-Igt2tlxp4cYcHmJlxFX_6tS82VVgVCfY-ocIKF_hYT8fr_PXYnlQY500V8LwjMNYClclQY_ORnlg2Ngw',
-                'trung-bo-sua' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuAfAvrPmFPvvvwD7dcXq2eZnZjoX7EYUAT6EFexTlj004WO0kGblbvQEQzIcacCao9nFDQarpv0_2x7ho0h6sjsct4jYVRCXLkY6dyjy4f_uI0I49rgPHWw65i2lcYj0H8TSPEoz_WSoYyI-ZGRqFos-5UpCsNrfFZa3Mb9_0zneJAIRI5neBuqgIxGKIdeNkn9rEQBJOd9wuFP4q8ngaA8L8SYsl6qRbI4TFUFd2tCGav2DueJMlIMt8CYUXnl5-Xwpsaj8c-3pZO5',
-                'banh-mi' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuCDsDF7gC8PtX9mPt2jSALFbwr58iui_Ld1R98p8srS77omhyvNDDPTXG4P7c_8fL1K27JY_y8B7MZEl6-U_8r3pDPPx3A611K2fSDWYot7u-8BjyUxU7SRVVe8ovPobD32RJz6nxPuHFUgqdPbC3s_EioEfeDhM11PL8Df8yqVPK8HZm9hrgKklLh_bb8Olp1TRHKpRfExW3uEZ7qgSiJvJcGYSnKehPHDlt-OWJr0CUBE4OB5GtyZYFWWsEfxmwLryH9l1c2Ih8g6'
-            ];
-            
             foreach ($categories as $index => $cat): 
                 if ($index >= 4) break;
-                $img = $categoryImages[$cat['slug']] ?? $categoryImages['rau-cu'];
+                $img = imageUrl($cat['icon'] ?? '');
             ?>
             <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>" 
                style="position: relative; aspect-ratio: 1; border-radius: 0.75rem; overflow: hidden; display: block; transition: transform 0.3s;">

@@ -1,3 +1,4 @@
+
 <?php
 /**
  * products.php - Trang danh sách sản phẩm với phân trang và bộ lọc
@@ -6,21 +7,27 @@
 require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
-// Get filter parameters
+// =========================
+// Lấy tham số bộ lọc
+// =========================
 $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
-$search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
-$sort = isset($_GET['sort']) ? sanitize($_GET['sort']) : 'newest';
-$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$onSale = isset($_GET['on_sale']) ? 1 : 0;
-$isNew = isset($_GET['is_new']) ? 1 : 0;
-$isOrganic = isset($_GET['is_organic']) ? 1 : 0;
-$minPrice = isset($_GET['min_price']) ? (int)$_GET['min_price'] : null;
-$maxPrice = isset($_GET['max_price']) ? (int)$_GET['max_price'] : null;
+$search     = isset($_GET['search']) ? sanitize($_GET['search']) : '';
+$sort       = isset($_GET['sort']) ? sanitize($_GET['sort']) : 'newest';
+$page       = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$onSale     = isset($_GET['on_sale']) ? 1 : 0;
+$isNew      = isset($_GET['is_new']) ? 1 : 0;
+$isOrganic  = isset($_GET['is_organic']) ? 1 : 0;
+$minPrice   = isset($_GET['min_price']) ? (int)$_GET['min_price'] : null;
+$maxPrice   = isset($_GET['max_price']) ? (int)$_GET['max_price'] : null;
 
-// Get categories for sidebar
+// =========================
+// Lấy danh mục cho sidebar
+// =========================
 $categories = getCategories();
 
-// Get current category name
+// =========================
+// Xác định tên danh mục hiện tại
+// =========================
 $currentCategoryName = 'Tất cả sản phẩm';
 if ($categoryId) {
     foreach ($categories as $cat) {
@@ -31,27 +38,33 @@ if ($categoryId) {
     }
 }
 
-// Get products with filters
+// =========================
+// Lấy sản phẩm theo bộ lọc
+// =========================
 $result = getProducts([
-    'page' => $page,
+    'page'        => $page,
     'category_id' => $categoryId,
-    'search' => $search,
-    'sort' => $sort,
-    'on_sale' => $onSale,
-    'is_new' => $isNew,
-    'is_organic' => $isOrganic,
-    'min_price' => $minPrice,
-    'max_price' => $maxPrice
+    'search'      => $search,
+    'sort'        => $sort,
+    'on_sale'     => $onSale,
+    'is_new'      => $isNew,
+    'is_organic'  => $isOrganic,
+    'min_price'   => $minPrice,
+    'max_price'   => $maxPrice
 ]);
 
-$products = $result['products'];
-$totalPages = $result['pages'];
+$products      = $result['products'];
+$totalPages    = $result['pages'];
 $totalProducts = $result['total'];
 
-// Page title
+// =========================
+// Tiêu đề trang
+// =========================
 $pageTitle = $search ? "Tìm kiếm: $search" : $currentCategoryName;
 
+// =========================
 // Include header
+// =========================
 include 'includes/header.php';
 ?>
 
@@ -61,44 +74,45 @@ include 'includes/header.php';
         <div class="filter-card">
             <h2 class="filter-title">Bộ lọc</h2>
             <p class="filter-subtitle">Tùy chỉnh lựa chọn của bạn</p>
-            
+
             <form action="" method="GET" id="filterForm">
                 <?php if ($search): ?>
                     <input type="hidden" name="search" value="<?= $search ?>">
                 <?php endif; ?>
-                
+
                 <!-- Categories -->
                 <div class="filter-section">
                     <h3 class="filter-section-title">Danh mục</h3>
                     <div class="category-list">
-                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])) ?>" 
+                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])) ?>"
                            class="category-item <?= !$categoryId ? 'active' : '' ?>">
-                            <span class="material-symbols-outlined">apps</span>
                             <span class="category-name">Tất cả</span>
                         </a>
-                        <?php foreach ($categories as $cat): ?>
-                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => $cat['id'], 'page' => 1])) ?>" 
+                        <?php
+                        // Hiển thị tất cả danh mục, dùng ảnh admin upload (trường icon)
+                        foreach ($categories as $cat): ?>
+                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => $cat['id'], 'page' => 1])) ?>"
                            class="category-item <?= $categoryId == $cat['id'] ? 'active' : '' ?>">
-                            <span class="material-symbols-outlined"><?= $cat['icon'] ?></span>
-                            <span class="category-name"><?= sanitize($cat['name']) ?></span>
+                            <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" style="width: 28px; height: 28px; object-fit: cover; margin-right: 8px;">
+                            <span class="category-name"><?= str_replace('&amp;', '&', sanitize($cat['name'])) ?></span>
                         </a>
                         <?php endforeach; ?>
                     </div>
                 </div>
-                
+
                 <!-- Price Range -->
                 <div class="filter-section">
                     <h3 class="filter-section-title">Khoảng giá</h3>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                        <input type="number" name="min_price" placeholder="Từ" 
-                               value="<?= $minPrice ?>" 
+                        <input type="number" name="min_price" placeholder="Từ"
+                               value="<?= $minPrice ?>"
                                style="width: 50%; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                        <input type="number" name="max_price" placeholder="Đến" 
+                        <input type="number" name="max_price" placeholder="Đến"
                                value="<?= $maxPrice ?>"
                                style="width: 50%; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                     </div>
                 </div>
-                
+
                 <!-- Checkboxes -->
                 <div class="filter-section">
                     <div class="checkbox-group">
@@ -116,7 +130,7 @@ include 'includes/header.php';
                         </label>
                     </div>
                 </div>
-                
+
                 <!-- Apply Button -->
                 <div class="filter-section">
                     <button type="submit" class="btn btn-primary" style="width: 100%;">
@@ -126,7 +140,7 @@ include 'includes/header.php';
             </form>
         </div>
     </aside>
-    
+
     <!-- Products Content -->
     <div class="products-section">
         <!-- Breadcrumb -->
@@ -139,7 +153,7 @@ include 'includes/header.php';
                 <span class="current"><?= sanitize($currentCategoryName) ?></span>
             <?php endif; ?>
         </div>
-        
+
         <!-- Section Header -->
         <div class="section-header">
             <div>
@@ -148,7 +162,7 @@ include 'includes/header.php';
                     <?= $totalProducts ?> sản phẩm
                 </p>
             </div>
-            
+
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <label style="font-size: 0.875rem; color: var(--muted-light);">Sắp xếp:</label>
                 <select class="sort-select" onchange="window.location.href=this.value">
@@ -159,7 +173,7 @@ include 'includes/header.php';
                 </select>
             </div>
         </div>
-        
+
         <!-- Products Grid -->
         <?php if (empty($products)): ?>
             <div style="text-align: center; padding: 3rem;">
@@ -175,7 +189,7 @@ include 'includes/header.php';
                     <?= renderProductCard($product) ?>
                 <?php endforeach; ?>
             </div>
-            
+
             <!-- Pagination -->
             <?= renderPagination($page, $totalPages, $_GET) ?>
         <?php endif; ?>

@@ -70,7 +70,7 @@ if ($filterRole !== 'all') {
 }
 
 if ($search) {
-    $where[] = "(name LIKE :search OR email LIKE :search)";
+    $where[] = "email LIKE :search";
     $params[':search'] = "%$search%";
 }
 

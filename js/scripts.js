@@ -19,7 +19,7 @@ function addToCart(productId, quantity = 1) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification(data.message, 'success');
+                showNotification('Đã thêm vào giỏ hàng', 'success');
             updateCartCount(data.cart_count);
         } else {
             showNotification('Có lỗi xảy ra', 'error');
@@ -30,6 +30,7 @@ function addToCart(productId, quantity = 1) {
         showNotification('Có lỗi xảy ra', 'error');
     });
 }
+
 
 /**
  * Toggle favorite product
@@ -55,14 +56,13 @@ function toggleFavorite(productId) {
  * Update cart count in header
  */
 function updateCartCount(count) {
-    const cartBadge = document.querySelector('.header-actions .icon-btn span:last-child');
+    // Only update the cart icon badge (shopping_bag)
+    const cartIconBtn = document.querySelector('.header-actions a.icon-btn[href$="cart.php"]');
+    const cartBadge = cartIconBtn ? cartIconBtn.querySelector('span:not(.material-symbols-outlined)') : null;
     if (cartBadge && cartBadge.style) {
         cartBadge.textContent = count;
         cartBadge.style.display = count > 0 ? 'flex' : 'none';
     }
-    
-    // Reload page to update cart badge
-    location.reload();
 }
 
 /**
@@ -187,6 +187,32 @@ function debounce(func, wait) {
 }
 
 // Export functions for global use
+// Cart quantity update (AJAX, no reload)
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('change', function(e) {
+        if (e.target.classList.contains('cart-qty-input')) {
+            const input = e.target;
+            const productId = input.dataset.productId;
+            let qty = parseInt(input.value);
+            if (isNaN(qty) || qty < 1) qty = 1;
+            fetch(`${window.location.origin}/organic/cart.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=update&product_id=${productId}&quantity=${qty}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Đã cập nhật số lượng', 'success');
+                        updateCartCount(data.cart_count);
+                        // Optionally update cart total, etc. via JS here
+                } else {
+                    showNotification('Có lỗi khi cập nhật', 'error');
+                }
+            });
+        }
+    });
+});
 window.addToCart = addToCart;
 window.toggleFavorite = toggleFavorite;
 window.showNotification = showNotification;

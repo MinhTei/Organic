@@ -33,7 +33,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             } else {
                 unset($_SESSION['cart'][$productId]);
             }
-            echo json_encode(['success' => true, 'message' => 'Đã cập nhật giỏ hàng']);
+            // Tính lại giá trị giỏ hàng sau cập nhật
+            $cartCount = array_sum($_SESSION['cart']);
+            $subtotal = 0;
+            $shippingFee = 25000;
+            $total = 0;
+            $unitPrice = 0;
+            if (!empty($_SESSION['cart'])) {
+                $conn = getConnection();
+                $ids = array_keys($_SESSION['cart']);
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $stmt = $conn->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
+                $stmt->execute($ids);
+                $products = $stmt->fetchAll();
+                foreach ($products as $product) {
+                    $qty = $_SESSION['cart'][$product['id']];
+                    $price = $product['sale_price'] ?? $product['price'];
+                    if ($product['id'] == $productId) {
+                        $unitPrice = $price;
+                    }
+                    $itemTotal = $price * $qty;
+                    $subtotal += $itemTotal;
+                }
+            }
+            $freeShippingThreshold = 500000;
+            $isFreeShipping = $subtotal >= $freeShippingThreshold;
+            if ($isFreeShipping) {
+                $shippingFee = 0;
+            }
+            $total = $subtotal + ($subtotal > 0 ? $shippingFee : 0);
+            if ($isFreeShipping) {
+                $total = $subtotal;
+            }
+            echo json_encode([
+                'success' => true,
+                'message' => 'Đã cập nhật giỏ hàng',
+                'cart_count' => $cartCount,
+                'subtotal' => $subtotal,
+                'shippingFee' => $shippingFee,
+                'total' => $total,
+                'unitPrice' => $unitPrice
+            ]);
             break;
             
         case 'remove':
@@ -110,7 +150,7 @@ include 'includes/header.php';
             <!-- Cart Items -->
             <div>
                 <?php foreach ($cartItems as $item): ?>
-                <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
+                 <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
                      style="display: flex; gap: 1rem; padding: 1.5rem; background: var(--card-light); border-radius: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--border-light);">
                     
                     <!-- Product Image -->
@@ -126,19 +166,19 @@ include 'includes/header.php';
                            style="font-weight: 600; font-size: 1rem;">
                             <?= sanitize($item['product']['name']) ?>
                         </a>
-                        <p style="color: var(--muted-light); font-size: 0.875rem;">
+                        <p class="item-price" data-unit-price="<?= $item['price'] ?>" style="color: var(--muted-light); font-size: 0.875rem;">
                             <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
                         </p>
                         
                         <!-- Quantity Controls -->
                         <div style="display: flex; align-items: center; gap: 1rem; margin-top: auto;">
-                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                                <button onclick="updateCart(<?= $item['product']['id'] ?>, <?= $item['quantity'] - 1 ?>)"
-                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer;">-</button>
-                                <span style="padding: 0 0.5rem; min-width: 30px; text-align: center;"><?= $item['quantity'] ?></span>
-                                <button onclick="updateCart(<?= $item['product']['id'] ?>, <?= $item['quantity'] + 1 ?>)"
-                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer;">+</button>
-                            </div>
+                                <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                <button type="button" class="qty-decrease" data-product-id="<?= $item['product']['id'] ?>"
+                                    style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer;">-</button>
+                                <input type="number" min="1" class="cart-qty-input" data-product-id="<?= $item['product']['id'] ?>" value="<?= $item['quantity'] ?>" style="width: 50px; text-align: center; border: none; font-size: 1rem;" />
+                                <button type="button" class="qty-increase" data-product-id="<?= $item['product']['id'] ?>"
+                                    style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer;">+</button>
+                                </div>
                             
                             <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
                                     style="color: var(--danger); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
@@ -149,7 +189,7 @@ include 'includes/header.php';
                     </div>
                     
                     <!-- Item Total -->
-                    <div style="font-weight: 700; color: var(--primary-dark);">
+                    <div class="item-total" style="font-weight: 700; color: var(--primary-dark);">
                         <?= formatPrice($item['total']) ?>
                     </div>
                 </div>
@@ -171,15 +211,17 @@ include 'includes/header.php';
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
                         <div style="display: flex; justify-content: space-between;">
                             <span style="color: var(--muted-light);">Tạm tính</span>
-                            <span><?= formatPrice($subtotal) ?></span>
+                            <span class="cart-subtotal"><?= formatPrice($subtotal) ?></span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span style="color: var(--muted-light);">Phí vận chuyển</span>
-                            <?php if ($isFreeShipping): ?>
-                                <span style="color: var(--success);">Miễn phí</span>
-                            <?php else: ?>
-                                <span><?= formatPrice($shippingFee) ?></span>
-                            <?php endif; ?>
+                            <span class="cart-shipping" style="color: var(--success);">
+                                <?php if ($isFreeShipping): ?>
+                                    Miễn phí
+                                <?php else: ?>
+                                    <?= formatPrice($shippingFee) ?>
+                                <?php endif; ?>
+                            </span>
                         </div>
                     </div>
                     
@@ -193,7 +235,7 @@ include 'includes/header.php';
                     
                     <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
                         <span>Tổng cộng</span>
-                        <span style="color: var(--primary-dark);"><?= formatPrice($total) ?></span>
+                        <span class="cart-grandtotal" style="color: var(--primary-dark);"><?= formatPrice($total) ?></span>
                     </div>
                     
                     <a href="<?= SITE_URL ?>/thanhtoan.php" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
@@ -215,8 +257,61 @@ function updateCart(productId, quantity) {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=update&product_id=${productId}&quantity=${quantity}`
-    }).then(() => location.reload());
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof showNotification === 'function') showNotification('Đã cập nhật số lượng', 'success');
+            if (typeof updateCartCount === 'function' && data.cart_count !== undefined) updateCartCount(data.cart_count);
+            // Update input value in UI for better UX
+            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+            if (input) input.value = quantity;
+
+            // Update item total price
+            const itemRow = input.closest('.cart-item');
+            if (itemRow && data.unitPrice !== undefined) {
+                const totalText = itemRow.querySelector('.item-total');
+                if (totalText) {
+                    totalText.textContent = formatPrice(data.unitPrice * quantity);
+                }
+            }
+
+            // Update subtotal, shipping, grand total
+            if (data.subtotal !== undefined) {
+                const subtotalEl = document.querySelector('.cart-subtotal');
+                if (subtotalEl) subtotalEl.textContent = formatPrice(data.subtotal);
+            }
+            if (data.shippingFee !== undefined) {
+                const shippingEl = document.querySelector('.cart-shipping');
+                if (shippingEl) shippingEl.textContent = data.shippingFee === 0 ? 'Miễn phí' : formatPrice(data.shippingFee);
+            }
+            if (data.total !== undefined) {
+                const totalEl = document.querySelector('.cart-grandtotal');
+                if (totalEl) totalEl.textContent = formatPrice(data.total);
+            }
+        } else {
+            if (typeof showNotification === 'function') showNotification('Có lỗi khi cập nhật', 'error');
+        }
+    });
 }
+
+// Sự kiện tăng/giảm số lượng
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('qty-increase')) {
+            const productId = e.target.dataset.productId;
+            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+            let qty = parseInt(input.value) || 1;
+            updateCart(productId, qty + 1);
+        }
+        if (e.target.classList.contains('qty-decrease')) {
+            const productId = e.target.dataset.productId;
+            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+            let qty = parseInt(input.value) || 1;
+            updateCart(productId, qty > 1 ? qty - 1 : 1);
+        }
+    });
+});
 
 function removeFromCart(productId) {
     if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {

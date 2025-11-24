@@ -271,7 +271,7 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
                                 <td class="py-4 px-4 font-medium"><?= $index + 1 ?></td>
                                 <td class="py-4 px-4">
                                     <div class="flex items-center gap-3">
-                                        <img src="<?= $product['image'] ?>" alt="" class="w-12 h-12 rounded-lg object-cover">
+                                        <img src="<?= imageUrl($product['image']) ?>" alt="" class="w-12 h-12 rounded-lg object-cover">
                                         <span class="font-medium"><?= sanitize($product['name']) ?></span>
                                     </div>
                                 </td>
