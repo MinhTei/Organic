@@ -3,7 +3,7 @@
  * auth.php - Đăng nhập và đăng ký với giao diện mới
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'login';

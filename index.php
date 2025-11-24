@@ -3,11 +3,23 @@
  * index.php - Trang chủ với slideshow banner
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
-// Get featured products
-$featuredProducts = getFeaturedProducts(4);
+
+// Xử lý tìm kiếm sản phẩm trên trang chủ
+$search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
+if ($search) {
+    // Tìm kiếm sản phẩm theo tên hoặc mô tả
+    require_once __DIR__ . '/includes/functions.php';
+    $conn = getConnection();
+    $stmt = $conn->prepare("SELECT * FROM products WHERE name LIKE :kw1 OR description LIKE :kw2 ORDER BY id DESC LIMIT 12");
+    $stmt->execute([':kw1' => "%$search%", ':kw2' => "%$search%"]);
+    $searchProducts = $stmt->fetchAll();
+} else {
+    // Get featured products
+    $featuredProducts = getFeaturedProducts(4);
+}
 
 // Get categories
 $categories = getCategories();
@@ -18,6 +30,8 @@ $newProducts = getProducts(['is_new' => 1, 'limit' => 4])['products'];
 $pageTitle = 'Rau Sạch Tận Nhà';
 include 'includes/header.php';
 ?>
+
+<!-- Search Section đã chuyển lên header -->
 
 <!-- Hero Slideshow Section -->
 <section style="padding: 0 1rem;">
@@ -162,21 +176,40 @@ setInterval(() => {
 }, 4000);
 </script>
 
-<!-- Featured Products -->
+
+<!-- Search Results or Featured Products -->
 <section style="padding: 3rem 1rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
-        <div class="section-header">
-            <h2 class="section-title">Nông Sản Tươi Mới</h2>
-            <a href="<?= SITE_URL ?>/products.php" style="color: var(--primary-dark); font-weight: 600;">
-                Xem tất cả →
-            </a>
-        </div>
-        
-        <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-            <?php foreach ($featuredProducts as $product): ?>
-                <?= renderProductCard($product) ?>
-            <?php endforeach; ?>
-        </div>
+        <?php if ($search): ?>
+            <div class="section-header">
+                <h2 class="section-title">Kết quả tìm kiếm cho "<?= htmlspecialchars($search) ?>"</h2>
+                <a href="index.php" style="color: var(--primary-dark); font-weight: 600;">Đặt lại</a>
+            </div>
+            <?php if (!empty($searchProducts)): ?>
+                <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                    <?php foreach ($searchProducts as $product): ?>
+                        <?= renderProductCard($product) ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div style="text-align:center; color:var(--muted-light); padding:3rem 0; font-size:1.2rem;">
+                    <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary-dark);">search_off</span><br>
+                    Không tìm thấy sản phẩm phù hợp.
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <div class="section-header">
+                <h2 class="section-title">Nông Sản Tươi Mới</h2>
+                <a href="<?= SITE_URL ?>/products.php" style="color: var(--primary-dark); font-weight: 600;">
+                    Xem tất cả →
+                </a>
+            </div>
+            <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                <?php foreach ($featuredProducts as $product): ?>
+                    <?= renderProductCard($product) ?>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </section>
 

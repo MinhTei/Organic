@@ -3,7 +3,7 @@
  * product_detail.php - Trang chi tiết sản phẩm
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
 // Get product by slug or ID

@@ -3,7 +3,7 @@
  * giohang.php - Trang giỏ hàng
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
 // Handle cart actions via AJAX
@@ -211,7 +211,7 @@ include 'includes/header.php';
 
 <script>
 function updateCart(productId, quantity) {
-    fetch('<?= SITE_URL ?>/giohang.php', {
+    fetch('<?= SITE_URL ?>/cart.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=update&product_id=${productId}&quantity=${quantity}`
@@ -220,7 +220,7 @@ function updateCart(productId, quantity) {
 
 function removeFromCart(productId) {
     if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-        fetch('<?= SITE_URL ?>/giohang.php', {
+        fetch('<?= SITE_URL ?>/cart.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `action=remove&product_id=${productId}`
@@ -230,7 +230,7 @@ function removeFromCart(productId) {
 
 function clearCart() {
     if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')) {
-        fetch('<?= SITE_URL ?>/giohang.php', {
+        fetch('<?= SITE_URL ?>/cart.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'action=clear'

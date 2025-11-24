@@ -144,13 +144,13 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         
         <!-- Header Actions -->
         <div class="header-actions">
-            <!-- Search -->
-            <div class="search-box">
-                <span class="material-symbols-outlined text-muted-light">search</span>
-                <form action="<?= SITE_URL ?>/products.php" method="GET">
-                    <input type="text" name="search" placeholder="Tìm kiếm..." value="<?= isset($_GET['search']) ? sanitize($_GET['search']) : '' ?>"/>
-                </form>
-            </div>
+            <!-- Search (áp dụng toàn site, giao diện lớn ở trang chủ) -->
+            <form method="GET" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; gap: 1rem; align-items: center; max-width: 400px; background: #fff; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                <input type="text" name="search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>" placeholder="Tìm kiếm sản phẩm..." style="flex:1; padding: 0.75rem 1rem; border: none; font-size: 1.1rem; outline: none; background: transparent;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.25rem; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; background: #b6e633; border: none; border-radius: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 1.5rem; color: #161811;">search</span>
+                </button>
+            </form>
             
             <!-- User Account -->
             <?php if ($isLoggedIn): ?>
@@ -189,7 +189,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
             <?php endif; ?>
             
             <!-- Cart -->
-            <a href="<?= SITE_URL ?>/giohang.php" class="icon-btn" style="position: relative;">
+            <a href="<?= SITE_URL ?>/cart.php" class="icon-btn" style="position: relative;">
                 <span class="material-symbols-outlined">shopping_bag</span>
                 <?php if ($cartCount > 0): ?>
                 <span style="position: absolute; top: -4px; right: -4px; background: var(--primary); color: #000; font-size: 0.75rem; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">

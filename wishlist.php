@@ -3,7 +3,7 @@
  * wishlist.php - Trang danh sách yêu thích
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 require_once 'includes/wishlist_functions.php';
 
@@ -157,7 +157,7 @@ function addAllToCart() {
     if (count > 0) {
         showNotification(`Đã thêm ${count} sản phẩm vào giỏ hàng`, 'success');
         setTimeout(() => {
-            window.location.href = '<?= SITE_URL ?>/giohang.php';
+            window.location.href = '<?= SITE_URL ?>/cart.php';
         }, 1500);
     }
 }

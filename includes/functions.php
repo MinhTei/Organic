@@ -35,8 +35,9 @@ function getProducts($options = []) {
     }
     // Lọc theo từ khóa tìm kiếm
     if (!empty($options['search'])) {
-        $where[] = "(p.name LIKE :search OR p.description LIKE :search)";
-        $params[':search'] = '%' . $options['search'] . '%';
+        $where[] = "(p.name LIKE :search1 OR p.description LIKE :search2)";
+        $params[':search1'] = '%' . $options['search'] . '%';
+        $params[':search2'] = '%' . $options['search'] . '%';
     }
     // Lọc sản phẩm đang giảm giá
     if (!empty($options['on_sale'])) {

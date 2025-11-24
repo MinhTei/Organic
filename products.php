@@ -3,7 +3,7 @@
  * products.php - Trang danh sách sản phẩm với phân trang và bộ lọc
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
 // Get filter parameters

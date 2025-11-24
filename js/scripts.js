@@ -9,7 +9,7 @@ const SITE_URL = document.querySelector('meta[name="site-url"]')?.content || '';
  * Add product to cart
  */
 function addToCart(productId, quantity = 1) {
-    fetch(`${window.location.origin}/organic/giohang.php`, {
+    fetch(`${window.location.origin}/organic/cart.php`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

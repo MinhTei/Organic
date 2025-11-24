@@ -3,7 +3,7 @@
  * forgot_password.php - Quên mật khẩu
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 require_once 'includes/email_functions.php';
 

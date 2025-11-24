@@ -3,7 +3,7 @@
  * user_info.php - Trang thông tin người dùng (cải tiến)
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
 // Check if user is logged in
