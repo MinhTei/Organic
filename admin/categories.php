@@ -226,9 +226,26 @@ $pageTitle = 'Quản lý Danh mục';
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
-                                    <input type="file" name="icon" accept="image/*"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                    <p class="text-xs text-gray-500 mt-1">Upload an image file (jpg, png, svg). Leave empty to keep current icon.</p>
+                                    <div style="position:relative;">
+                                        <input type="file" name="icon" accept="image/*" id="iconInput"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <button type="button" onclick="document.getElementById('iconInput').value=''; iconPreview.src=''; iconPreview.style.display='none';" 
+                                                class="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" style="z-index:2;">Xóa hình</button>
+                                    </div>
+                                    <img id="iconPreview" src="" style="display:none;max-width:64px;margin-top:8px;" />
+                                    <p class="text-xs text-gray-500 mt-1">Upload an image file (jpg, png, svg). Leave empty để giữ icon hiện tại.</p>
+                                    <script>
+                                    document.getElementById('iconInput').addEventListener('change', function(e) {
+                                        const [file] = e.target.files;
+                                        if (file) {
+                                            iconPreview.src = URL.createObjectURL(file);
+                                            iconPreview.style.display = 'block';
+                                        } else {
+                                            iconPreview.src = '';
+                                            iconPreview.style.display = 'none';
+                                        }
+                                    });
+                                    </script>
                                 </div>
                             </div>
 

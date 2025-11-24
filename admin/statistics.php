@@ -58,12 +58,13 @@ $totalStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 $totals = $totalStmt->fetch();
 
 // Lấy top 10 sản phẩm bán chạy nhất
+// Sử dụng unit_price thay cho price
 $topProductsStmt = $conn->prepare("
     SELECT 
         p.name,
         p.image,
         SUM(oi.quantity) as total_sold,
-        SUM(oi.quantity * oi.price) as total_revenue
+        SUM(oi.quantity * oi.unit_price) as total_revenue
     FROM order_items oi
     JOIN products p ON oi.product_id = p.id
     JOIN orders o ON oi.order_id = o.id

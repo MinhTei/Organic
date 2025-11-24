@@ -6,7 +6,7 @@
 :root {
     --primary: #b6e633;
     --primary-dark: #9acc2a;
-    --background-light: #f7f8f6;
+    --background-light: #FBFBF7;
     --background-dark: #1d2111;
     --text-light: #161811;
     --text-dark: #f7f8f6;
@@ -29,7 +29,7 @@
 
 body {
     font-family: 'Be Vietnam Pro', sans-serif;
-    background-color: var(--background-light);
+    background-color: var(--background-light) !important;
     color: var(--text-light);
     line-height: 1.6;
 }

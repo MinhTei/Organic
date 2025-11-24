@@ -31,20 +31,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $name = sanitize($_POST['name']);
     $phone = sanitize($_POST['phone']);
     $birthdate = sanitize($_POST['birthdate'] ?? '');
-    
+
     if (empty($name)) {
         $error = 'Tên không được để trống.';
     } else {
-        $stmt = $conn->prepare("UPDATE users SET name = :name, phone = :phone WHERE id = :id");
-        if ($stmt->execute([':name' => $name, ':phone' => $phone, ':id' => $userId])) {
+        // Start transaction to update profile (and avatar if provided)
+        try {
+            $conn->beginTransaction();
+
+            // Handle avatar upload if present
+            if (!empty($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $file = $_FILES['avatar'];
+                $allowed = ['image/jpeg', 'image/png', 'image/gif'];
+                $maxSize = 2 * 1024 * 1024; // 2MB
+
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception('Lỗi khi tải lên ảnh.');
+                }
+
+                if ($file['size'] > $maxSize) {
+                    throw new Exception('Kích thước ảnh quá lớn. Vui lòng chọn ảnh < 2MB.');
+                }
+
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+
+                if (!in_array($mime, $allowed)) {
+                    throw new Exception('Định dạng ảnh không được hỗ trợ. Vui lòng chọn JPG/PNG/GIF.');
+                }
+
+                // Ensure target directory exists
+                $uploadDir = __DIR__ . '/images/avatars';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'user_' . $userId . '_' . time() . '.' . $ext;
+                $targetPath = $uploadDir . '/' . $filename;
+
+                if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                    throw new Exception('Không thể lưu ảnh tải lên.');
+                }
+
+                // Build relative path to store in DB (web-accessible)
+                $avatarPath = 'images/avatars/' . $filename;
+
+                // Delete old avatar file if exists and is a local file
+                if (!empty($user['avatar']) && strpos($user['avatar'], 'images/avatars/') === 0) {
+                    $oldFile = __DIR__ . '/' . $user['avatar'];
+                    if (is_file($oldFile)) {
+                        @unlink($oldFile);
+                    }
+                }
+
+                // Update avatar column
+                $stmt = $conn->prepare("UPDATE users SET avatar = :avatar WHERE id = :id");
+                $stmt->execute([':avatar' => $avatarPath, ':id' => $userId]);
+                // Update local $user array for immediate display
+                $user['avatar'] = $avatarPath;
+            }
+
+            // Update other profile fields
+            $stmt = $conn->prepare("UPDATE users SET name = :name, phone = :phone, birthdate = :birthdate WHERE id = :id");
+            $stmt->execute([':name' => $name, ':phone' => $phone, ':birthdate' => $birthdate, ':id' => $userId]);
+
+            $conn->commit();
+
             $_SESSION['user_name'] = $name;
             $success = 'Cập nhật thông tin thành công!';
+
             // Reload user data
             $stmt = $conn->prepare("SELECT * FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
-        } else {
-            $error = 'Có lỗi xảy ra, vui lòng thử lại.';
+        } catch (Exception $ex) {
+            $conn->rollBack();
+            $error = $ex->getMessage();
         }
     }
 }
@@ -72,9 +136,15 @@ include 'includes/header.php';
             <aside style="background: white; border-radius: 1rem; padding: 2rem; height: fit-content; position: sticky; top: 100px;">
                 <!-- User Avatar -->
                 <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-light);">
-                    <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: white;">
-                        <?= strtoupper(substr($user['name'], 0, 1)) ?>
-                    </div>
+                    <?php if (!empty($user['avatar'])): ?>
+                        <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
+                            <img src="<?= sanitize($user['avatar']) ?>" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        </div>
+                    <?php else: ?>
+                        <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: white;">
+                            <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
                     <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem;"><?= sanitize($user['name']) ?></h3>
                     <p style="font-size: 0.875rem; color: var(--muted-light);">
                         Thành viên 
@@ -154,7 +224,17 @@ include 'includes/header.php';
                         <div style="background: white; border-radius: 1rem; padding: 2rem;">
                             <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Thông tin cá nhân</h2>
                             
-                            <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                <div style="display:flex; gap:1rem; align-items:center;">
+                                    <label style="display:block; font-weight:600;">Ảnh đại diện</label>
+                                    <div>
+                                        <?php if (!empty($user['avatar'])): ?>
+                                            <img src="<?= sanitize($user['avatar']) ?>" alt="avatar" style="width:56px; height:56px; object-fit:cover; border-radius:50%; display:block; margin-bottom:0.5rem;">
+                                        <?php endif; ?>
+                                        <input type="file" name="avatar" accept="image/*" style="display:block;">
+                                        <div style="font-size:0.8rem; color:var(--muted-light); margin-top:0.25rem;">Hỗ trợ JPG/PNG/GIF, tối đa 2MB</div>
+                                    </div>
+                                </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                     <div>
                                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Họ và tên</label>
@@ -164,8 +244,8 @@ include 'includes/header.php';
                                     
                                     <div>
                                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ngày sinh</label>
-                                        <input type="date" name="birthdate" value=""
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                             <input type="date" name="birthdate" value="<?= sanitize($user['birthdate'] ?? '') ?>"
+                                                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                                     </div>
                                 </div>
                                 

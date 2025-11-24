@@ -147,7 +147,24 @@ $pageTitle = 'Chỉnh sửa sản phẩm';
                     <img src="<?= imageUrl($product['image']) ?>" class="w-32 h-32 object-cover border rounded">
                 </div>
                 <label class="block text-sm font-medium mb-1">Thay ảnh</label>
-                <input type="file" name="image" accept="image/*" class="w-full">
+                <div style="position:relative;">
+                    <input type="file" name="image" accept="image/*" id="productImageInput" class="w-full">
+                    <button type="button" onclick="document.getElementById('productImageInput').value=''; productImagePreview.src=''; productImagePreview.style.display='none';" 
+                            class="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" style="z-index:2;">Xóa hình</button>
+                </div>
+                <img id="productImagePreview" src="" style="display:none;max-width:96px;margin-top:8px;" />
+                <script>
+                document.getElementById('productImageInput').addEventListener('change', function(e) {
+                    const [file] = e.target.files;
+                    if (file) {
+                        productImagePreview.src = URL.createObjectURL(file);
+                        productImagePreview.style.display = 'block';
+                    } else {
+                        productImagePreview.src = '';
+                        productImagePreview.style.display = 'none';
+                    }
+                });
+                </script>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Tồn kho</label>
