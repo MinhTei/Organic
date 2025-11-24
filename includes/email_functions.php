@@ -157,6 +157,7 @@ function sendEmailWithPHPMail($to, $subject, $message) {
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
     $headers .= "From: " . SITE_NAME . " <noreply@xanhorganic.vn>" . "\r\n";
-    
-    return mail($to, $subject, $message, $headers);
+    // Chỉ gửi mail nếu hàm mail() trả về true, nếu không thì bỏ qua, không hiển thị warning
+    $result = @mail($to, $subject, $message, $headers);
+    return $result;
 }
