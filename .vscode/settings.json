@@ -1,0 +1,13 @@
+{
+  // Ensure Intelephense does NOT exclude vendor so composer packages are indexed
+  "intelephense.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/storage/**"
+  ],
+
+  // If your global files.exclude hides vendor, explicitly include vendor for this workspace
+  "files.exclude": {
+    "**/vendor": false
+  }
+}
