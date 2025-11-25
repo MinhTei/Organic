@@ -1,9 +1,9 @@
 <?php
 /**
- * user_info.php - Trang thông tin người dùng (cải tiến)
+ * user_info.php - Trang quản lý thông tin và địa chỉ khách hàng
  */
 
-require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/config.php';
 require_once 'includes/functions.php';
 
 // Check if user is logged in
@@ -17,39 +17,19 @@ $error = '';
 
 // Get user data
 $conn = getConnection();
-$stmt = $conn->prepare("SELECT * FROM users WHERE id = :id");
-$stmt->execute([':id' => $userId]);
-$user = $stmt->fetch();
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$userId]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
     session_destroy();
     redirect(SITE_URL . '/auth.php');
 }
 
-// Xử lý thêm địa chỉ mới (sau khi $conn đã có)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_address'])) {
-    $address = sanitize($_POST['address']);
-    $note = sanitize($_POST['note'] ?? '');
-    if ($address) {
-        $stmt = $conn->prepare("INSERT INTO user_addresses (user_id, address, note) VALUES (:user_id, :address, :note)");
-        $stmt->execute([':user_id' => $userId, ':address' => $address, ':note' => $note]);
-        $success = 'Đã thêm địa chỉ mới!';
-        // Redirect để tránh submit lại
-        header('Location: ?tab=addresses');
-        exit;
-    } else {
-        $error = 'Vui lòng nhập địa chỉ.';
-    }
-}
-$conn = getConnection();
-$stmt = $conn->prepare("SELECT * FROM users WHERE id = :id");
-$stmt->execute([':id' => $userId]);
-$user = $stmt->fetch();
-
-if (!$user) {
-    session_destroy();
-    redirect(SITE_URL . '/auth.php');
-}
+// Lấy danh sách địa chỉ đã lưu
+$stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
+$stmt->execute([$userId]);
+$addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
@@ -287,17 +267,31 @@ include 'includes/header.php';
                                     </div>
                                 </div>
                                 
-                                   <!-- Địa chỉ mới nhất dưới ô email -->
+                                   <!-- Địa chỉ mặc định hiện tại -->
                                 <?php
-                                $stmt = $conn->prepare("SELECT * FROM user_addresses WHERE user_id = :user_id ORDER BY id DESC LIMIT 1");
-                                $stmt->execute([':user_id' => $userId]);
-                                $firstAddr = $stmt->fetch();
-                                if ($firstAddr): ?>
+                                $defaultAddr = null;
+                                foreach ($addresses as $addr) {
+                                    if ($addr['is_default']) {
+                                        $defaultAddr = $addr;
+                                        break;
+                                    }
+                                }
+                                if ($defaultAddr): ?>
                                     <div style="margin-bottom:2rem;">
-                                        <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ hiện tại</h3>
-                                        <div style="padding:0.75rem 1rem; background:#f7f8f6; border-radius:0.5rem;">
-                                            <div style="font-weight:600; color:#222;"><?= htmlspecialchars($firstAddr['address']) ?></div>
-                                            <div style="color:var(--muted-light); font-size:0.95rem; margin-top:0.25rem;">Ghi chú: Địa chỉ 1</div>
+                                        <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ giao hàng mặc định</h3>
+                                        <div style="padding:1rem; background:#f7f8f6; border-radius:0.5rem; border-left: 4px solid var(--primary);">
+                                            <div style="font-weight:600; color:#222; margin-bottom:0.25rem;"><?= sanitize($defaultAddr['name']) ?> - <?= sanitize($defaultAddr['phone']) ?></div>
+                                            <div style="color:var(--text-light); margin-bottom:0.25rem;"><?= sanitize($defaultAddr['address']) ?></div>
+                                            <?php if ($defaultAddr['note']): ?>
+                                                <div style="color:var(--muted-light); font-size:0.9rem;">Ghi chú: <?= sanitize($defaultAddr['note']) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div style="margin-bottom:2rem;">
+                                        <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ giao hàng mặc định</h3>
+                                        <div style="padding:1rem; background:#f7f8f6; border-radius:0.5rem; color:var(--muted-light);">
+                                            Chưa có địa chỉ mặc định. <a href="?tab=addresses" style="color:var(--primary); font-weight:600;">Thêm địa chỉ</a>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -380,33 +374,105 @@ include 'includes/header.php';
                         <div style="background: white; border-radius: 1rem; padding: 2rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                                 <h2 style="font-size: 1.5rem; font-weight: 700;">Địa chỉ đã lưu</h2>
-                                <button class="btn btn-primary" id="showAddAddress" type="button">
+                                <button class="btn btn-primary" onclick="showAddressForm()" type="button">
                                     <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.25rem;">add</span>
                                     Thêm địa chỉ mới
                                 </button>
                             </div>
-                            <div id="addAddressForm" style="display:none; margin-bottom:2rem;">
-                                <form method="POST" action="?tab=addresses">
-                                    <div style="margin-bottom:1rem;">
-                                        <label for="address" style="font-weight:600;">Địa chỉ</label>
-                                        <input type="text" name="address" id="address" required class="form-input" style="width:100%;margin-top:0.5rem;">
+
+                            <!-- Form Add/Edit Address -->
+                            <div id="address-form" style="display:none; background: #f9f9f9; padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem; border: 1px solid var(--border-light);">
+                                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">
+                                    <span id="form-title">Thêm địa chỉ mới</span>
+                                </h3>
+                                <form id="address-form-element" style="display: grid; gap: 1rem;">
+                                    <input type="hidden" id="address-id">
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tên người nhận *</label>
+                                            <input type="text" id="address-name" placeholder="Nhập tên người nhận" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        </div>
+
+                                        <div>
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại *</label>
+                                            <input type="tel" id="address-phone" placeholder="Nhập số điện thoại" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        </div>
                                     </div>
-                                    <div style="margin-bottom:1rem;">
-                                        <label for="note" style="font-weight:600;">Ghi chú (tuỳ chọn)</label>
-                                        <input type="text" name="note" id="note" class="form-input" style="width:100%;margin-top:0.5rem;">
+
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Địa chỉ *</label>
+                                        <textarea id="address-address" placeholder="Nhập địa chỉ giao hàng" required rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem; resize: vertical;"></textarea>
                                     </div>
-                                    <button type="submit" name="add_address" class="btn btn-primary" style="width:100%;">Lưu địa chỉ</button>
+
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ghi chú (tùy chọn)</label>
+                                        <input type="text" id="address-note" placeholder="VD: Nhà riêng, Công ty, ..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="address-default" style="width: 18px; height: 18px; cursor: pointer;">
+                                        <label for="address-default" style="cursor: pointer; margin: 0;">Đặt làm địa chỉ mặc định</label>
+                                    </div>
+
+                                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                        <button type="button" onclick="hideAddressForm()" class="btn" style="padding: 0.75rem 1.5rem; border: 1px solid var(--border-light); background: #fff; color: var(--text-light); border-radius: 0.5rem; cursor: pointer; font-weight: 500;">Hủy</button>
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Lưu địa chỉ</button>
+                                    </div>
                                 </form>
                             </div>
-                            <script>
-                            document.getElementById('showAddAddress').onclick = function() {
-                                var f = document.getElementById('addAddressForm');
-                                f.style.display = f.style.display === 'none' ? 'block' : 'none';
-                            };
-                            </script>
-                            <p style="text-align: center; padding: 3rem; color: var(--muted-light);">
-                                Bạn chưa có địa chỉ nào được lưu.
-                            </p>
+
+                            <!-- Address List -->
+                            <div id="addresses-list" style="display: grid; gap: 1rem;">
+                                <?php if (empty($addresses)): ?>
+                                    <div style="text-align: center; padding: 3rem 1rem; color: var(--muted-light);">
+                                        <span class="material-symbols-outlined" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.5;">location_off</span>
+                                        <p>Bạn chưa lưu địa chỉ nào. <a href="#" onclick="showAddressForm(); return false;" style="color: var(--primary); font-weight: 600;">Thêm địa chỉ ngay</a></p>
+                                    </div>
+                                <?php else: ?>
+                                    <?php foreach ($addresses as $addr): ?>
+                                        <div class="address-card" data-id="<?= $addr['id'] ?>" style="background: #fff; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: flex-start; position: relative;">
+                                            <?php if ($addr['is_default']): ?>
+                                                <span style="position: absolute; top: 1rem; right: 1rem; background: var(--primary); color: #fff; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Mặc định</span>
+                                            <?php endif; ?>
+                                            
+                                            <div style="flex: 1;">
+                                                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                                    <?= sanitize($addr['name']) ?>
+                                                    <?php if ($addr['note']): ?>
+                                                        <span style="color: var(--muted-light); font-size: 0.9rem; font-weight: 400;">(<?= sanitize($addr['note']) ?>)</span>
+                                                    <?php endif; ?>
+                                                </h3>
+                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem;">
+                                                    <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1rem;">phone</span>
+                                                    <?= sanitize($addr['phone']) ?>
+                                                </p>
+                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem;">
+                                                    <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1rem;">location_on</span>
+                                                    <?= sanitize($addr['address']) ?>
+                                                </p>
+                                                <p style="color: var(--muted-light); font-size: 0.875rem;">
+                                                    Thêm <?= date('d/m/Y', strtotime($addr['created_at'])) ?>
+                                                </p>
+                                            </div>
+
+                                            <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                                                <?php if (!$addr['is_default']): ?>
+                                                    <button onclick="setDefaultAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Đặt làm mặc định" style="background: none; border: none; cursor: pointer; color: var(--muted-light); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                        <span class="material-symbols-outlined">check_circle</span>
+                                                    </button>
+                                                <?php endif; ?>
+                                                <button onclick="editAddress(<?= htmlspecialchars(json_encode($addr)) ?>)" class="btn-icon" title="Chỉnh sửa" style="background: none; border: none; cursor: pointer; color: var(--muted-light); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                    <span class="material-symbols-outlined">edit</span>
+                                                </button>
+                                                <button onclick="deleteAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Xóa" style="background: none; border: none; cursor: pointer; color: var(--danger); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                    <span class="material-symbols-outlined">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                 <?php
                         break;
@@ -458,5 +524,140 @@ include 'includes/header.php';
         </div>
     </div>
 </main>
+
+<script>
+function showAddressForm() {
+    document.getElementById('address-form').style.display = 'block';
+    document.getElementById('form-title').textContent = 'Thêm địa chỉ mới';
+    document.getElementById('address-id').value = '';
+    document.getElementById('address-form-element').reset();
+}
+
+function hideAddressForm() {
+    document.getElementById('address-form').style.display = 'none';
+}
+
+function editAddress(address) {
+    document.getElementById('address-id').value = address.id;
+    document.getElementById('address-name').value = address.name;
+    document.getElementById('address-phone').value = address.phone;
+    document.getElementById('address-address').value = address.address;
+    document.getElementById('address-note').value = address.note || '';
+    document.getElementById('address-default').checked = address.is_default;
+    
+    document.getElementById('address-form').style.display = 'block';
+    document.getElementById('form-title').textContent = 'Chỉnh sửa địa chỉ';
+    document.getElementById('address-form-element').scrollIntoView({ behavior: 'smooth' });
+}
+
+function setDefaultAddress(id) {
+    // Use relative path based on current location
+    const apiPath = './api/customer_addresses.php';
+    
+    fetch(apiPath + '?action=set_default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+    })
+    .then(res => res.text())
+    .then(text => {
+        console.log('set_default response:', text);
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Có lỗi xảy ra');
+            }
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            alert('Lỗi: ' + text);
+        }
+    })
+    .catch(err => {
+        console.error('Fetch error:', err);
+        alert('Lỗi: ' + err.message);
+    });
+}
+
+function deleteAddress(id) {
+    if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
+    
+    const apiPath = './api/customer_addresses.php';
+    
+    fetch(apiPath + '?action=delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+    })
+    .then(res => res.text())
+    .then(text => {
+        console.log('delete response:', text);
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Có lỗi xảy ra');
+            }
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            alert('Lỗi: ' + text);
+        }
+    })
+    .catch(err => {
+        console.error('Fetch error:', err);
+        alert('Lỗi: ' + err.message);
+    });
+}
+
+// Handle form submit
+document.getElementById('address-form-element').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('address-id').value;
+    const action = id ? 'update' : 'add';
+    const apiPath = './api/customer_addresses.php';
+    
+    const data = {
+        name: document.getElementById('address-name').value,
+        phone: document.getElementById('address-phone').value,
+        address: document.getElementById('address-address').value,
+        note: document.getElementById('address-note').value,
+        is_default: document.getElementById('address-default').checked ? 1 : 0
+    };
+    
+    if (id) data.id = id;
+    
+    fetch(apiPath + '?action=' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => {
+        console.log('Response status:', res.status);
+        return res.text();
+    })
+    .then(text => {
+        console.log('Response text:', text);
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                alert(data.message || 'Thành công');
+                location.reload();
+            } else {
+                alert(data.message || 'Có lỗi xảy ra');
+            }
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            alert('Lỗi: ' + text);
+        }
+    })
+    .catch(err => {
+        console.error('Fetch error:', err);
+        alert('Lỗi: ' + err.message);
+    });
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
