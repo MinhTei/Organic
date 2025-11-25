@@ -32,7 +32,8 @@ $currentCategoryName = 'Tất cả sản phẩm';
 if ($categoryId) {
     foreach ($categories as $cat) {
         if ($cat['id'] == $categoryId) {
-            $currentCategoryName = $cat['name'];
+            // sanitize and decode HTML entities to avoid showing &amp; for names like "Trứng & Bơ sữa"
+            $currentCategoryName = htmlspecialchars_decode(sanitize($cat['name']));
             break;
         }
     }
@@ -150,14 +151,14 @@ include 'includes/header.php';
             <?php if ($search): ?>
                 <span class="current">Tìm kiếm: "<?= $search ?>"</span>
             <?php else: ?>
-                <span class="current"><?= sanitize($currentCategoryName) ?></span>
+                <span class="current"><?= $currentCategoryName ?></span>
             <?php endif; ?>
         </div>
 
         <!-- Section Header -->
         <div class="section-header">
             <div>
-                <h1 class="section-title"><?= sanitize($currentCategoryName) ?></h1>
+                <h1 class="section-title"><?= $currentCategoryName ?></h1>
                 <p style="color: var(--muted-light); font-size: 0.875rem;">
                     <?= $totalProducts ?> sản phẩm
                 </p>

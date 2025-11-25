@@ -17,14 +17,19 @@ if ($search) {
     $searchProducts = $stmt->fetchAll();
 } else {
     // Get featured products
-    $featuredProducts = getFeaturedProducts(4);
+    $featuredProducts = getFeaturedProducts(8);
 }
 
 // Get categories
 $categories = getCategories();
+// Get new products (Nông sản tươi mới)
+$newProducts = getProducts(['is_new' => 1, 'limit' => 8])['products'];
 
-// Get new products
-$newProducts = getProducts(['is_new' => 1, 'limit' => 4])['products'];
+// Admin-selected featured products (hiển thị riêng)
+$adminFeatured = getFeaturedProducts(4);
+
+// Latest news posts (admin)
+$latestPosts = function_exists('getLatestPosts') ? getLatestPosts(4) : [];
 
 $pageTitle = 'Rau Sạch Tận Nhà';
 include 'includes/header.php';
@@ -177,6 +182,27 @@ setInterval(() => {
 
 
 <!-- Search Results or Featured Products -->
+<!-- Categories (moved up above products) -->
+<section style="padding: 2rem 1rem 1rem;">
+    <div style="max-width: 1280px; margin: 0 auto; text-align: center;">
+        <?php $catCount = count($categories); ?>
+        <h2 class="section-title">Khám Phá Danh Mục <span style="font-weight:600; color:var(--muted-light); font-size:0.95rem;">(<?= $catCount ?> danh mục)</span></h2>
+        <div style="margin-top:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:1rem; align-items:center; justify-items:center;">
+            <?php foreach ($categories as $cat): ?>
+                <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>" style="text-align:center; width:140px; text-decoration:none; color:inherit;">
+                    <div style="width:96px; height:96px; margin:0 auto 0.5rem; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.06);">
+                        <?php if (!empty($cat['icon'])): ?>
+                            <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                        <?php else: ?>
+                            <span class="material-symbols-outlined" style="font-size:2rem; color:var(--primary-dark);">category</span>
+                        <?php endif; ?>
+                    </div>
+                    <div style="font-weight:700;"><?= htmlspecialchars_decode(sanitize($cat['name'])) ?></div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
 <section style="padding: 3rem 1rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
         <?php if ($search): ?>
@@ -211,6 +237,49 @@ setInterval(() => {
         <?php endif; ?>
     </div>
 </section>
+
+
+<!-- Admin Featured Products -->
+<?php if (!empty($adminFeatured)): ?>
+<section style="padding: 1.5rem 1rem; background: transparent;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <div class="section-header">
+            <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
+            <a href="<?= SITE_URL ?>/products.php?filter=featured" style="color: var(--primary-dark); font-weight: 600;">Xem thêm →</a>
+        </div>
+        <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+            <?php foreach ($adminFeatured as $p): ?>
+                <?= renderProductCard($p) ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<!-- News / Blog -->
+<?php if (!empty($latestPosts)): ?>
+<section style="padding: 2rem 1rem;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+        <div class="section-header">
+            <h2 class="section-title">Tin Tức</h2>
+            <a href="<?= SITE_URL ?>/blog.php" style="color: var(--primary-dark); font-weight: 600;">Xem tất cả →</a>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
+            <?php foreach ($latestPosts as $post): ?>
+                <a href="<?= SITE_URL ?>/blog.php?slug=<?= $post['slug'] ?>" style="display:block; background: #fff; border-radius: 0.75rem; overflow:hidden; text-decoration:none; color:inherit; box-shadow: 0 6px 18px rgba(0,0,0,0.04);">
+                    <?php if (!empty($post['featured_image'])): ?>
+                        <img src="<?= imageUrl($post['featured_image']) ?>" alt="<?= sanitize($post['title']) ?>" style="width:100%; height:160px; object-fit:cover;">
+                    <?php endif; ?>
+                    <div style="padding:1rem;">
+                        <h3 style="margin:0 0 0.5rem; font-size:1.05rem; font-weight:700;"><?= sanitize($post['title']) ?></h3>
+                        <p style="margin:0; color:var(--muted-light); font-size:0.95rem;"><?= sanitize($post['excerpt']) ?></p>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- Features -->
 <section style="padding: 3rem 1rem; background: var(--card-light);">
@@ -249,30 +318,7 @@ setInterval(() => {
     </div>
 </section>
 
-<!-- Categories -->
-<section style="padding: 3rem 1rem;">
-    <div style="max-width: 1280px; margin: 0 auto;">
-        <h2 class="section-title" style="margin-bottom: 1.5rem;">Khám Phá Danh Mục</h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
-            <?php 
-            // Hiển thị hình ảnh danh mục từ admin upload (icon)
-            foreach ($categories as $index => $cat): 
-                if ($index >= 4) break;
-            ?>
-            <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>" 
-               style="position: relative; aspect-ratio: 1; border-radius: 0.75rem; overflow: hidden; display: block; transition: transform 0.3s;">
-                <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" 
-                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); transition: background 0.3s;"></div>
-                <h3 style="position: absolute; bottom: 1rem; left: 1rem; color: white; font-size: 1.25rem; font-weight: 700;">
-                    <?= sanitize($cat['name']) ?>
-                </h3>
-            </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
+
 
 <!-- CTA Banner -->
 <section style="padding: 3rem 1rem;">

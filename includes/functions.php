@@ -141,6 +141,20 @@ function getFeaturedProducts($limit = 4) {
 }
 
 /**
+ * Lấy các bài viết mới nhất (tin tức) từ admin
+ * @param int $limit
+ * @return array
+ */
+function getLatestPosts($limit = 4) {
+    $conn = getConnection();
+    $sql = "SELECT id, title, slug, excerpt, featured_image, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT :limit";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+/**
  * Chuẩn hóa đường dẫn ảnh sản phẩm
  * - Nếu là URL đầy đủ thì trả về luôn
  * - Nếu là đường dẫn tuyệt đối/relative thì thêm SITE_URL

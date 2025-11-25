@@ -177,6 +177,11 @@ $pageTitle = 'Dashboard Admin';
                     <span>Đánh giá</span>
                 </a>
 
+                <a href="posts.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'posts.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                    <span class="material-symbols-outlined">article</span>
+                    <span>Quản lý bài viết</span>
+                </a>
+
                 <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'statistics.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">analytics</span>
                     <span>Thống kê</span>
