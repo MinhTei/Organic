@@ -3,11 +3,13 @@
  * thanhtoan.php - Trang thanh toán
  * 
  * Chức năng:
+ * - Chọn địa chỉ giao hàng (đã lưu hoặc nhập mới)
  * - Hiển thị form thông tin người nhận
  * - Chọn phương thức thanh toán (COD, Chuyển khoản)
  * - Áp dụng mã giảm giá
  * - Tính phí vận chuyển
  * - Xác nhận và tạo đơn hàng
+ * - Lưu địa chỉ mới với note "địa chỉ người nhận gần đây"
  */
 
 require_once __DIR__ . '/includes/config.php';
@@ -22,10 +24,16 @@ if (empty($_SESSION['cart'])) {
     redirect(SITE_URL . '/cart.php');
 }
 
+// Check login status
+if (!isset($_SESSION['user_id'])) {
+    redirect(SITE_URL . '/auth.php?redirect=thanhtoan');
+}
+
 // Get cart items
 $conn = getConnection();
 $cartItems = [];
 $subtotal = 0;
+$userId = $_SESSION['user_id'];
 
 $ids = array_keys($_SESSION['cart']);
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
@@ -48,9 +56,18 @@ foreach ($products as $product) {
     ];
 }
 
+// Get user info and saved addresses
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$userId]);
+$user = $stmt->fetch();
+
+$stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
+$stmt->execute([$userId]);
+$savedAddresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Shipping fee
-$shippingFee = DEFAULT_SHIPPING_FEE;
-$freeShippingThreshold = FREE_SHIPPING_THRESHOLD;
+$shippingFee = defined('DEFAULT_SHIPPING_FEE') ? DEFAULT_SHIPPING_FEE : 25000;
+$freeShippingThreshold = defined('FREE_SHIPPING_THRESHOLD') ? FREE_SHIPPING_THRESHOLD : 500000;
 $isFreeShipping = $subtotal >= $freeShippingThreshold;
 if ($isFreeShipping) {
     $shippingFee = 0;
@@ -122,32 +139,61 @@ if (isset($_SESSION['applied_coupon']) && empty($couponCode)) {
 // Calculate final total
 $total = $subtotal + $shippingFee - $discountAmount;
 
-// Get user info if logged in
-$user = null;
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT * FROM users WHERE id = :id");
-    $stmt->execute([':id' => $_SESSION['user_id']]);
-    $user = $stmt->fetch();
-}
-
 // Process order
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
-    $name = sanitize($_POST['name']);
-    $phone = sanitize($_POST['phone']);
-    $email = sanitize($_POST['email']);
-    $address = sanitize($_POST['address']);
-    $ward = sanitize($_POST['ward'] ?? '');
-    $district = sanitize($_POST['district'] ?? '');
-    $city = sanitize($_POST['city']);
+    $addressType = $_POST['address_type'] ?? '';
+    $savedAddressId = (int)($_POST['saved_address_id'] ?? 0);
+    
+    // Determine which fields to use
+    $name = '';
+    $phone = '';
+    $email = '';
+    $address = '';
+    $ward = '';
+    $district = '';
+    $city = '';
+    
+    if ($addressType === 'saved') {
+        // Use saved address
+        if ($savedAddressId <= 0) {
+            $error = 'Vui lòng chọn địa chỉ giao hàng.';
+        } else {
+            $stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE id = ? AND user_id = ?");
+            $stmt->execute([$savedAddressId, $userId]);
+            $selectedAddr = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$selectedAddr) {
+                $error = 'Địa chỉ giao hàng không hợp lệ.';
+            } else {
+                $name = $selectedAddr['name'];
+                $phone = $selectedAddr['phone'];
+                $address = $selectedAddr['address'];
+                $email = $user['email'] ?? '';
+                $city = 'TP. Hồ Chí Minh'; // Default city
+            }
+        }
+    } elseif ($addressType === 'new') {
+        // Use new address from form
+        $name = sanitize($_POST['name'] ?? '');
+        $phone = sanitize($_POST['phone'] ?? '');
+        $email = sanitize($_POST['email'] ?? '');
+        $address = sanitize($_POST['address'] ?? '');
+        $ward = sanitize($_POST['ward'] ?? '');
+        $district = sanitize($_POST['district'] ?? '');
+        $city = sanitize($_POST['city'] ?? '');
+    } else {
+        $error = 'Vui lòng chọn hình thức giao hàng.';
+    }
+    
     $note = sanitize($_POST['note'] ?? '');
     $paymentMethod = sanitize($_POST['payment_method']);
     
     // Validation
-    if (empty($name) || empty($phone) || empty($address) || empty($city)) {
+    if (empty($error) && (empty($name) || empty($phone) || empty($address) || empty($city))) {
         $error = 'Vui lòng điền đầy đủ thông tin giao hàng.';
-    } elseif (!in_array($paymentMethod, ['cod', 'bank_transfer'])) {
+    } elseif (empty($error) && !in_array($paymentMethod, ['cod', 'bank_transfer'])) {
         $error = 'Vui lòng chọn phương thức thanh toán.';
-    } else {
+    } elseif (!$error) {
         try {
             $conn->beginTransaction();
             
@@ -169,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             
             $stmt = $conn->prepare($sql);
             $stmt->execute([
-                ':user_id' => $_SESSION['user_id'] ?? null,
+                ':user_id' => $userId,
                 ':order_code' => $orderCode,
                 ':total_amount' => $subtotal,
                 ':discount_amount' => $discountAmount,
@@ -207,6 +253,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 // Update product stock
                 $updateStock = $conn->prepare("UPDATE products SET stock = stock - :qty WHERE id = :id");
                 $updateStock->execute([':qty' => $item['quantity'], ':id' => $item['product']['id']]);
+            }
+            
+            // If new address was used, save it to customer_addresses
+            if ($addressType === 'new' && !empty($name) && !empty($phone)) {
+                $stmtAddr = $conn->prepare("INSERT INTO customer_addresses (user_id, name, phone, address, note, is_default, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
+                $stmtAddr->execute([$userId, $name, $phone, $address, 'địa chỉ người nhận gần đây']);
             }
             
             // Update coupon usage
@@ -266,8 +318,107 @@ include 'includes/header.php';
     <form method="POST" style="display: grid; grid-template-columns: 1fr 400px; gap: 2rem;">
         <!-- Left Column - Shipping Info -->
         <div>
-            <!-- Shipping Information -->
+            <!-- Address Selection Section -->
             <div style="background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 1.5rem; border: 1px solid var(--border-light);">
+                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-symbols-outlined" style="color: var(--primary-dark);">location_on</span>
+                    Địa chỉ giao hàng
+                </h2>
+
+                <!-- Option 1: Saved Address -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; transition: all 0.3s;">
+                        <input type="radio" name="address_type" value="saved" checked style="width: 20px; height: 20px; margin-top: 0.25rem; cursor: pointer; accent-color: var(--primary);">
+                        <div style="flex: 1;">
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Sử dụng địa chỉ đã lưu</p>
+                            <?php if (empty($savedAddresses)): ?>
+                                <p style="color: var(--muted-light); font-size: 0.9rem;">Bạn chưa lưu địa chỉ nào. <a href="<?= SITE_URL ?>/user_info.php" style="color: var(--primary);">Thêm địa chỉ</a></p>
+                            <?php else: ?>
+                                <select name="saved_address_id" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; margin-top: 0.5rem; font-size: 1rem;">
+                                    <?php foreach ($savedAddresses as $addr): ?>
+                                        <option value="<?= $addr['id'] ?>" <?= $addr['is_default'] ? 'selected' : '' ?>>
+                                            <?= sanitize($addr['name']) ?> - <?= sanitize($addr['phone']) ?> | <?= sanitize($addr['address']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Option 2: New Address -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; transition: all 0.3s;">
+                        <input type="radio" name="address_type" value="new" style="width: 20px; height: 20px; margin-top: 0.25rem; cursor: pointer; accent-color: var(--primary);">
+                        <div style="flex: 1;">
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Giao đến địa chỉ khác</p>
+                            <p style="color: var(--muted-light); font-size: 0.9rem;">Nhập thông tin người nhận khác</p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- New Address Form (Hidden by default) -->
+                <div id="new-address-form" style="display: none; background: #f9f9f9; padding: 1.5rem; border-radius: 0.75rem; margin-top: 1rem; border: 1px solid var(--border-light);">
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Họ và tên <span style="color: var(--danger);">*</span>
+                                </label>
+                                    <input type="text" name="name" placeholder="Nhập tên người nhận" required
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Số điện thoại <span style="color: var(--danger);">*</span>
+                                </label>
+                                    <input type="tel" name="phone" placeholder="Nhập số điện thoại" required
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
+                            <input type="email" name="email" value="<?= $user ? sanitize($user['email']) : '' ?>" placeholder="Nhập email người nhận"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                Địa chỉ <span style="color: var(--danger);">*</span>
+                            </label>
+                            <input type="text" name="address" placeholder="Số nhà, tên đường"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
+                                <input type="text" name="ward"
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
+                                <input type="text" name="district"
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Tỉnh/Thành phố <span style="color: var(--danger);">*</span>
+                                </label>
+                                <input type="text" name="city" value="TP. Hồ Chí Minh" required
+                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Information (displayed when using saved address) -->
+            <div id="shipping-info" style="background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 1.5rem; border: 1px solid var(--border-light); display: none;">
                 <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                     <span class="material-symbols-outlined" style="color: var(--primary-dark);">local_shipping</span>
                     Thông tin giao hàng
@@ -276,77 +427,28 @@ include 'includes/header.php';
                 <div style="display: grid; gap: 1rem;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
-                                Họ và tên <span style="color: var(--danger);">*</span>
-                            </label>
-                            <input type="text" name="name" required
-                                   value="<?= $user ? sanitize($user['name']) : '' ?>"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Họ và tên <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="name_display" readonly
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
                         </div>
 
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
-                                Số điện thoại <span style="color: var(--danger);">*</span>
-                            </label>
-                            <input type="tel" name="phone" required
-                                   value="<?= $user ? sanitize($user['phone']) : '' ?>"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="phone_display" readonly
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
                         </div>
                     </div>
 
                     <div>
                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
-                        <input type="email" name="email"
-                               value="<?= $user ? sanitize($user['email']) : '' ?>"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                        <input type="email" name="email_display" readonly
+                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
                     </div>
 
                     <div>
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
-                            Địa chỉ <span style="color: var(--danger);">*</span>
-                        </label>
-                        <?php
-                        $userAddress = '';
-                        if ($user) {
-                            $stmt = $conn->prepare("SELECT address FROM user_addresses WHERE user_id = :user_id ORDER BY id DESC LIMIT 1");
-                            $stmt->execute([':user_id' => $user['id']]);
-                            $addr = $stmt->fetch();
-                            if ($addr) {
-                                $userAddress = $addr['address'];
-                            }
-                        }
-                        ?>
-                        <input type="text" name="address" required placeholder="Số nhà, tên đường"
-                               value="<?= htmlspecialchars($userAddress) ?>"
-                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                        <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
-                            <input type="text" name="ward"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
-                            <input type="text" name="district"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
-                                Tỉnh/Thành phố <span style="color: var(--danger);">*</span>
-                            </label>
-                            <input type="text" name="city" required value="TP. Hồ Chí Minh"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ghi chú đơn hàng (tuỳ chọn)</label>
-                        <textarea name="note" rows="3" placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn"
-                                  style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;"></textarea>
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Địa chỉ <span style="color: var(--danger);">*</span></label>
+                        <input type="text" name="address_display" readonly
+                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
                     </div>
                 </div>
             </div>
@@ -396,6 +498,13 @@ include 'includes/header.php';
                         </div>
                     </label>
                 </div>
+            </div>
+
+            <!-- Order Note -->
+            <div style="background: white; border-radius: 1rem; padding: 2rem; margin-top: 1.5rem; border: 1px solid var(--border-light);">
+                <label style="display: block; font-weight: 600; margin-bottom: 1rem;">Ghi chú đơn hàng (tuỳ chọn)</label>
+                <textarea name="note" rows="3" placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn"
+                          style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;"></textarea>
             </div>
         </div>
 
@@ -499,6 +608,58 @@ include 'includes/header.php';
 </main>
 
 <script>
+// Update address type display
+function updateAddressType() {
+    const addressType = document.querySelector('input[name="address_type"]:checked').value;
+    const newAddressForm = document.getElementById('new-address-form');
+    const shippingInfo = document.getElementById('shipping-info');
+    const savedAddressSelect = document.querySelector('select[name="saved_address_id"]');
+    
+    // Update border for address type radio buttons
+    document.querySelectorAll('input[name="address_type"]').forEach(radio => {
+        const label = radio.closest('label');
+        if (label) {
+            if (radio.checked) {
+                label.style.borderColor = 'var(--primary)';
+                label.style.backgroundColor = 'rgba(182, 230, 51, 0.05)';
+            } else {
+                label.style.borderColor = 'var(--border-light)';
+                label.style.backgroundColor = 'transparent';
+            }
+        }
+    });
+    
+    if (addressType === 'new') {
+        newAddressForm.style.display = 'block';
+        shippingInfo.style.display = 'none';
+    } else {
+        newAddressForm.style.display = 'none';
+        shippingInfo.style.display = 'block';
+        
+        // Populate shipping info from selected address
+        if (savedAddressSelect && savedAddressSelect.options.length > 0) {
+            const selectedOption = savedAddressSelect.options[savedAddressSelect.selectedIndex];
+            const text = selectedOption.text;
+            const parts = text.split('|');
+            
+            if (parts.length >= 2) {
+                const namePhone = parts[0].trim().split('-');
+                const nameDisplayEl = document.querySelector('input[name="name_display"]');
+                const phoneDisplayEl = document.querySelector('input[name="phone_display"]');
+                
+                if (nameDisplayEl) nameDisplayEl.value = namePhone[0].trim();
+                if (phoneDisplayEl) phoneDisplayEl.value = namePhone[1].trim() || '';
+            }
+            
+            const addressDisplayEl = document.querySelector('input[name="address_display"]');
+            if (addressDisplayEl) addressDisplayEl.value = (parts[1] || '').trim();
+            
+            const emailDisplayEl = document.querySelector('input[name="email_display"]');
+            if (emailDisplayEl) emailDisplayEl.value = '<?= $user ? sanitize($user['email']) : '' ?>';
+        }
+    }
+}
+
 // Update payment method border on selection
 function updatePaymentBorder() {
     const labels = document.querySelectorAll('label');
@@ -517,11 +678,31 @@ function updatePaymentBorder() {
 }
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', updatePaymentBorder);
+document.addEventListener('DOMContentLoaded', function() {
+    updateAddressType();
+    updatePaymentBorder();
+    
+    // Update shipping info when saved address changes
+    const savedAddressSelect = document.querySelector('select[name="saved_address_id"]');
+    if (savedAddressSelect) {
+        savedAddressSelect.addEventListener('change', updateAddressType);
+    }
+    
+    // Update address type border when radio changes
+    document.querySelectorAll('input[name="address_type"]').forEach(radio => {
+        radio.addEventListener('change', updateAddressType);
+    });
+});
 
 // Update on radio change
 document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener('change', updatePaymentBorder);
+});
+
+document.querySelectorAll('input[name="address_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        updateAddressType();
+    });
 });
 </script>
 

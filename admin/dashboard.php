@@ -73,6 +73,22 @@ try {
     $stats['active_customers'] = (int)$stmt->fetchColumn();
 }
 
+// Thống kê đánh giá sản phẩm
+try {
+    $stmt = $conn->query("SELECT status, COUNT(*) as count FROM product_reviews GROUP BY status");
+    $reviewsByStatus = [];
+    while ($row = $stmt->fetch()) {
+        $reviewsByStatus[$row['status']] = $row['count'];
+    }
+    $stats['pending_reviews'] = $reviewsByStatus['pending'] ?? 0;
+    $stats['approved_reviews'] = $reviewsByStatus['approved'] ?? 0;
+    $stats['total_reviews'] = array_sum($reviewsByStatus);
+} catch (PDOException $e) {
+    $stats['pending_reviews'] = 0;
+    $stats['approved_reviews'] = 0;
+    $stats['total_reviews'] = 0;
+}
+
 $pageTitle = 'Dashboard Admin';
 ?>
 <!DOCTYPE html>
@@ -184,7 +200,7 @@ $pageTitle = 'Dashboard Admin';
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 <!-- Revenue Card -->
                 <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
                     <div class="flex items-center justify-between mb-4">
@@ -246,6 +262,22 @@ $pageTitle = 'Dashboard Admin';
                     </div>
                     <p class="text-purple-100 text-sm">
                         <a href="customers.php" class="font-semibold hover:underline">Xem danh sách →</a>
+                    </p>
+                </div>
+
+                <!-- Pending Reviews Card -->
+                <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-red-100 text-sm font-medium">Đánh giá chờ</p>
+                            <h3 class="text-3xl font-bold mt-1"><?= $stats['pending_reviews'] ?></h3>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">rate_review</span>
+                        </div>
+                    </div>
+                    <p class="text-red-100 text-sm">
+                        <a href="reviews.php" class="font-semibold hover:underline">Duyệt ngay →</a>
                     </p>
                 </div>
             </div>
