@@ -196,6 +196,17 @@ $pageTitle = 'Quản lý đánh giá';
                 <p class="text-gray-600 mt-1">Kiểm duyệt và quản lý đánh giá sản phẩm</p>
             </div>
 
+            <!-- Notification Banner -->
+            <?php if ($stats['pending'] > 0): ?>
+                <div class="mb-8 p-4 bg-orange-50 border-2 border-orange-200 rounded-lg flex items-center gap-3">
+                    <span class="material-symbols-outlined text-2xl text-orange-600">notifications_active</span>
+                    <div>
+                        <p class="font-semibold text-orange-900">Có <?= $stats['pending'] ?> đánh giá chờ duyệt</p>
+                        <p class="text-sm text-orange-700">Vui lòng kiểm tra và duyệt các bài đánh giá của người dùng</p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
@@ -297,13 +308,22 @@ $pageTitle = 'Quản lý đánh giá';
                                 <?php foreach ($reviews as $review): ?>
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                                     <td class="py-4 px-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="<?= $review['product_image'] ?>" alt="<?= sanitize($review['product_name']) ?>"
-                                                 class="w-12 h-12 rounded-lg object-cover">
-                                            <div>
-                                                <p class="font-medium text-gray-900"><?= sanitize($review['product_name']) ?></p>
+                                        <div class="flex items-center gap-4">
+                                            <?php if ($review['product_image']): ?>
+                                                <img src="<?= imageUrl($review['product_image']) ?>" alt="<?= sanitize($review['product_name']) ?>"
+                                                     class="w-20 h-20 rounded-lg object-cover border border-gray-300 shadow-sm" title="<?= sanitize($review['product_name']) ?>">
+                                            <?php else: ?>
+                                                <div class="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-300">
+                                                    <span class="material-symbols-outlined text-gray-400">image</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="flex-1">
+                                                <p class="font-semibold text-gray-900"><?= sanitize($review['product_name']) ?></p>
                                                 <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $review['product_slug'] ?>" 
-                                                   target="_blank" class="text-xs text-green-600 hover:underline">Xem sản phẩm →</a>
+                                                   target="_blank" class="text-xs text-green-600 hover:underline flex items-center gap-1 mt-1">
+                                                    <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
+                                                    Xem sản phẩm
+                                                </a>
                                             </div>
                                         </div>
                                     </td>

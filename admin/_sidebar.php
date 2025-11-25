@@ -13,9 +13,14 @@ $adminCurrent = basename($_SERVER['PHP_SELF']);
 // Giá trị mặc định an toàn
 $ordersByStatus = $ordersByStatus ?? [];
 $pendingReviews = 0;
+$totalNotifications = 0;
 if (isset($stats) && is_array($stats)) {
     $pendingReviews = isset($stats['pending']) ? (int)$stats['pending'] : $pendingReviews;
 }
+if (isset($contactMessages) && is_array($contactMessages)) {
+    $totalNotifications = count($contactMessages);
+}
+$totalNotifications += $pendingReviews;
 ?>
 <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
     <nav class="p-4 space-y-1">
@@ -85,8 +90,8 @@ if (isset($stats) && is_array($stats)) {
         <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'reviews.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
             <span class="material-symbols-outlined">star</span>
             <span>Đánh giá</span>
-            <?php if ($pendingReviews > 0): ?>
-                <span class="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?= $pendingReviews ?></span>
+            <?php if ($totalNotifications > 0): ?>
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?= $totalNotifications ?></span>
             <?php endif; ?>
         </a>
 
