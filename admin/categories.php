@@ -1,5 +1,5 @@
-
 <?php
+
 /**
  * admin/categories.php - Trang Quản lý Danh mục
  *
@@ -116,16 +116,18 @@ $pageTitle = 'Quản lý Danh mục';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-50 font-['Be_Vietnam_Pro']">
-    
+
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="px-4 sm:px-6 lg:px-8">
@@ -164,7 +166,7 @@ $pageTitle = 'Quản lý Danh mục';
                     <?= $success ?>
                 </div>
             <?php endif; ?>
-            
+
             <?php if ($error): ?>
                 <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
                     <?= $error ?>
@@ -184,20 +186,20 @@ $pageTitle = 'Quản lý Danh mục';
                         <h3 class="text-lg font-bold mb-4">
                             <?= $editCategory ? 'Sửa danh mục' : 'Thêm danh mục mới' ?>
                         </h3>
-                        
+
                         <form method="POST" enctype="multipart/form-data">
                             <?php if ($editCategory): ?>
                                 <input type="hidden" name="id" value="<?= $editCategory['id'] ?>">
                             <?php endif; ?>
-                            
+
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         Tên danh mục <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" name="name" required
-                                           value="<?= $editCategory ? sanitize($editCategory['name']) : '' ?>"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        value="<?= $editCategory ? htmlspecialchars(strip_tags(html_entity_decode($editCategory['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') : '' ?>"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                 </div>
 
                                 <div>
@@ -205,8 +207,8 @@ $pageTitle = 'Quản lý Danh mục';
                                         Slug <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" name="slug" id="slugInput" required
-                                           value="<?= $editCategory ? sanitize($editCategory['slug']) : '' ?>"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        value="<?= $editCategory ? sanitize($editCategory['slug']) : '' ?>"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                     <p class="text-xs text-gray-500 mt-1">VD: rau-cu, trai-cay — will be auto-filled from name</p>
                                 </div>
 
@@ -228,23 +230,24 @@ $pageTitle = 'Quản lý Danh mục';
                                     <?php endif; ?>
                                     <div style="position:relative;">
                                         <input type="file" name="icon" accept="image/*" id="iconInput"
-                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                        <button type="button" onclick="document.getElementById('iconInput').value=''; iconPreview.src=''; iconPreview.style.display='none';" 
-                                                class="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" style="z-index:2;">Xóa hình</button>
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <button type="button" onclick="document.getElementById('iconInput').value=''; iconPreview.src=''; iconPreview.style.display='none';"
+                                            class="mt-3 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" style="z-index:2;">Xóa Tệp</button>
                                     </div>
+
                                     <img id="iconPreview" src="" style="display:none;max-width:64px;margin-top:8px;" />
                                     <p class="text-xs text-gray-500 mt-1">Upload an image file (jpg, png, svg). Leave empty để giữ icon hiện tại.</p>
                                     <script>
-                                    document.getElementById('iconInput').addEventListener('change', function(e) {
-                                        const [file] = e.target.files;
-                                        if (file) {
-                                            iconPreview.src = URL.createObjectURL(file);
-                                            iconPreview.style.display = 'block';
-                                        } else {
-                                            iconPreview.src = '';
-                                            iconPreview.style.display = 'none';
-                                        }
-                                    });
+                                        document.getElementById('iconInput').addEventListener('change', function(e) {
+                                            const [file] = e.target.files;
+                                            if (file) {
+                                                iconPreview.src = URL.createObjectURL(file);
+                                                iconPreview.style.display = 'block';
+                                            } else {
+                                                iconPreview.src = '';
+                                                iconPreview.style.display = 'none';
+                                            }
+                                        });
                                     </script>
                                 </div>
                             </div>
@@ -255,8 +258,8 @@ $pageTitle = 'Quản lý Danh mục';
                                         Hủy
                                     </a>
                                 <?php endif; ?>
-                                <button type="submit" name="save_category" 
-                                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                <button type="submit" name="save_category"
+                                    class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                                     <?= $editCategory ? 'Cập nhật' : 'Thêm mới' ?>
                                 </button>
                             </div>
@@ -279,33 +282,33 @@ $pageTitle = 'Quản lý Danh mục';
                             </thead>
                             <tbody>
                                 <?php foreach ($categories as $cat): ?>
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-4 px-4 font-medium text-gray-900"><?= $cat['id'] ?></td>
-                                    <td class="py-4 px-4">
-                                        <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center overflow-hidden">
-                                            <?php $iconVal = $cat['icon'] ?? ''; ?>
-                                            <?php if ($iconVal && (preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $iconVal) || strpos($iconVal, '/images/') !== false || strpos($iconVal, 'http') === 0)): ?>
-                                                <img src="<?= imageUrl($iconVal) ?>" alt="icon" class="w-full h-full object-cover">
-                                            <?php else: ?>
-                                                <span class="material-symbols-outlined text-green-600"><?= sanitize($iconVal ?: 'category') ?></span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td class="py-4 px-4 font-medium text-gray-900"><?= sanitize($cat['name']) ?></td>
-                                    <td class="py-4 px-4 text-gray-600 text-sm font-mono"><?= sanitize($cat['slug']) ?></td>
-                                    <td class="py-4 px-4">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <a href="?edit=<?= $cat['id'] ?>" 
-                                               class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                                                <span class="material-symbols-outlined text-lg">edit</span>
-                                            </a>
-                                            <button onclick="deleteCategory(<?= $cat['id'] ?>)" 
+                                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                        <td class="py-4 px-4 font-medium text-gray-900"><?= $cat['id'] ?></td>
+                                        <td class="py-4 px-4">
+                                            <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center overflow-hidden">
+                                                <?php $iconVal = $cat['icon'] ?? ''; ?>
+                                                <?php if ($iconVal && (preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $iconVal) || strpos($iconVal, '/images/') !== false || strpos($iconVal, 'http') === 0)): ?>
+                                                    <img src="<?= imageUrl($iconVal) ?>" alt="icon" class="w-full h-full object-cover">
+                                                <?php else: ?>
+                                                    <span class="material-symbols-outlined text-green-600"><?= sanitize($iconVal ?: 'category') ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-4 font-medium text-gray-900"><?= htmlspecialchars(strip_tags(html_entity_decode($cat['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td class="py-4 px-4 text-gray-600 text-sm font-mono"><?= sanitize($cat['slug']) ?></td>
+                                        <td class="py-4 px-4">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a href="?edit=<?= $cat['id'] ?>"
+                                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                                </a>
+                                                <button onclick="deleteCategory(<?= $cat['id'] ?>)"
                                                     class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                                                <span class="material-symbols-outlined text-lg">delete</span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -316,32 +319,33 @@ $pageTitle = 'Quản lý Danh mục';
     </div>
 
     <script>
-    function deleteCategory(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa danh mục này?\nLưu ý: Các sản phẩm thuộc danh mục này sẽ không có danh mục.')) {
-            window.location.href = '?delete=' + id;
+        function deleteCategory(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa danh mục này?\nLưu ý: Các sản phẩm thuộc danh mục này sẽ không có danh mục.')) {
+                window.location.href = '?delete=' + id;
+            }
         }
-    }
     </script>
 
     <script>
-    // Auto-generate slug from name for convenience
-    function slugify(text) {
-        return text.toString().toLowerCase()
-            .normalize('NFKD')
-            .replace(/[\u0300-\u036f]/g, '') // remove diacritics
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    }
+        // Auto-generate slug from name for convenience
+        function slugify(text) {
+            return text.toString().toLowerCase()
+                .normalize('NFKD')
+                .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+                .replace(/[^az0--9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
 
-    const nameInput = document.querySelector('input[name="name"]');
-    const slugInput = document.getElementById('slugInput');
-    if (nameInput && slugInput) {
-        nameInput.addEventListener('input', function() {
-            // Only auto-fill when slug is empty or matches previous auto slug
-            slugInput.value = slugify(this.value);
-        });
-    }
+        const nameInput = document.querySelector('input[name="name"]');
+        const slugInput = document.getElementById('slugInput');
+        if (nameInput && slugInput) {
+            nameInput.addEventListener('input', function() {
+                // Only auto-fill when slug is empty or matches previous auto slug
+                slugInput.value = slugify(this.value);
+            });
+        }
     </script>
 
 </body>
+
 </html>

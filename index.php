@@ -1,4 +1,5 @@
 <?php
+
 /**
  * index.php - Trang chủ với slideshow banner
  */
@@ -121,58 +122,65 @@ include 'includes/header.php';
 </section>
 
 <style>
-@keyframes slideInLeft {
-    from { transform: translateX(-50px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
+    @keyframes slideInLeft {
+        from {
+            transform: translateX(-50px);
+            opacity: 0;
+        }
 
-.hero-slide.active {
-    opacity: 1 !important;
-    z-index: 1;
-}
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
 
-.slide-dot.active {
-    background: var(--primary) !important;
-    transform: scale(1.3);
-}
+    .hero-slide.active {
+        opacity: 1 !important;
+        z-index: 1;
+    }
+
+    .slide-dot.active {
+        background: var(--primary) !important;
+        transform: scale(1.3);
+    }
 </style>
 
 <script>
-let currentSlide = 0;
-const slides = document.querySelectorAll('.hero-slide');
-const dots = document.querySelectorAll('.slide-dot');
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots = document.querySelectorAll('.slide-dot');
 
-function showSlide(index) {
-    slides.forEach((slide, i) => {
-        slide.classList.remove('active');
-        if (dots[i]) dots[i].classList.remove('active');
-    });
-    
-    if (index >= slides.length) currentSlide = 0;
-    else if (index < 0) currentSlide = slides.length - 1;
-    else currentSlide = index;
-    
-    slides[currentSlide].classList.add('active');
-    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
-}
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            if (dots[i]) dots[i].classList.remove('active');
+        });
 
-function changeSlide(direction) {
-    currentSlide += direction;
-    showSlide(currentSlide);
-}
+        if (index >= slides.length) currentSlide = 0;
+        else if (index < 0) currentSlide = slides.length - 1;
+        else currentSlide = index;
 
-function goToSlide(index) {
-    showSlide(index);
-}
+        slides[currentSlide].classList.add('active');
+        if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+    }
 
-// Initialize slideshow state
-showSlide(0);
+    function changeSlide(direction) {
+        currentSlide += direction;
+        showSlide(currentSlide);
+    }
 
-// Auto slide every 4 seconds (4000 ms)
-setInterval(() => {
-    currentSlide++;
-    showSlide(currentSlide);
-}, 4000);
+    function goToSlide(index) {
+        showSlide(index);
+    }
+
+    // Initialize slideshow state
+    showSlide(0);
+
+    // Auto slide every 4 seconds (4000 ms)
+    setInterval(() => {
+        currentSlide++;
+        showSlide(currentSlide);
+    }, 4000);
 </script>
 
 
@@ -225,7 +233,7 @@ setInterval(() => {
                     Sản phẩm được chứng nhận hữu cơ, không thuốc trừ sâu và phân bón hóa học.
                 </p>
             </div>
-            
+
             <div style="padding: 2rem;">
                 <div style="width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center;">
                     <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--primary-dark);">local_shipping</span>
@@ -235,7 +243,7 @@ setInterval(() => {
                     Miễn phí giao hàng cho đơn từ 500.000₫. Giao trong ngày tại TP.HCM.
                 </p>
             </div>
-            
+
             <div style="padding: 2rem;">
                 <div style="width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center;">
                     <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--primary-dark);">agriculture</span>
@@ -253,22 +261,22 @@ setInterval(() => {
 <section style="padding: 3rem 1rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
         <h2 class="section-title" style="margin-bottom: 1.5rem;">Khám Phá Danh Mục</h2>
-        
+
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
-            <?php 
+            <?php
             // Hiển thị hình ảnh danh mục từ admin upload (icon)
-            foreach ($categories as $index => $cat): 
+            foreach ($categories as $index => $cat):
                 if ($index >= 4) break;
             ?>
-            <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>" 
-               style="position: relative; aspect-ratio: 1; border-radius: 0.75rem; overflow: hidden; display: block; transition: transform 0.3s;">
-                <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" 
-                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
-                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); transition: background 0.3s;"></div>
-                <h3 style="position: absolute; bottom: 1rem; left: 1rem; color: white; font-size: 1.25rem; font-weight: 700;">
-                    <?= sanitize($cat['name']) ?>
-                </h3>
-            </a>
+                <a href="<?= SITE_URL ?>/products.php?category=<?= $cat['id'] ?>"
+                    style="position: relative; aspect-ratio: 1; border-radius: 0.75rem; overflow: hidden; display: block; transition: transform 0.3s;">
+                    <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= htmlspecialchars(strip_tags(html_entity_decode($cat['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') ?>"
+                        style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
+                    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); transition: background 0.3s;"></div>
+                    <h3 style="position: absolute; bottom: 1rem; left: 1rem; color: white; font-size: 1.25rem; font-weight: 700;">
+                        <?= htmlspecialchars(strip_tags(html_entity_decode($cat['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') ?>
+                    </h3>
+                </a>
             <?php endforeach; ?>
         </div>
     </div>
