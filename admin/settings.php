@@ -93,7 +93,7 @@ function getSetting($key, $default = '') {
 
 // Xử lý upload logo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
-    $uploadDir = __DIR__ . '/../images/';
+    $uploadDir = __DIR__ . '/../images/logo/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['site_logo']) && $_FI
     $targetPath = $uploadDir . $safeName;
     
     if (move_uploaded_file($_FILES['site_logo']['tmp_name'], $targetPath)) {
-        $logoPath = 'images/' . $safeName;
+        $logoPath = 'images/logo/' . $safeName;
         
         $stmt = $conn->prepare("
             INSERT INTO settings (setting_key, setting_value) 

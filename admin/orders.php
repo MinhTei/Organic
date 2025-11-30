@@ -200,18 +200,24 @@ $pageTitle = 'Quản lý Đơn hàng';
                                 <?= formatPrice($order['total_amount']) ?>
                             </td>
                             <td class="py-4 px-4">
-                                <form method="POST" class="inline">
-                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                    <select name="status" onchange="this.form.submit()"
-                                            class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?> border-none cursor-pointer">
-                                        <?php foreach ($statusLabels as $key => $label): ?>
-                                            <option value="<?= $key ?>" <?= $order['status'] == $key ? 'selected' : '' ?>>
-                                                <?= $label ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <input type="hidden" name="update_status" value="1">
-                                </form>
+                                <?php if ($order['status'] === 'cancelled'): ?>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>" style="opacity: 0.5; cursor: not-allowed;">
+                                        <?= $statusLabels[$order['status']] ?>
+                                    </span>
+                                <?php else: ?>
+                                    <form method="POST" class="inline">
+                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                        <select name="status" onchange="this.form.submit()"
+                                                class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?> border-none cursor-pointer">
+                                            <?php foreach ($statusLabels as $key => $label): ?>
+                                                <option value="<?= $key ?>" <?= $order['status'] == $key ? 'selected' : '' ?>>
+                                                    <?= $label ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <input type="hidden" name="update_status" value="1">
+                                    </form>
+                                <?php endif; ?>
                             </td>
                             <td class="py-4 px-4 text-sm text-gray-600">
                                 <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>

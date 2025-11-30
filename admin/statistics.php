@@ -314,14 +314,10 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
     });
 
     // Dummy export functions (to be implemented)
-    function exportReport(type) {
-        if (type === 'pdf') {
-            alert('Chức năng xuất PDF sẽ được bổ sung!');
-            // TODO: Implement PDF export (jsPDF, html2pdf, etc.)
-        } else if (type === 'excel') {
-            alert('Chức năng xuất Excel sẽ được bổ sung!');
-            // TODO: Implement Excel export (SheetJS, etc.)
-        }
+    function exportReport(format) {
+        const startDate = document.querySelector('input[name="start"]').value;
+        const endDate = document.querySelector('input[name="end"]').value;
+        window.location.href = `export_report.php?format=${format}&start=${startDate}&end=${endDate}`;
     }
     // Revenue Chart
     // Ensure revenue values are numeric and compute a sensible suggested max so the line doesn't appear as a near-vertical line

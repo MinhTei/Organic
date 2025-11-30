@@ -3,6 +3,11 @@
  * giohang.php - Trang giỏ hàng
  */
 
+// Start session first before anything else
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
 
@@ -25,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             $_SESSION['cart'][$productId] += $quantity;
             echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng', 'cart_count' => array_sum($_SESSION['cart'])]);
+            exit;
             break;
             
         case 'update':
@@ -74,17 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 'total' => $total,
                 'unitPrice' => $unitPrice
             ]);
-            break;
+            exit;
             
         case 'remove':
             unset($_SESSION['cart'][$productId]);
             echo json_encode(['success' => true, 'message' => 'Đã xóa khỏi giỏ hàng']);
-            break;
+            exit;
             
         case 'clear':
             $_SESSION['cart'] = [];
             echo json_encode(['success' => true, 'message' => 'Đã xóa giỏ hàng']);
-            break;
+            exit;
     }
     exit;
 }

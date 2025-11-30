@@ -25,86 +25,86 @@ include __DIR__ . '/../includes/header.php';
     <div style="max-width: 1280px; margin: 2rem auto;">
         <div class="hero-slideshow" style="position: relative; min-height: 520px; border-radius: 1rem; overflow: hidden;">
             <!-- Slide 1 -->
-            <img src="<?= $img ?>" alt="<?= htmlspecialchars(strip_tags(html_entity_decode($cat['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') ?>"
-                background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%),
-                <h3 style="position: absolute; bottom: 1rem; left: 1rem; color: white; font-size: 1.25rem; font-weight: 700;">
-            <?= htmlspecialchars(strip_tags(html_entity_decode($cat['name'], ENT_QUOTES, 'UTF-8')), ENT_QUOTES, 'UTF-8') ?></h3>
-            <div style="max-width: 600px; animation: slideInLeft 1s ease;">
-                <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
-                    Rau Sạch Tận Nhà,<br>Cho Bữa Cơm Lành
-                </h1>
-                <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
-                    Khám phá rau củ quả 100% hữu cơ, được nuôi trồng bền vững từ các nông trại địa phương.
-                </p>
-                <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary">
-                    Mua sắm ngay
-                </a>
+            <div class="hero-slide active" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+                        background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
+                        url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7jBmepfv88TypDQhRfqPxr2kmUbJLD14A9wrRaJgs5oN8_9kdiwZZM4z-ttEZx2B0haPe0Vuzp1-llKvaDmMOmAwg8huUPWtNWdnftkhN6NgZUv6DzH2yll7zsjj-jkixFIHGTE7EmvzHzi2QKDBA9gTXmD562if_DmN4u1kTCOqtqPuhPXa3hKgM-TLZVKZNq3gjxpqe3v2RTteRlstGEXRYha6AR0HDT5pUNGoLXh10RKGE5pKNEzaIm57UClSF1sFUoa5x55Og') center/cover no-repeat;">
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px; animation: slideInLeft 1s ease;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Rau Sạch Tận Nhà,<br>Cho Bữa Cơm Lành
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Khám phá rau củ quả 100% hữu cơ, được nuôi trồng bền vững từ các nông trại địa phương.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary">
+                            Mua sắm ngay
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Slide 2 -->
-    <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+            <!-- Slide 2 -->
+            <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
                         background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
                         url('https://lh3.googleusercontent.com/aida-public/AB6AXuArr-q9KwzloOdRgoz6xxREcL6v_q_RX6EIBJAP-j5JTZsY2iajUTTnKaZ6evwiX17TyFr1w9q7mEuz2KbFPCIKsBivjHgaFoknvDoEfbWnrhVibxS-6YPcVr6JkgwLe3GTCSCt1DSS7iaxG0yET27xYyGCA-RO_yr_GAhzuCTxXWm3svbPfqCyP8tOSKpidAJtxDcIV3K1rdvWtc3E7XKfwaJDeSwelGnAkUlOIH0qV65tTVBsv56ijVGSnrsm2qbf1z_ibND92c3V') center/cover no-repeat;">
-        <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
-            <div style="max-width: 600px;">
-                <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
-                    Tươi Ngon Từ Nông Trại
-                </h1>
-                <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
-                    Giao hàng trong ngày, đảm bảo độ tươi ngon tối đa cho mọi sản phẩm.
-                </p>
-                <a href="<?= SITE_URL ?>/products.php?is_new=1" class="btn btn-primary">
-                    Xem hàng mới
-                </a>
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Tươi Ngon Từ Nông Trại
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Giao hàng trong ngày, đảm bảo độ tươi ngon tối đa cho mọi sản phẩm.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php?is_new=1" class="btn btn-primary">
+                            Xem hàng mới
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Slide 3 -->
-    <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
+            <!-- Slide 3 -->
+            <div class="hero-slide" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
                         background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
                         url('https://lh3.googleusercontent.com/aida-public/AB6AXuCVWBtAAXz_MHFMzXpn_hL-zvY2OO0MuxsmMvlzM-0q_pFKgWeutioN__AGyk9FYYwrW--4un68KrRmhgxyStSkk97ooIszU8eLgzOOT6pAr5l31M3kZFjjCmTXAkfhS_jKeuCjp_NEKJgVgAC04EKWj9L2iYd7QXNp4oLulaDQtChnDO3kRaezsEfHAqCE4Q-MDGcEwFYDXXZ8AX4x0HpUTpzZSdsU_cqEwye5buJa2SxMe6vvIbo_cNsNasYK-NQTLtGzJgVrH9LC') center/cover no-repeat;">
-        <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
-            <div style="max-width: 600px;">
-                <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
-                    Ưu Đãi Đặc Biệt
-                </h1>
-                <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
-                    Miễn phí giao hàng cho đơn từ 500.000₫. Giảm giá đến 30% cho sản phẩm chọn lọc.
-                </p>
-                <a href="<?= SITE_URL ?>/products.php?on_sale=1" class="btn btn-primary">
-                    Khám phá ưu đãi
-                </a>
+                <div style="display: flex; align-items: center; height: 100%; padding: 3rem;">
+                    <div style="max-width: 600px;">
+                        <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; color: var(--text-light); margin-bottom: 1rem;">
+                            Ưu Đãi Đặc Biệt
+                        </h1>
+                        <p style="font-size: 1.125rem; color: var(--muted-light); margin-bottom: 2rem;">
+                            Miễn phí giao hàng cho đơn từ 500.000₫. Giảm giá đến 30% cho sản phẩm chọn lọc.
+                        </p>
+                        <a href="<?= SITE_URL ?>/products.php?on_sale=1" class="btn btn-primary">
+                            Khám phá ưu đãi
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button onclick="changeSlide(-1)" aria-label="Previous slide" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); 
+                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button onclick="changeSlide(1)" aria-label="Next slide" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); 
+                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+
+            <!-- Dots Indicator -->
+            <div style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem;">
+                <span class="slide-dot active" onclick="goToSlide(0)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: var(--primary); cursor: pointer; transition: all 0.3s;"></span>
+                <span class="slide-dot" onclick="goToSlide(1)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
+                <span class="slide-dot" onclick="goToSlide(2)" style="width: 12px; height: 12px; border-radius: 50%; 
+                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
             </div>
         </div>
-    </div>
-
-    <!-- Navigation Arrows -->
-    <button onclick="changeSlide(-1)" aria-label="Previous slide" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); 
-                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
-                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
-        <span class="material-symbols-outlined">chevron_left</span>
-    </button>
-    <button onclick="changeSlide(1)" aria-label="Next slide" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); 
-                    width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.6); border: none; 
-                    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    transition: all 0.18s; z-index: 40; backdrop-filter: blur(4px); color: rgba(0,0,0,0.85);">
-        <span class="material-symbols-outlined">chevron_right</span>
-    </button>
-
-    <!-- Dots Indicator -->
-    <div style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem;">
-        <span class="slide-dot active" onclick="goToSlide(0)" style="width: 12px; height: 12px; border-radius: 50%; 
-                      background: var(--primary); cursor: pointer; transition: all 0.3s;"></span>
-        <span class="slide-dot" onclick="goToSlide(1)" style="width: 12px; height: 12px; border-radius: 50%; 
-                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
-        <span class="slide-dot" onclick="goToSlide(2)" style="width: 12px; height: 12px; border-radius: 50%; 
-                      background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;"></span>
-    </div>
-    </div>
     </div>
 </section>
 
@@ -163,7 +163,7 @@ include __DIR__ . '/../includes/header.php';
     // Initialize slideshow state
     showSlide(0);
 
-    // Auto slide every 4 seconds
+    // Auto slide every 4 seconds (4000 ms)
     setInterval(() => {
         currentSlide++;
         showSlide(currentSlide);

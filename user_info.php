@@ -118,6 +118,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     }
 }
 
+// Handle password change
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
+    $currentPassword = $_POST['current_password'] ?? '';
+    $newPassword = $_POST['new_password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+
+    if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+        $error = 'Vui lòng điền đầy đủ thông tin.';
+    } elseif ($newPassword !== $confirmPassword) {
+        $error = 'Mật khẩu xác nhận không khớp.';
+    } elseif (strlen($newPassword) < 6) {
+        $error = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+    } else {
+        // Verify current password
+        if (password_verify($currentPassword, $user['password'])) {
+            $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+            $stmt = $conn->prepare("UPDATE users SET password = :password WHERE id = :id");
+            $stmt->execute([':password' => $hashedPassword, ':id' => $userId]);
+            $success = 'Đổi mật khẩu thành công!';
+        } else {
+            $error = 'Mật khẩu hiện tại không chính xác.';
+        }
+    }
+}
+
 // Handle logout
 if (isset($_GET['logout'])) {
     session_destroy();
@@ -309,7 +334,12 @@ include 'includes/header.php';
                 ?>
                         <!-- Orders Tab -->
                         <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Lịch sử đơn hàng</h2>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <h2 style="font-size: 1.5rem; font-weight: 700;">Lịch sử đơn hàng</h2>
+                                <a href="<?= SITE_URL ?>/order_history.php" class="btn btn-primary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">
+                                    Xem tất cả
+                                </a>
+                            </div>
                             
                             <?php if (empty($orders)): ?>
                                 <div style="text-align: center; padding: 3rem;">
@@ -355,10 +385,12 @@ include 'includes/header.php';
                                             <div>
                                                 <p style="font-size: 0.875rem; color: var(--muted-light);">Tổng tiền:</p>
                                                 <p style="font-size: 1.125rem; font-weight: 700; color: var(--primary-dark);">
-                                                    <?= formatPrice($order['total_amount']) ?>
+                                                    <?= formatPrice($order['final_amount']) ?>
                                                 </p>
                                             </div>
-                                            <button class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Xem chi tiết</button>
+                                            <a href="<?= SITE_URL ?>/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-primary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">
+                                                Xem chi tiết
+                                            </a>
                                         </div>
                                     </div>
                                     <?php endforeach; ?>
@@ -490,7 +522,7 @@ include 'includes/header.php';
                                     <p style="font-size: 0.875rem; color: var(--muted-light); margin-bottom: 1rem;">
                                         Cập nhật mật khẩu của bạn để bảo mật tài khoản
                                     </p>
-                                    <button class="btn btn-secondary">Đổi mật khẩu</button>
+                                    <button onclick="showPasswordForm()" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Đổi mật khẩu</button>
                                 </div>
                                 
                                 <!-- Notifications -->
@@ -516,6 +548,37 @@ include 'includes/header.php';
                                 </div>
                             </div>
                         </div>
+                    
+                        <!-- Password Modal -->
+                        <div id="password-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                            <div style="background: white; border-radius: 1rem; padding: 2rem; max-width: 400px; width: 90%;">
+                                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Đổi mật khẩu</h3>
+                                <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Mật khẩu hiện tại</label>
+                                        <input type="password" name="current_password" required
+                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Mật khẩu mới</label>
+                                        <input type="password" name="new_password" required
+                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Xác nhận mật khẩu</label>
+                                        <input type="password" name="confirm_password" required
+                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                                        <button type="button" onclick="hidePasswordForm()" class="btn btn-secondary">Hủy</button>
+                                        <button type="submit" name="change_password" class="btn btn-primary">Đổi mật khẩu</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                 <?php
                         break;
                 }
@@ -526,6 +589,14 @@ include 'includes/header.php';
 </main>
 
 <script>
+function showPasswordForm() {
+    document.getElementById('password-modal').style.display = 'flex';
+}
+
+function hidePasswordForm() {
+    document.getElementById('password-modal').style.display = 'none';
+}
+
 function showAddressForm() {
     document.getElementById('address-form').style.display = 'block';
     document.getElementById('form-title').textContent = 'Thêm địa chỉ mới';

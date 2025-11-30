@@ -4,18 +4,27 @@ if (!defined('SITE_NAME')) {
     require_once __DIR__ . '/../config.php';
 }
 
+// Load settings helper để lấy logo từ database
+if (!function_exists('getSystemSetting')) {
+    require_once __DIR__ . '/settings_helper.php';
+}
+
 // Get cart count
 $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 
 // Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
 $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
+
+// Get logo từ settings hoặc dùng constant SITE_LOGO nếu có
+$siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''));
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="site-url" content="<?= SITE_URL ?>"/>
     <title><?= isset($pageTitle) ? $pageTitle . ' - ' : '' ?><?= SITE_NAME ?></title>
     
     <!-- Tailwind CSS -->
@@ -56,6 +65,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         /* Dropdown Menu */
         .dropdown {
             position: relative;
+        }
 
         /* Nav typography improvements */
         .nav-link {
@@ -63,7 +73,6 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
             font-size: 1rem;
             color: inherit;
             padding: 0.5rem 0.75rem;
-        }
         }
         
         .dropdown-menu {
@@ -117,32 +126,37 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
             display: block;
         }
     </style>
+
+    <!-- Main JavaScript -->
+    <script src="<?= SITE_URL ?>/js/scripts.js" defer></script>
 </head>
 <body class="bg-background-light font-display text-text-light">
     
 <header class="header">
     <div class="header-container">
         <!-- Logo -->
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-4">
             <a href="<?= SITE_URL ?>" class="logo flex items-center gap-3">
-                <?php if (defined('SITE_LOGO') && SITE_LOGO): ?>
-                    <img src="<?= SITE_URL . '/' . SITE_LOGO ?>" alt="<?= SITE_NAME ?>" class="h-10 object-contain">
+                <?php if (!empty($siteLogo)): ?>
+                    <img src="<?= SITE_URL . '/' . htmlspecialchars($siteLogo) ?>" alt="<?= SITE_NAME ?>" class="h-20 object-contain">
+                <?php elseif (defined('SITE_LOGO') && SITE_LOGO): ?>
+                    <img src="<?= SITE_URL . '/' . SITE_LOGO ?>" alt="<?= SITE_NAME ?>" class="h-25 object-contain">
                 <?php else: ?>
-                    <svg class="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 48 48">
+                    <svg class="w-16 h-16 text-primary" fill="currentColor" viewBox="0 0 48 48">
                         <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z"></path>
                     </svg>
                 <?php endif; ?>
-                <span class="logo-text"><?= SITE_NAME ?></span>
+                <!-- <span class="logo-text text-lg font-bold"><?= SITE_NAME ?></span> -->
             </a>
             
             <!-- Navigation -->
                 <?php $navCategories = function_exists('getCategories') ? getCategories() : []; ?>
-                <nav class="nav">
-                    <a href="<?= SITE_URL ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>">Trang chủ</a>
+                <nav class="nav" style="gap: 1.5rem;">
+                    <a href="<?= SITE_URL ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Trang chủ</a>
 
                     <!-- Categories dropdown placed between Trang chủ and Sản phẩm -->
                     <div class="dropdown" style="display:inline-block;">
-                        <button class="nav-link" style="display:flex; align-items:center; gap:0.5rem;">Danh mục
+                        <button class="nav-link" style="display:flex; align-items:center; gap:0.5rem; font-size: 0.9rem; padding: 0.25rem 0;">Danh mục
                             <span class="material-symbols-outlined" style="font-size:1rem;">arrow_drop_down</span>
                         </button>
                         <div class="dropdown-menu" style="left: 50%; transform: translateX(-50%); min-width: 240px;">
@@ -163,12 +177,12 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         </div>
                     </div>
 
-                    <a href="<?= SITE_URL ?>/products.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>">Sản phẩm</a>
-                    <a href="<?= SITE_URL ?>/about.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'about.php' ? 'active' : '' ?>">Về chúng tôi</a>
-                    <a href="<?= SITE_URL ?>/contact.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : '' ?>">Liên hệ</a>
+                    <a href="<?= SITE_URL ?>/products.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Sản phẩm</a>
+                    <a href="<?= SITE_URL ?>/about.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'about.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Về chúng tôi</a>
+                    <a href="<?= SITE_URL ?>/contact.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Liên hệ</a>
                     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
                         <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/dashboard.php' : SITE_URL . '/admin/dashboard.php' ?>" 
-                           class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin') !== false ? 'active' : '' ?>">
+                           class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin') !== false ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">
                             Quản lý
                         </a>
                     <?php endif; ?>
@@ -178,9 +192,9 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         <!-- Header Actions -->
         <div class="header-actions">
             <!-- Search (áp dụng toàn site, giao diện lớn ở trang chủ) -->
-            <form method="GET" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; gap: 1rem; align-items: center; max-width: 400px; background: #fff; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                    <input type="text" name="search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>" placeholder="Tìm kiếm sản phẩm..." style="flex:1; padding: 0.5rem 0.75rem; border: none; font-size: 1rem; outline: none; background: transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 0.9rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; background: #b6e633; border: none; border-radius: 0;">
+            <form method="GET" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; gap: 1rem; align-items: center; max-width: 280px; background: #fff; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <input type="text" name="search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>" placeholder="Tìm..." style="flex:1; padding: 0.6rem 0.75rem; border: none; font-size: 0.9rem; outline: none; background: transparent;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.6rem 0.8rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; background: #b6e633; border: none; border-radius: 0;">
                         <span class="material-symbols-outlined" style="font-size: 1.25rem; color: #161811;">search</span>
                     </button>
             </form>

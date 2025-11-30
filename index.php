@@ -6,6 +6,7 @@
 
 require_once 'config.php';
 require_once 'includes/functions.php';
+require_once 'includes/settings_helper.php';
 
 
 // Xử lý tìm kiếm sản phẩm trên trang chủ

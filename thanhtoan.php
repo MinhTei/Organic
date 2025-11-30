@@ -168,8 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 $name = $selectedAddr['name'];
                 $phone = $selectedAddr['phone'];
                 $address = $selectedAddr['address'];
+                $ward = $selectedAddr['ward'] ?? '';
+                $district = $selectedAddr['district'] ?? '';
                 $email = $user['email'] ?? '';
-                $city = 'TP. Hồ Chí Minh'; // Default city
+                $city = 'TP. Hồ Chí Minh'; // Thành phố mặc định
             }
         }
     } elseif ($addressType === 'new') {
@@ -186,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     }
     
     $note = sanitize($_POST['note'] ?? '');
-    $paymentMethod = sanitize($_POST['payment_method']);
+    $paymentMethod = isset($_POST['payment_method']) ? sanitize($_POST['payment_method']) : 'cod';
     
     // Validation
     if (empty($error) && (empty($name) || empty($phone) || empty($address) || empty($city))) {
@@ -310,8 +312,8 @@ include 'includes/header.php';
     <h1 style="font-size: 2rem; font-weight: 700; margin: 2rem 0 1rem;">Thanh toán</h1>
 
     <?php if ($error): ?>
-        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-            <?= $error ?>
+        <div class="alert alert-error" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: 0.5rem; color: var(--danger);">
+            <strong>Lỗi:</strong> <?= $error ?>
         </div>
     <?php endif; ?>
 
@@ -334,13 +336,21 @@ include 'includes/header.php';
                             <?php if (empty($savedAddresses)): ?>
                                 <p style="color: var(--muted-light); font-size: 0.9rem;">Bạn chưa lưu địa chỉ nào. <a href="<?= SITE_URL ?>/user_info.php" style="color: var(--primary);">Thêm địa chỉ</a></p>
                             <?php else: ?>
-                                <select name="saved_address_id" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; margin-top: 0.5rem; font-size: 1rem;">
+                                <select name="saved_address_id" id="saved_address_id" onchange="updateAddressDisplay()" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; margin-top: 0.5rem; font-size: 1rem;">
                                     <?php foreach ($savedAddresses as $addr): ?>
                                         <option value="<?= $addr['id'] ?>" <?= $addr['is_default'] ? 'selected' : '' ?>>
                                             <?= sanitize($addr['name']) ?> - <?= sanitize($addr['phone']) ?> | <?= sanitize($addr['address']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <!-- Hiển thị chi tiết địa chỉ -->
+                                <div id="address_details" style="margin-top: 1rem; padding: 1rem; background: #f0f5ee; border-radius: 0.5rem; display: none;">
+                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Người nhận:</strong> <span id="detail_name"></span></p>
+                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Điện thoại:</strong> <span id="detail_phone"></span></p>
+                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Địa chỉ:</strong> <span id="detail_address"></span></p>
+                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Phường/Xã:</strong> <span id="detail_ward"></span></p>
+                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Quận/Huyện:</strong> <span id="detail_district"></span></p>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </label>
@@ -594,7 +604,7 @@ include 'includes/header.php';
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" name="place_order" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1rem;">
+                <button type="submit" name="place_order" value="1" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1rem; cursor: pointer; pointer-events: auto; border-radius: 0.5rem;">
                     Đặt hàng
                 </button>
 
@@ -632,9 +642,29 @@ function updateAddressType() {
     if (addressType === 'new') {
         newAddressForm.style.display = 'block';
         shippingInfo.style.display = 'none';
+        
+        // Thêm required cho các input trong new address form
+        document.querySelector('input[name="name"]').setAttribute('required', 'required');
+        document.querySelector('input[name="phone"]').setAttribute('required', 'required');
+        document.querySelector('input[name="address"]').setAttribute('required', 'required');
+        
+        // Clear the form inputs
+        document.querySelector('input[name="name"]').value = '';
+        document.querySelector('input[name="phone"]').value = '';
+        document.querySelector('input[name="email"]').value = '';
+        document.querySelector('input[name="address"]').value = '';
+        document.querySelector('input[name="ward"]').value = '';
+        document.querySelector('input[name="district"]').value = '';
+        document.querySelector('input[name="city"]').value = 'TP. Hồ Chí Minh';
+        document.querySelector('textarea[name="note"]').value = '';
     } else {
         newAddressForm.style.display = 'none';
         shippingInfo.style.display = 'block';
+        
+        // Loại bỏ required khi form ẩn
+        document.querySelector('input[name="name"]').removeAttribute('required');
+        document.querySelector('input[name="phone"]').removeAttribute('required');
+        document.querySelector('input[name="address"]').removeAttribute('required');
         
         // Populate shipping info from selected address
         if (savedAddressSelect && savedAddressSelect.options.length > 0) {

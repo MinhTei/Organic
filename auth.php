@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/settings_helper.php';
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'login';
 $success = '';
@@ -135,14 +136,21 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
         <div class="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
             <div class="w-full max-w-md">
                 <!-- Logo & Title -->
-                <div class="mb-8 text-center">
-                    <a class="inline-flex items-center gap-2 mb-4" href="<?= SITE_URL ?>">
-                        <svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#4C7C44"></path>
-                            <path d="M2 17l10 5 10-5" stroke="#4C7C44" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
-                            <path d="M2 12l10 5 10-5" stroke="#4C7C44" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
-                        </svg>
-                        <span class="text-2xl font-bold text-primary">Xanh Organic</span>
+                <div class="mb-4 text-center">
+                    <a class="inline-flex items-center gap-2 mb-2" href="<?= SITE_URL ?>">
+                        <?php 
+                        $siteLogo = getSystemSetting('site_logo', '');
+                        $siteName = getSystemSetting('site_name', 'Xanh Organic');
+                        if (!empty($siteLogo)): ?>
+                            <img src="<?= SITE_URL . '/' . htmlspecialchars($siteLogo) ?>" alt="<?= htmlspecialchars($siteName) ?>" class="h-22 object-contain">
+                        <?php else: ?>
+                            <svg class="h-14 w-14 text-primary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#4C7C44"></path>
+                                <path d="M2 17l10 5 10-5" stroke="#4C7C44" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                                <path d="M2 12l10 5 10-5" stroke="#4C7C44" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                            </svg>
+                        <?php endif; ?>
+                        <!-- <span class="text-2xl font-bold text-primary"><?= htmlspecialchars($siteName) ?></span> Chữ Xnah Organic-->
                     </a>
                     <h1 class="tracking-tight text-3xl font-bold text-gray-800">
                         <?= $mode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản mới' ?>
@@ -204,13 +212,6 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                                 class="flex items-center justify-center font-bold text-white h-12 px-6 rounded-xl bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 w-full mt-4 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30">
                             Đăng nhập
                         </button>
-
-                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
-                            <p class="text-xs font-semibold text-blue-800 mb-2">📌 Tài khoản demo:</p>
-                            <p class="text-xs text-blue-700"><strong>Admin:</strong> admin@xanhorganic.vn / admin123</p>
-                            <p class="text-xs text-blue-700"><strong>Khách:</strong> lean@email.com / 123456</p>
-                        </div>
-
                         <p class="pt-4 text-center text-sm text-text-subtle">
                             Chưa có tài khoản?
                             <a href="?mode=register" class="font-bold text-primary hover:underline">Đăng ký ngay</a>
@@ -280,14 +281,27 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
         <div class="relative hidden w-1/2 flex-col items-center justify-center bg-primary-light lg:flex p-12">
             <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22%234C7C44%22%20fill-opacity%3D%220.07%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M0%2040L40%200H20L0%2020M40%2040V20L20%2040%22/%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
             <div class="z-10 w-full max-w-lg space-y-8 text-center">
-                <div class="relative w-full aspect-square rounded-2xl shadow-soft overflow-hidden">
-                    <div class="w-full h-full bg-center bg-no-repeat bg-cover" 
-                         style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTWbfW23Vp_lDS4MiB1QuORVu16-GBIHQgJih4yI8Jk0KFvEJ9Cs0teSe_hbp5x4Sc09jHNqiQzV4_Pvg8ivg9vFDWS1F-BigbwfEzpbFioEwqZzUhdTCqZroq07Gfx7DIYwnCnEBa40HfEGJPNleSWzekcOX2Ipy44dPlJr4ZHePO6DJ0rfavKGMXsINl-jQ_w01dpP2cfcWTBGFx2A5yA_hf9xny1joK4a5HBsriL3pw-QuIvJIfbbwB7fCTW2j95YQmLMEZpSNr"); background-size: contain;'></div>
-                </div>
-                <div class="p-6 bg-white/70 backdrop-blur-sm rounded-2xl shadow-soft">
-                    <h2 class="text-2xl font-bold text-gray-800">"Khởi đầu lối sống lành mạnh, ngay từ hôm nay."</h2>
-                    <p class="mt-2 text-text-subtle">Tham gia cùng hàng ngàn người dùng tin tưởng Xanh Organic để mang thực phẩm tươi sạch đến tận nhà.</p>
-                </div>
+                <?php if ($mode === 'login'): ?>
+                    <!-- Đăng nhập Image -->
+                    <div class="relative w-full aspect-square rounded-2xl shadow-soft overflow-hidden">
+                        <div class="w-full h-full bg-center bg-no-repeat bg-cover" 
+                             style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTWbfW23Vp_lDS4MiB1QuORVu16-GBIHQgJih4yI8Jk0KFvEJ9Cs0teSe_hbp5x4Sc09jHNqiQzV4_Pvg8ivg9vFDWS1F-BigbwfEzpbFioEwqZzUhdTCqZroq07Gfx7DIYwnCnEBa40HfEGJPNleSWzekcOX2Ipy44dPlJr4ZHePO6DJ0rfavKGMXsINl-jQ_w01dpP2cfcWTBGFx2A5yA_hf9xny1joK4a5HBsriL3pw-QuIvJIfbbwB7fCTW2j95YQmLMEZpSNr"); background-size: contain;'></div>
+                    </div>
+                    <div class="p-6 bg-white/70 backdrop-blur-sm rounded-2xl shadow-soft">
+                        <h2 class="text-2xl font-bold text-gray-800">"Khởi đầu lối sống lành mạnh, ngay từ hôm nay."</h2>
+                        <p class="mt-2 text-text-subtle">Tham gia cùng hàng ngàn người dùng tin tưởng Xanh Organic để mang thực phẩm tươi sạch đến tận nhà.</p>
+                    </div>
+                <?php else: ?>
+                    <!-- Đăng ký Image -->
+                    <div class="relative w-full aspect-square rounded-2xl shadow-soft overflow-hidden">
+                        <div class="w-full h-full bg-center bg-no-repeat bg-cover" 
+                             style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCll8A3mPQzyBcabsJu_08U639k1Qbk_e45fMwD8d6n6JSlatK8KyW9PBmiKHnzojVu0PxpHSh6739dDTL13AAmfA7W5I4Hq9ScmA4Dg4w8pfE5c-v-_SjmpenrjWVa1LZKDvkAWbestnOgD8tCFmeVXggX8uf2mORzhwjGJtoWWqrp7VzJt81-OAhStK_A9GgT6RoijXf0xZZtlrC2XWGYSkj5iM18aPPfH7mJapIfwPN3i39XiWRzTSYfyx9uPmDdR0s-Qh0o0gw"); background-size: contain;'></div>
+                    </div>
+                    <div class="p-6 bg-white/70 backdrop-blur-sm rounded-2xl shadow-soft">
+                        <h2 class="text-2xl font-bold text-gray-800">"Sức khỏe là tài sản quý giá nhất."</h2>
+                        <p class="mt-2 text-text-subtle">Hãy bắt đầu hành trình chăm sóc sức khỏe của bạn và gia đình với các sản phẩm hữu cơ chất lượng cao.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

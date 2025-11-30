@@ -9,25 +9,38 @@ const SITE_URL = document.querySelector('meta[name="site-url"]')?.content || '';
  * Add product to cart
  */
 function addToCart(productId, quantity = 1) {
-    fetch(`${window.location.origin}/organic/cart.php`, {
+    const url = SITE_URL ? `${SITE_URL}/cart.php` : '/Organic/cart.php';
+    
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: `action=add&product_id=${productId}&quantity=${quantity}`
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
                 showNotification('Đã thêm vào giỏ hàng', 'success');
-            updateCartCount(data.cart_count);
-        } else {
-            showNotification('Có lỗi xảy ra', 'error');
+                updateCartCount(data.cart_count);
+            } else {
+                showNotification(data.message || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (e) {
+            console.error('JSON parse error:', text);
+            showNotification('Lỗi xử lý phản hồi từ máy chủ', 'error');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showNotification('Có lỗi xảy ra', 'error');
+        console.error('Fetch error:', error);
+        showNotification('Lỗi kết nối: ' + error.message, 'error');
     });
 }
 
@@ -36,7 +49,7 @@ function addToCart(productId, quantity = 1) {
  * Toggle favorite product
  */
 function toggleFavorite(productId) {
-    const btn = event.currentTarget;
+    const btn = event.target.closest('.product-favorite') || event.currentTarget;
     const icon = btn.querySelector('.material-symbols-outlined');
     
     // Toggle visual state
@@ -58,10 +71,30 @@ function toggleFavorite(productId) {
 function updateCartCount(count) {
     // Only update the cart icon badge (shopping_bag)
     const cartIconBtn = document.querySelector('.header-actions a.icon-btn[href$="cart.php"]');
-    const cartBadge = cartIconBtn ? cartIconBtn.querySelector('span:not(.material-symbols-outlined)') : null;
-    if (cartBadge && cartBadge.style) {
-        cartBadge.textContent = count;
-        cartBadge.style.display = count > 0 ? 'flex' : 'none';
+    if (cartIconBtn) {
+        let cartBadge = cartIconBtn.querySelector('span:not(.material-symbols-outlined)');
+        if (!cartBadge && count > 0) {
+            // Create badge if it doesn't exist
+            cartBadge = document.createElement('span');
+            cartIconBtn.appendChild(cartBadge);
+        }
+        if (cartBadge) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = count > 0 ? 'flex' : 'none';
+            cartBadge.style.position = 'absolute';
+            cartBadge.style.top = '-4px';
+            cartBadge.style.right = '-4px';
+            cartBadge.style.background = '#b6e633';
+            cartBadge.style.color = '#000';
+            cartBadge.style.fontSize = '0.75rem';
+            cartBadge.style.fontWeight = '700';
+            cartBadge.style.width = '20px';
+            cartBadge.style.height = '20px';
+            cartBadge.style.borderRadius = '50%';
+            cartBadge.style.display = 'flex';
+            cartBadge.style.alignItems = 'center';
+            cartBadge.style.justifyContent = 'center';
+        }
     }
 }
 
