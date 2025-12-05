@@ -3,8 +3,8 @@
  * user_info.php - Trang quản lý thông tin và địa chỉ khách hàng
  */
 
-require_once __DIR__ . '/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -39,6 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
     if (empty($name)) {
         $error = 'Tên không được để trống.';
+    } elseif (strlen($name) < 3 || strlen($name) > 100) {
+        $error = 'Tên phải từ 3 đến 100 ký tự.';
+    } elseif (!empty($phone) && !preg_match('/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/', $phone)) {
+        $error = 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng (0XXXXXXXXXX hoặc +84XXXXXXXXX).';
     } else {
         // Start transaction to update profile (and avatar if provided)
         try {
@@ -155,7 +159,7 @@ $stmt->execute([':user_id' => $userId]);
 $orders = $stmt->fetchAll();
 
 $pageTitle = 'Thông tin cá nhân';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main style="background: var(--background-light); min-height: calc(100vh - 400px);">
@@ -266,8 +270,10 @@ include 'includes/header.php';
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Họ và tên</label>
-                                        <input type="text" name="name" value="<?= sanitize($user['name']) ?>" required
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                            Họ và tên <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="text" name="name" value="<?= sanitize($user['name']) ?>" required minlength="3" maxlength="100"
                                                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                                     </div>
                                     
@@ -287,8 +293,10 @@ include 'includes/header.php';
                                     
                                     <div>
                                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại</label>
-                                        <input type="tel" name="phone" value="<?= sanitize($user['phone']) ?>"
+                                        <input type="text" name="phone" value="<?= sanitize($user['phone']) ?>" minlength="10" maxlength="13"
+                                               placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx"
                                                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                        <div id="profile-phone-error" style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
                                     </div>
                                 </div>
                                 
@@ -422,24 +430,42 @@ include 'includes/header.php';
                                     
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tên người nhận *</label>
-                                            <input type="text" id="address-name" placeholder="Nhập tên người nhận" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tên người nhận <span style="color: var(--danger);">*</span></label>
+                                            <input type="text" id="address-name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
                                         </div>
 
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại *</label>
-                                            <input type="tel" id="address-phone" placeholder="Nhập số điện thoại" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại <span style="color: var(--danger);">*</span></label>
+                                            <input type="text" id="address-phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <div id="phone-error" style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Địa chỉ *</label>
-                                        <textarea id="address-address" placeholder="Nhập địa chỉ giao hàng" required rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem; resize: vertical;"></textarea>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Địa chỉ <span style="color: var(--danger);">*</span></label>
+                                        <textarea id="address-address" placeholder="Nhập địa chỉ giao hàng (số nhà, tên đường,...)" required minlength="5" maxlength="255" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem; resize: vertical;"></textarea>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
+                                            <input type="text" id="address-ward" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        </div>
+
+                                        <div>
+                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
+                                            <input type="text" id="address-district" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tỉnh/Thành phố</label>
+                                        <input type="text" id="address-city" value="TP. Hồ Chí Minh" minlength="3" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
                                     </div>
 
                                     <div>
                                         <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ghi chú (tùy chọn)</label>
-                                        <input type="text" id="address-note" placeholder="VD: Nhà riêng, Công ty, ..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        <input type="text" id="address-note" placeholder="VD: Nhà riêng, Công ty, ..." maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
                                     </div>
 
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -589,6 +615,25 @@ include 'includes/header.php';
 </main>
 
 <script>
+// Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+function validateVietnamPhoneNumber(phone) {
+    return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
+}
+
+// Show phone error message
+function showPhoneError(phoneInput, errorEl, message) {
+    if (message) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        phoneInput.style.borderColor = 'var(--danger)';
+        phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+    } else {
+        errorEl.style.display = 'none';
+        phoneInput.style.borderColor = 'var(--border-light)';
+        phoneInput.style.backgroundColor = 'transparent';
+    }
+}
+
 function showPasswordForm() {
     document.getElementById('password-modal').style.display = 'flex';
 }
@@ -613,6 +658,9 @@ function editAddress(address) {
     document.getElementById('address-name').value = address.name;
     document.getElementById('address-phone').value = address.phone;
     document.getElementById('address-address').value = address.address;
+    document.getElementById('address-ward').value = address.ward || '';
+    document.getElementById('address-district').value = address.district || '';
+    document.getElementById('address-city').value = address.city || 'TP. Hồ Chí Minh';
     document.getElementById('address-note').value = address.note || '';
     document.getElementById('address-default').checked = address.is_default;
     
@@ -686,14 +734,34 @@ function deleteAddress(id) {
 document.getElementById('address-form-element').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    const phoneInput = document.getElementById('address-phone');
+    const phone = phoneInput.value.trim();
+    
+    // Validate phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+    if (!validateVietnamPhoneNumber(phone)) {
+        document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
+        document.getElementById('phone-error').style.display = 'block';
+        phoneInput.style.borderColor = 'var(--danger)';
+        phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+        return false;
+    }
+    
+    // Clear error
+    document.getElementById('phone-error').style.display = 'none';
+    phoneInput.style.borderColor = 'var(--border-light)';
+    phoneInput.style.backgroundColor = 'transparent';
+    
     const id = document.getElementById('address-id').value;
     const action = id ? 'update' : 'add';
     const apiPath = './api/customer_addresses.php';
     
     const data = {
         name: document.getElementById('address-name').value,
-        phone: document.getElementById('address-phone').value,
+        phone: phone,
         address: document.getElementById('address-address').value,
+        ward: document.getElementById('address-ward').value,
+        district: document.getElementById('address-district').value,
+        city: document.getElementById('address-city').value,
         note: document.getElementById('address-note').value,
         is_default: document.getElementById('address-default').checked ? 1 : 0
     };
@@ -729,6 +797,53 @@ document.getElementById('address-form-element').addEventListener('submit', funct
         alert('Lỗi: ' + err.message);
     });
 });
+
+// Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+function validateVietnamPhoneNumber(phone) {
+    return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
+}
+
+// Add real-time phone validation
+document.getElementById('address-phone').addEventListener('input', function() {
+    const phone = this.value.trim();
+    if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
+        document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
+        document.getElementById('phone-error').style.display = 'block';
+        this.style.borderColor = 'var(--danger)';
+        this.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+    } else {
+        document.getElementById('phone-error').style.display = 'none';
+        this.style.borderColor = 'var(--border-light)';
+        this.style.backgroundColor = 'transparent';
+    }
+});
+
+document.getElementById('address-phone').addEventListener('focus', function() {
+    document.getElementById('phone-error').style.display = 'none';
+    this.style.borderColor = 'var(--border-light)';
+    this.style.backgroundColor = 'transparent';
+});
+
+// Profile phone validation
+const profilePhoneInput = document.querySelector('input[name="phone"]');
+if (profilePhoneInput) {
+    profilePhoneInput.addEventListener('input', function() {
+        const phone = this.value.trim();
+        const errorEl = document.getElementById('profile-phone-error');
+        
+        if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
+            showPhoneError(this, errorEl, 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)');
+        } else {
+            showPhoneError(this, errorEl, '');
+        }
+    });
+    
+    profilePhoneInput.addEventListener('focus', function() {
+        document.getElementById('profile-phone-error').style.display = 'none';
+        this.style.borderColor = 'var(--border-light)';
+        this.style.backgroundColor = 'transparent';
+    });
+}
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

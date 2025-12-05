@@ -10,7 +10,7 @@
 // Nếu `getConnection` chưa tồn tại, require config để khởi tạo kết nối và session
 if (!function_exists('getConnection')) {
     if (file_exists(__DIR__ . '/../config.php')) {
-        require_once __DIR__ . '/../config.php';
+        require_once __DIR__ . '/config.php';
     }
 }
 

@@ -4,8 +4,8 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
-require_once 'includes/settings_helper.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/settings_helper.php';
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'login';
 $success = '';

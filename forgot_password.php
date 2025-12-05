@@ -4,8 +4,8 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
-require_once 'includes/email_functions.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/email_functions.php';
 
 $success = '';
 $error = '';
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
 }
 
 $pageTitle = 'Quên mật khẩu';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <section style="padding: 4rem 1rem; min-height: calc(100vh - 400px); display: flex; align-items: center; justify-content: center;">
@@ -108,4 +108,4 @@ include 'includes/header.php';
     </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

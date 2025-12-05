@@ -1,7 +1,7 @@
 <?php
 // includes/footer.php - Updated với Settings từ DB
 if (!defined('SITE_URL')) {
-    require_once __DIR__ . '/../config.php';
+    require_once __DIR__ . '/config.php';
 }
 ?>
 

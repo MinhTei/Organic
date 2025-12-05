@@ -4,10 +4,10 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pageTitle = 'Về Chúng Tôi';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Hero Section -->
@@ -219,4 +219,4 @@ include 'includes/header.php';
     </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

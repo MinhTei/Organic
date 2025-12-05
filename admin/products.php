@@ -13,8 +13,8 @@
  * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Check if user is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
@@ -121,21 +121,11 @@ $pageTitle = 'Quản lý sản phẩm';
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="../css/styles.css" rel="stylesheet" />
-    <link href="../css/styles.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-    <style>
-        body {
-            font-family: 'Be Vietnam Pro', sans-serif;
-        }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 font-['Be_Vietnam_Pro']">
 
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -332,7 +322,7 @@ $pageTitle = 'Quản lý sản phẩm';
                                             </div>
                                         </td>
                                         <td class="py-4 px-4">
-                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium font-['Be_Vietnam_Pro']">
                                                 <?= sanitize($product['category_name']) ?>
                                             </span>
                                         </td>

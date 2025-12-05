@@ -5,7 +5,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // Lấy thông tin đơn hàng từ session
 $order = $_SESSION['order_success'] ?? null;
@@ -25,7 +25,7 @@ $stmt->execute([':order_id' => $order['order_id']]);
 $items = $stmt->fetchAll();
 
 $pageTitle = 'Đặt hàng thành công';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="container" style="max-width: 700px; margin: 3rem auto; padding: 2rem 1rem;">
@@ -136,5 +136,5 @@ include 'includes/header.php';
     </div>
 </main>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 <?php unset($_SESSION['order_success']); ?>

@@ -14,8 +14,8 @@
  * - Header hiển thị avatar, tên admin, link về trang chủ
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     redirect(SITE_URL . '/auth.php');

@@ -4,7 +4,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // Lấy sản phẩm trước khi xử lý đánh giá
 $slug = isset($_GET['slug']) ? sanitize($_GET['slug']) : '';
@@ -40,13 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
 if (!$product) {
     header('HTTP/1.0 404 Not Found');
     $pageTitle = 'Không tìm thấy sản phẩm';
-    include 'includes/header.php';
+    include __DIR__ . '/includes/header.php';
     echo '<div class="container" style="text-align: center; padding: 5rem 1rem;">
             <h1>Sản phẩm không tồn tại</h1>
             <p>Sản phẩm bạn tìm kiếm không tồn tại hoặc đã bị xóa.</p>
             <a href="' . SITE_URL . '/products.php" class="btn btn-primary" style="margin-top: 1rem;">Quay lại cửa hàng</a>
           </div>';
-    include 'includes/footer.php';
+    include __DIR__ . '/includes/footer.php';
     exit;
 }
 
@@ -68,7 +68,7 @@ $hasDiscount = !empty($product['sale_price']);
 $discountPercent = $hasDiscount ? round((1 - $product['sale_price'] / $product['price']) * 100) : 0;
 
 $pageTitle = $product['name'];
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="container" style="padding: 2rem 1rem;">
@@ -139,20 +139,26 @@ include 'includes/header.php';
                 </div>
                 
                 <!-- Quantity & Add to Cart -->
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                        <button onclick="changeQty(-1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer;">-</button>
-                        <input type="number" id="quantity" value="1" min="1" max="<?= $product['stock'] ?>" 
-                               style="width: 60px; text-align: center; border: none; font-size: 1rem;">
-                        <button onclick="changeQty(1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer;">+</button>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                            <button onclick="changeQty(-1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">−</button>
+                            <input type="number" id="quantity" value="1" min="1" max="<?= $product['stock'] ?>" 
+                                   style="width: 60px; text-align: center; border: none; font-size: 1rem;" 
+                                   onkeypress="handleEnterKey(event, <?= $product['id'] ?>)">
+                            <button onclick="changeQty(1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">+</button>
+                        </div>
+                        
+                        <button onclick="addToCartWithQty(<?= $product['id'] ?>)" 
+                                class="btn btn-primary" style="flex: 1; min-width: 200px;"
+                                <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
+                            <span class="material-symbols-outlined" style="margin-right: 0.5rem;">add_shopping_cart</span>
+                            Thêm vào giỏ hàng
+                        </button>
                     </div>
                     
-                    <button onclick="addToCartWithQty(<?= $product['id'] ?>)" 
-                            class="btn btn-primary" style="flex: 1; min-width: 200px;"
-                            <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
-                        <span class="material-symbols-outlined" style="margin-right: 0.5rem;">add_shopping_cart</span>
-                        Thêm vào giỏ hàng
-                    </button>
+                    <!-- Quantity Error Message -->
+                    <div id="quantity-error" style="color: var(--danger); font-size: 0.875rem; display: none; padding: 0.5rem; background: #fee2e2; border-radius: 0.5rem; border-left: 3px solid var(--danger);"></div>
                 </div>
                 
                 <!-- Description -->
@@ -291,19 +297,102 @@ include 'includes/header.php';
     <?php endif; ?>
 </main>
 
+<style>
+/* Ẩn nút tăng giảm mặc định của input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    appearance: textfield;
+}
+</style>
+
 <script>
+const maxStock = <?= $product['stock'] ?>;
+
 function changeQty(delta) {
     const input = document.getElementById('quantity');
-    let val = parseInt(input.value) + delta;
-    if (val < 1) val = 1;
-    if (val > <?= $product['stock'] ?>) val = <?= $product['stock'] ?>;
+    let val = parseInt(input.value) || 0;
+    
+    // Nếu để trống, mặc định là 1
+    if (isNaN(val) || val < 0) {
+        val = 1;
+    }
+    
+    val += delta;
+    
+    if (val < 1) {
+        val = 1;
+    }
+    if (val > maxStock) {
+        val = maxStock;
+    }
+    
     input.value = val;
+    hideError();
+}
+
+function validateQuantity() {
+    const input = document.getElementById('quantity');
+    const val = input.value.trim();
+    
+    // Kiểm tra nếu để trống
+    if (val === '' || val === '0') {
+        showError('Vui lòng chọn ít nhất 1 sản phẩm.');
+        return false;
+    }
+    
+    const qty = parseInt(val);
+    
+    // Kiểm tra nếu không phải số hoặc nhỏ hơn 1
+    if (isNaN(qty) || qty < 1) {
+        showError('Số lượng phải lớn hơn 0.');
+        return false;
+    }
+    
+    // Kiểm tra nếu vượt quá stock
+    if (qty > maxStock) {
+        showError(`Chỉ còn ${maxStock} sản phẩm trong kho. Vui lòng chọn số lượng nhỏ hơn.`);
+        return false;
+    }
+    
+    hideError();
+    return true;
+}
+
+function showError(message) {
+    const errorEl = document.getElementById('quantity-error');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+}
+
+function hideError() {
+    const errorEl = document.getElementById('quantity-error');
+    errorEl.style.display = 'none';
+}
+
+function handleEnterKey(event, productId) {
+    if (event.key === 'Enter' || event.keyCode === 13) {
+        event.preventDefault();
+        addToCartWithQty(productId);
+    }
 }
 
 function addToCartWithQty(productId) {
-    const qty = document.getElementById('quantity').value;
+    const input = document.getElementById('quantity');
+    
+    // Validate khi nhấn nút hoặc Enter
+    if (!validateQuantity()) {
+        return;
+    }
+    
+    const qty = parseInt(input.value);
+    
+    // Nếu validate thành công, thêm vào giỏ hàng
     addToCart(productId, qty);
 }
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

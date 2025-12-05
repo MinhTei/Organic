@@ -11,7 +11,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // Check login status
 if (!isset($_SESSION['user_id'])) {
@@ -67,7 +67,7 @@ $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $pageTitle = 'Chi tiết đơn hàng ' . $order['order_code'];
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="container" style="padding: 2rem 1rem; max-width: 1200px;">
@@ -319,4 +319,4 @@ include 'includes/header.php';
 <script>
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

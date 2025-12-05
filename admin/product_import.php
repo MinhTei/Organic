@@ -4,9 +4,9 @@
  * admin/product_import.php - Import danh sách sản phẩm từ Excel
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
-require_once '../includes/import_helper.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/import_helper.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     redirect(SITE_URL . '/auth.php');

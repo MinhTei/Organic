@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Kiểm tra quyền admin trước khi require config
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     // Nếu chưa login, chuyển hướng
-    require_once '../config.php';
+    require_once __DIR__ . '/../includes/config.php';
     redirect(SITE_URL . '/auth.php');
 }
 
@@ -25,8 +25,8 @@ header('Content-Disposition: attachment; filename="template_import_san_pham_' . 
 header('Pragma: no-cache');
 header('Expires: 0');
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Header columns - phải wrap với quotes để Excel nhận diện UTF-8 đúng
 $headers = [

@@ -4,9 +4,9 @@
  * index.php - Trang chủ với slideshow banner
  */
 
-require_once 'config.php';
-require_once 'includes/functions.php';
-require_once 'includes/settings_helper.php';
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/settings_helper.php';
 
 
 // Xử lý tìm kiếm sản phẩm trên trang chủ
@@ -34,7 +34,7 @@ $adminFeatured = getFeaturedProducts(4);
 $latestPosts = function_exists('getLatestPosts') ? getLatestPosts(4) : [];
 
 $pageTitle = 'Rau Sạch Tận Nhà';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Search Section removed: chỉ dùng thanh tìm kiếm ở header -->
@@ -370,4 +370,4 @@ include 'includes/header.php';
     </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

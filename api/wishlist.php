@@ -3,9 +3,9 @@
  * api/wishlist.php - API xử lý wishlist
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
-require_once '../includes/wishlist_functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/wishlist_functions.php';
 
 header('Content-Type: application/json');
 

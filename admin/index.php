@@ -4,7 +4,7 @@
  * index.php - Trang chủ với slideshow banner và menu admin
  */
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 // Get featured products

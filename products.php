@@ -5,7 +5,7 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // =========================
 // Lấy tham số bộ lọc
@@ -66,7 +66,7 @@ $pageTitle = $search ? "Tìm kiếm: $search" : $currentCategoryName;
 // =========================
 // Include header
 // =========================
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="main-layout">
@@ -197,4 +197,4 @@ include 'includes/header.php';
     </div>
 </main>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

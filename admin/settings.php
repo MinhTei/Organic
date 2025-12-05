@@ -11,8 +11,8 @@
  * - Giao diện đồng bộ với các trang quản trị khác
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     redirect(SITE_URL . '/auth.php');

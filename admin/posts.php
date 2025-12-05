@@ -1,6 +1,6 @@
 <?php
 // admin/posts.php - Simple admin UI to manage blog posts / news
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/config.php';
 
 // basic auth: ensure admin
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {

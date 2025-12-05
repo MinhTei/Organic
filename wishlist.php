@@ -4,8 +4,8 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
-require_once 'includes/wishlist_functions.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/wishlist_functions.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -22,7 +22,7 @@ $totalPages = $result['pages'];
 $totalProducts = $result['total'];
 
 $pageTitle = 'Sản phẩm yêu thích';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="container" style="padding: 2rem 1rem;">
@@ -163,4 +163,4 @@ function addAllToCart() {
 }
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

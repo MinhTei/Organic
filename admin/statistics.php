@@ -16,8 +16,8 @@
  * - Nếu không có dữ liệu, sẽ hiển thị dữ liệu mẫu để xem giao diện
  */
 
-require_once '../config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     redirect(SITE_URL . '/auth.php');
@@ -61,6 +61,7 @@ $totals = $totalStmt->fetch();
 // Sử dụng unit_price thay cho price
 $topProductsStmt = $conn->prepare("
     SELECT 
+        p.id,
         p.name,
         p.image,
         SUM(oi.quantity) as total_sold,
@@ -70,7 +71,7 @@ $topProductsStmt = $conn->prepare("
     JOIN orders o ON oi.order_id = o.id
     WHERE o.created_at BETWEEN ? AND ?
     AND o.status != 'cancelled'
-    GROUP BY p.id
+    GROUP BY p.id, p.name, p.image
     ORDER BY total_revenue DESC
     LIMIT 10
 ");
@@ -114,11 +115,24 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
         'avg_order_value' => array_sum($sampleRevenues) / max(1, array_sum(array_map(fn($r) => $r['orders'], $revenueData)))
     ];
 
-    $topProducts = [
-        ['name' => 'Green Apple', 'image' => SITE_URL . '/images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
-        ['name' => 'Organic Carrot', 'image' => SITE_URL . '/images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
-        ['name' => 'Romaine Lettuce', 'image' => SITE_URL . '/images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
-    ];
+    // Lấy danh sách sản phẩm từ database để tạo dữ liệu mẫu đồng bộ
+    $sampleProductsStmt = $conn->prepare("SELECT id, name, image FROM products ORDER BY id LIMIT 3");
+    $sampleProductsStmt->execute();
+    $sampleProductsData = $sampleProductsStmt->fetchAll();
+    
+    if (!empty($sampleProductsData)) {
+        $topProducts = [
+            ['id' => $sampleProductsData[0]['id'] ?? 1, 'name' => $sampleProductsData[0]['name'] ?? 'Green Apple', 'image' => $sampleProductsData[0]['image'] ?? 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
+            ['id' => $sampleProductsData[1]['id'] ?? 2, 'name' => $sampleProductsData[1]['name'] ?? 'Organic Carrot', 'image' => $sampleProductsData[1]['image'] ?? 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
+            ['id' => $sampleProductsData[2]['id'] ?? 3, 'name' => $sampleProductsData[2]['name'] ?? 'Romaine Lettuce', 'image' => $sampleProductsData[2]['image'] ?? 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
+        ];
+    } else {
+        $topProducts = [
+            ['id' => 1, 'name' => 'Green Apple', 'image' => 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
+            ['id' => 2, 'name' => 'Organic Carrot', 'image' => 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
+            ['id' => 3, 'name' => 'Romaine Lettuce', 'image' => 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
+        ];
+    }
 
     $orderStatus = [
         'pending' => 5,

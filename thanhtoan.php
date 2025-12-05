@@ -13,8 +13,8 @@
  */
 
 require_once __DIR__ . '/includes/config.php';
-require_once 'includes/functions.php';
-require_once 'includes/email_functions.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/email_functions.php';
 
 $success = '';
 $error = '';
@@ -193,6 +193,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     // Validation
     if (empty($error) && (empty($name) || empty($phone) || empty($address) || empty($city))) {
         $error = 'Vui lòng điền đầy đủ thông tin giao hàng.';
+    } elseif (empty($error) && !preg_match('/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/', $phone)) {
+        $error = 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng (0XXXXXXXXXX hoặc +84XXXXXXXXX).';
     } elseif (empty($error) && !in_array($paymentMethod, ['cod', 'bank_transfer'])) {
         $error = 'Vui lòng chọn phương thức thanh toán.';
     } elseif (!$error) {
@@ -296,7 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 }
 
 $pageTitle = 'Thanh toán';
-include 'includes/header.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="container" style="padding: 2rem 1rem; max-width: 1200px;">
@@ -375,7 +377,7 @@ include 'includes/header.php';
                                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
                                     Họ và tên <span style="color: var(--danger);">*</span>
                                 </label>
-                                    <input type="text" name="name" placeholder="Nhập tên người nhận" required
+                                    <input type="text" name="name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100"
                                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             </div>
 
@@ -383,14 +385,14 @@ include 'includes/header.php';
                                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
                                     Số điện thoại <span style="color: var(--danger);">*</span>
                                 </label>
-                                    <input type="tel" name="phone" placeholder="Nhập số điện thoại" required
+                                    <input type="text" name="phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13"
                                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             </div>
                         </div>
 
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
-                            <input type="email" name="email" value="<?= $user ? sanitize($user['email']) : '' ?>" placeholder="Nhập email người nhận"
+                            <input type="email" name="email" value="<?= $user ? sanitize($user['email']) : '' ?>" placeholder="Nhập email người nhận" maxlength="100"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                         </div>
 
@@ -398,20 +400,20 @@ include 'includes/header.php';
                             <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
                                 Địa chỉ <span style="color: var(--danger);">*</span>
                             </label>
-                            <input type="text" name="address" placeholder="Số nhà, tên đường"
+                            <input type="text" name="address" placeholder="Số nhà, tên đường" required minlength="5" maxlength="255"
                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                             <div>
                                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
-                                <input type="text" name="ward"
+                                <input type="text" name="ward" maxlength="100"
                                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             </div>
 
                             <div>
                                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
-                                <input type="text" name="district"
+                                <input type="text" name="district" maxlength="100"
                                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             </div>
 
@@ -419,7 +421,7 @@ include 'includes/header.php';
                                 <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
                                     Tỉnh/Thành phố <span style="color: var(--danger);">*</span>
                                 </label>
-                                <input type="text" name="city" value="TP. Hồ Chí Minh" required
+                                <input type="text" name="city" value="TP. Hồ Chí Minh" required minlength="3" maxlength="100"
                                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             </div>
                         </div>
@@ -707,10 +709,57 @@ function updatePaymentBorder() {
     });
 }
 
+// Validate phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+function validatePhoneNumber(phone) {
+    return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.trim());
+}
+
+// Show phone error message
+function showPhoneError(phoneInput, message) {
+    let errorEl = phoneInput.nextElementSibling;
+    
+    // Remove existing error if it exists
+    if (errorEl && errorEl.classList && errorEl.classList.contains('phone-error')) {
+        errorEl.remove();
+    }
+    
+    if (message) {
+        const error = document.createElement('div');
+        error.className = 'phone-error';
+        error.style.cssText = 'color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.25rem;';
+        error.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem;">error</span><span>' + message + '</span>';
+        phoneInput.parentNode.insertBefore(error, phoneInput.nextSibling);
+        phoneInput.style.borderColor = 'var(--danger)';
+        phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+    } else {
+        phoneInput.style.borderColor = 'var(--border-light)';
+        phoneInput.style.backgroundColor = 'transparent';
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateAddressType();
     updatePaymentBorder();
+    
+    // Phone number validation
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(phoneInput => {
+        // Clear error on focus
+        phoneInput.addEventListener('focus', function() {
+            showPhoneError(this, '');
+        });
+        
+        // Real-time validation while typing
+        phoneInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value.length > 0 && !validatePhoneNumber(value)) {
+                showPhoneError(this, 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)');
+            } else {
+                showPhoneError(this, '');
+            }
+        });
+    });
     
     // Update shipping info when saved address changes
     const savedAddressSelect = document.querySelector('select[name="saved_address_id"]');
@@ -724,16 +773,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Update on radio change
+// Update on radio change for payment method
 document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener('change', updatePaymentBorder);
 });
-
-document.querySelectorAll('input[name="address_type"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        updateAddressType();
-    });
-});
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>
