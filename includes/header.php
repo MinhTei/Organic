@@ -25,10 +25,11 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="site-url" content="<?= SITE_URL ?>"/>
+    <link rel="icon" type="image/x-icon" href="<?= SITE_URL ?>/favicon.ico">
     <title><?= isset($pageTitle) ? $pageTitle . ' - ' : '' ?><?= SITE_NAME ?></title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind CSS - Compiled from source -->
+    <link href="./css/tailwind.css" rel="stylesheet"/>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
@@ -37,26 +38,6 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
     <!-- Custom CSS -->
     <link href="<?= SITE_URL ?>/css/styles.css" rel="stylesheet"/>
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#b6e633",
-                        "primary-dark": "#9acc2a",
-                        "background-light": "#f7f8f6",
-                        "text-light": "#161811",
-                        "card-light": "#ffffff",
-                        "border-light": "#e3e5dc",
-                        "muted-light": "#7e8863",
-                    },
-                    fontFamily: {
-                        "display": ["Be Vietnam Pro", "sans-serif"]
-                    },
-                }
-            }
-        }
-    </script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;

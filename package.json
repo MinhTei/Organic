@@ -1,0 +1,24 @@
+{
+  "name": "xanh-organic",
+  "version": "1.0.0",
+  "description": "Organic Food E-commerce Platform",
+  "main": "index.php",
+  "scripts": {
+    "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css",
+    "watch:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --watch",
+    "build": "npm run build:css"
+  },
+  "keywords": [
+    "organic",
+    "food",
+    "ecommerce"
+  ],
+  "author": "Xanh Organic",
+  "license": "MIT",
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.6"
+  }
+}

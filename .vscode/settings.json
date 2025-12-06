@@ -9,5 +9,9 @@
   // If your global files.exclude hides vendor, explicitly include vendor for this workspace
   "files.exclude": {
     "**/vendor": false
-  }
+  },
+
+  // Ignore Tailwind CSS unknown at-rules warnings
+  "css.lint.unknownAtRules": "ignore",
+  "css.validate": true
 }

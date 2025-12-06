@@ -3,7 +3,7 @@
  */
 
 // Site URL (set from PHP)
-const SITE_URL = document.querySelector('meta[name="site-url"]')?.content || '';
+let SITE_URL = document.querySelector('meta[name="site-url"]')?.content || '';
 
 /**
  * Add product to cart

@@ -1,0 +1,191 @@
+/* Tailwind CSS Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   Custom Styles for Xanh Organic
+   ============================================ */
+
+/* Material Symbols */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    border: 1px solid #e3e5dc;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 10;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 16px;
+    color: #161811;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f7f8f6;
+    color: #b6e633;
+}
+
+/* Navigation Links */
+.nav-link {
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #b6e633;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e3e5dc;
+    padding: 1rem;
+    z-index: 999;
+}
+
+.mobile-menu.active {
+    display: block;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #b6e633;
+    color: #161811;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #9acc2a;
+}
+
+/* Cards */
+.card {
+    background-color: white;
+    border: 1px solid #e3e5dc;
+    border-radius: 8px;
+    padding: 16px;
+    transition: box-shadow 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Forms */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    border: 1px solid #e3e5dc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: inherit;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #b6e633;
+    box-shadow: 0 0 0 3px rgba(182, 230, 51, 0.1);
+}
+
+/* Footer */
+.footer-bottom {
+    text-align: center;
+    padding: 1rem;
+    border-top: 1px solid #e3e5dc;
+    font-size: 0.875rem;
+    color: #7e8863;
+}
+
+/* Loading */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #e3e5dc;
+    border-top-color: #b6e633;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Notifications */
+.notification {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.notification.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.notification.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.notification.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.notification.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-link {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.5rem;
+    }
+
+    .dropdown-menu {
+        min-width: 150px;
+    }
+}

@@ -94,7 +94,5 @@ if (!defined('SITE_URL')) {
     </div>
 </footer>
 
-<!-- Custom JS -->
-<script src="<?= SITE_URL ?>/js/scripts.js"></script>
 </body>
 </html>
