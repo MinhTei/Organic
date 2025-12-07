@@ -69,107 +69,103 @@ $pageTitle = $search ? "Tìm kiếm: $search" : $currentCategoryName;
 include __DIR__ . '/includes/header.php';
 ?>
 
-<main class="main-layout">
-    <!-- Sidebar Filters -->
-    <aside class="sidebar">
-        <div class="filter-card">
-            <h2 class="filter-title">Bộ lọc</h2>
-            <p class="filter-subtitle">Tùy chỉnh lựa chọn của bạn</p>
+<main class="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto" style="width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: hidden;">
+    <!-- Sidebar Filters - Hidden on mobile, visible from md breakpoint -->
+    <aside class="hidden md:block md:col-span-1">
+        <div class="sticky top-20 bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-1">Bộ lọc</h2>
+            <p class="text-xs sm:text-sm text-gray-600 mb-4">Tùy chỉnh lựa chọn</p>
 
-            <form action="" method="GET" id="filterForm">
+            <form action="" method="GET" id="filterForm" class="space-y-4">
                 <?php if ($search): ?>
                     <input type="hidden" name="search" value="<?= $search ?>">
                 <?php endif; ?>
 
                 <!-- Categories -->
-                <div class="filter-section">
-                    <h3 class="filter-section-title">Danh mục</h3>
-                    <div class="category-list">
+                <div class="border-b pb-4">
+                    <h3 class="font-bold text-sm mb-3 text-gray-900">Danh mục</h3>
+                    <div class="space-y-2">
                         <a href="?<?= http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])) ?>"
-                           class="category-item <?= !$categoryId ? 'active' : '' ?>">
-                            <span class="category-name">Tất cả</span>
+                           class="block px-3 py-2 rounded text-sm <?= !$categoryId ? 'bg-primary/20 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-100' ?> transition">
+                            Tất cả
                         </a>
-                        <?php
-                        // Hiển thị tất cả danh mục, dùng ảnh admin upload (trường icon)
-                        foreach ($categories as $cat): ?>
+                        <?php foreach ($categories as $cat): ?>
                         <a href="?<?= http_build_query(array_merge($_GET, ['category' => $cat['id'], 'page' => 1])) ?>"
-                           class="category-item <?= $categoryId == $cat['id'] ? 'active' : '' ?>">
-                            <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" style="width: 28px; height: 28px; object-fit: cover; margin-right: 8px;">
-                            <span class="category-name"><?= str_replace('&amp;', '&', sanitize($cat['name'])) ?></span>
+                           class="flex items-center gap-2 px-3 py-2 rounded text-sm <?= $categoryId == $cat['id'] ? 'bg-primary/20 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-100' ?> transition">
+                            <?php if (!empty($cat['icon'])): ?>
+                                <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" class="w-5 h-5 rounded object-cover">
+                            <?php endif; ?>
+                            <span class="truncate"><?= str_replace('&amp;', '&', sanitize($cat['name'])) ?></span>
                         </a>
                         <?php endforeach; ?>
                     </div>
                 </div>
 
                 <!-- Price Range -->
-                <div class="filter-section">
-                    <h3 class="filter-section-title">Khoảng giá</h3>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <div class="border-b pb-4">
+                    <h3 class="font-bold text-sm mb-3 text-gray-900">Khoảng giá</h3>
+                    <div class="flex gap-2">
                         <input type="number" name="min_price" placeholder="Từ"
                                value="<?= $minPrice ?>"
-                               style="width: 50%; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                               class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
                         <input type="number" name="max_price" placeholder="Đến"
                                value="<?= $maxPrice ?>"
-                               style="width: 50%; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                               class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
                     </div>
                 </div>
 
                 <!-- Checkboxes -->
-                <div class="filter-section">
-                    <div class="checkbox-group">
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="on_sale" value="1" <?= $onSale ? 'checked' : '' ?>>
-                            <span>Đang giảm giá</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="is_new" value="1" <?= $isNew ? 'checked' : '' ?>>
-                            <span>Hàng mới về</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="is_organic" value="1" <?= $isOrganic ? 'checked' : '' ?>>
-                            <span>Chứng nhận hữu cơ</span>
-                        </label>
-                    </div>
+                <div class="space-y-2 pb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="on_sale" value="1" <?= $onSale ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-sm text-gray-700">Đang giảm giá</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_new" value="1" <?= $isNew ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-sm text-gray-700">Hàng mới về</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_organic" value="1" <?= $isOrganic ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-sm text-gray-700">Chứng nhận hữu cơ</span>
+                    </label>
                 </div>
 
                 <!-- Apply Button -->
-                <div class="filter-section">
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        Áp dụng bộ lọc
-                    </button>
-                </div>
+                <button type="submit" class="w-full px-4 py-2 bg-primary text-black font-bold rounded-lg hover:bg-primary-dark transition text-sm">
+                    Áp dụng
+                </button>
             </form>
         </div>
     </aside>
 
     <!-- Products Content -->
-    <div class="products-section">
+    <div class="md:col-span-3">
         <!-- Breadcrumb -->
-        <div class="breadcrumb">
-            <a href="<?= SITE_URL ?>">Trang chủ</a>
-            <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
+        <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
+            <a href="<?= SITE_URL ?>" class="hover:text-primary transition">Trang chủ</a>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
             <?php if ($search): ?>
-                <span class="current">Tìm kiếm: "<?= $search ?>"</span>
+                <span class="text-primary font-semibold">Tìm kiếm: "<?= htmlspecialchars($search) ?>"</span>
             <?php else: ?>
-                <span class="current"><?= $currentCategoryName ?></span>
+                <span class="text-primary font-semibold"><?= htmlspecialchars($currentCategoryName) ?></span>
             <?php endif; ?>
         </div>
 
         <!-- Section Header -->
-        <div class="section-header">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
             <div>
-                <h1 class="section-title"><?= $currentCategoryName ?></h1>
-                <p style="color: var(--muted-light); font-size: 0.875rem;">
-                    <?= $totalProducts ?> sản phẩm
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900"><?= htmlspecialchars($currentCategoryName) ?></h1>
+                <p class="text-xs sm:text-sm text-gray-600 mt-1">
+                    <?= number_format($totalProducts) ?> sản phẩm
                 </p>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <label style="font-size: 0.875rem; color: var(--muted-light);">Sắp xếp:</label>
-                <select class="sort-select" onchange="window.location.href=this.value">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <label class="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
+                <select class="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary/50" onchange="window.location.href=this.value">
                     <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'newest'])) ?>" <?= $sort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
-                    <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'price_asc'])) ?>" <?= $sort == 'price_asc' ? 'selected' : '' ?>>Giá: Thấp đến cao</option>
-                    <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'price_desc'])) ?>" <?= $sort == 'price_desc' ? 'selected' : '' ?>>Giá: Cao đến thấp</option>
+                    <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'price_asc'])) ?>" <?= $sort == 'price_asc' ? 'selected' : '' ?>>Giá: Thấp → Cao</option>
+                    <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'price_desc'])) ?>" <?= $sort == 'price_desc' ? 'selected' : '' ?>>Giá: Cao → Thấp</option>
                     <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'name_asc'])) ?>" <?= $sort == 'name_asc' ? 'selected' : '' ?>>Tên A-Z</option>
                 </select>
             </div>
@@ -177,15 +173,15 @@ include __DIR__ . '/includes/header.php';
 
         <!-- Products Grid -->
         <?php if (empty($products)): ?>
-            <div style="text-align: center; padding: 3rem;">
-                <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--muted-light);">inventory_2</span>
-                <p style="margin-top: 1rem; color: var(--muted-light);">Không tìm thấy sản phẩm nào.</p>
-                <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary" style="margin-top: 1rem;">
+            <div class="text-center py-12">
+                <span class="material-symbols-outlined text-5xl sm:text-6xl text-gray-300 block mb-4">inventory_2</span>
+                <p class="text-gray-600 mb-4">Không tìm thấy sản phẩm nào.</p>
+                <a href="<?= SITE_URL ?>/products.php" class="inline-block px-6 py-2 bg-primary text-black font-bold rounded-lg hover:bg-primary-dark transition">
                     Xem tất cả sản phẩm
                 </a>
             </div>
         <?php else: ?>
-            <div class="products-grid">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 <?php foreach ($products as $product): ?>
                     <?= renderProductCard($product) ?>
                 <?php endforeach; ?>

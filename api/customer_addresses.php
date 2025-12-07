@@ -1,12 +1,13 @@
 <?php
-/**
- * api/customer_addresses.php - API quản lý địa chỉ khách hàng
- */
 
-// Set header immediately - no includes before this
+
+// 1. Include file cấu hình chung (Để lấy thông tin DB chuẩn từ config.php)
+require_once __DIR__ . '/../includes/config.php'; 
+
+// Set header JSON
 header('Content-Type: application/json; charset=utf-8');
 
-// Start session
+// Start session nếu chưa có
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -23,22 +24,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
 try {
-    // Direct database connection
-    $conn = new PDO(
-        "mysql:host=localhost;dbname=organic_db;charset=utf8mb4",
-        'root',
-        '',
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
+    // 2. Sử dụng hàm getConnection() từ config.php thay vì tự tạo PDO mới
+    $conn = getConnection();
 
     // Helper function
-    function sanitize($data) {
-        if ($data === null) return '';
-        if (!is_string($data)) $data = (string)$data;
-        return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+    if (!function_exists('sanitize')) {
+        function sanitize($data) {
+            if ($data === null) return '';
+            if (!is_string($data)) $data = (string)$data;
+            return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+        }
     }
 
     switch ($action) {
@@ -61,6 +56,9 @@ try {
             $name = sanitize($data['name'] ?? '');
             $phone = sanitize($data['phone'] ?? '');
             $address = sanitize($data['address'] ?? '');
+            $ward = sanitize($data['ward'] ?? '');
+            $district = sanitize($data['district'] ?? '');
+            $city = sanitize($data['city'] ?? '');
             $note = sanitize($data['note'] ?? '');
             $isDefault = $data['is_default'] ?? 0;
 
@@ -75,8 +73,8 @@ try {
                 $conn->prepare("UPDATE customer_addresses SET is_default = 0 WHERE user_id = ?")->execute([$userId]);
             }
 
-            $stmt = $conn->prepare("INSERT INTO customer_addresses (user_id, name, phone, address, note, is_default) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$userId, $name, $phone, $address, $note, $isDefault ? 1 : 0]);
+            $stmt = $conn->prepare("INSERT INTO customer_addresses (user_id, name, phone, address, ward, district, city, note, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$userId, $name, $phone, $address, $ward, $district, $city, $note, $isDefault ? 1 : 0]);
 
             echo json_encode([
                 'success' => true,
@@ -97,6 +95,9 @@ try {
             $name = sanitize($data['name'] ?? '');
             $phone = sanitize($data['phone'] ?? '');
             $address = sanitize($data['address'] ?? '');
+            $ward = sanitize($data['ward'] ?? '');
+            $district = sanitize($data['district'] ?? '');
+            $city = sanitize($data['city'] ?? '');
             $note = sanitize($data['note'] ?? '');
             $isDefault = $data['is_default'] ?? 0;
 
@@ -114,13 +115,10 @@ try {
             // Nếu set làm mặc định, bỏ mặc định các địa chỉ khác
             if ($isDefault) {
                 $conn->prepare("UPDATE customer_addresses SET is_default = 0 WHERE user_id = ? AND id != ?")->execute([$userId, $id]);
-            } else {
-                // Nếu bỏ default flag, cập nhật không thay đổi is_default
-                // (để người dùng có thể unset default nếu muốn)
             }
 
-            $stmt = $conn->prepare("UPDATE customer_addresses SET name = ?, phone = ?, address = ?, note = ?, is_default = ? WHERE id = ? AND user_id = ?");
-            $stmt->execute([$name, $phone, $address, $note, $isDefault ? 1 : 0, $id, $userId]);
+            $stmt = $conn->prepare("UPDATE customer_addresses SET name = ?, phone = ?, address = ?, ward = ?, district = ?, city = ?, note = ?, is_default = ? WHERE id = ? AND user_id = ?");
+            $stmt->execute([$name, $phone, $address, $ward, $district, $city, $note, $isDefault ? 1 : 0, $id, $userId]);
 
             echo json_encode(['success' => true, 'message' => 'Cập nhật địa chỉ thành công']);
             break;

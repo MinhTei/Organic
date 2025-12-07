@@ -317,5 +317,35 @@ $pageTitle = 'Quản lý Role & Quyền';
         </main>
     </div>
 
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN TABLES ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            table {
+                font-size: 0.75rem !important;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.25rem !important;
+            }
+            
+            .btn {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 0.7rem !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            table {
+                font-size: 0.85rem !important;
+            }
+            
+            th, td {
+                padding: 0.6rem 0.4rem !important;
+            }
+        }
+    </style>
+
 </body>
 </html>

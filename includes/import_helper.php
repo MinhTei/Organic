@@ -56,6 +56,9 @@ function importProductsFromExcel($filePath, $categoryId = null)
 
             try {
                 /** @var \PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet */
+                if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                    throw new \Exception('PhpSpreadsheet IOFactory not found');
+                }
                 $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
                 $worksheet = $spreadsheet->getActiveSheet();
                 $rows = $worksheet->toArray();

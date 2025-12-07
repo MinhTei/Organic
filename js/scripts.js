@@ -5,20 +5,36 @@
 // Site URL (set from PHP)
 let SITE_URL = document.querySelector('meta[name="site-url"]')?.content || '';
 
+// Fallback to window location if SITE_URL not set
+if (!SITE_URL) {
+    const path = window.location.pathname;
+    if (path.includes('/organic')) {
+        SITE_URL = window.location.origin + '/organic';
+    }
+}
+
 /**
  * Add product to cart
  */
 function addToCart(productId, quantity = 1) {
-    const url = SITE_URL ? `${SITE_URL}/cart.php` : '/Organic/cart.php';
+    // Sử dụng SITE_URL để đảm bảo đường dẫn tuyệt đối
+    const url = SITE_URL + '/cart.php';
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
     fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
+        credentials: 'include',
+        signal: controller.signal,
         body: `action=add&product_id=${productId}&quantity=${quantity}`
     })
     .then(response => {
+        clearTimeout(timeoutId);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -39,8 +55,16 @@ function addToCart(productId, quantity = 1) {
         }
     })
     .catch(error => {
+        clearTimeout(timeoutId);
         console.error('Fetch error:', error);
-        showNotification('Lỗi kết nối: ' + error.message, 'error');
+        console.error('Fetch URL was:', url);
+        console.error('Full error:', error.toString());
+        
+        if (error.name === 'AbortError') {
+            showNotification('Lỗi: Yêu cầu quá lâu', 'error');
+        } else {
+            showNotification('Lỗi kết nối: ' + error.message, 'error');
+        }
     });
 }
 
@@ -228,9 +252,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const productId = input.dataset.productId;
             let qty = parseInt(input.value);
             if (isNaN(qty) || qty < 1) qty = 1;
-            fetch(`${window.location.origin}/organic/cart.php`, {
+            const cartUrl = SITE_URL + '/cart.php';
+            fetch(cartUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'include',
                 body: `action=update&product_id=${productId}&quantity=${qty}`
             })
             .then(res => res.json())
@@ -254,11 +280,13 @@ window.showNotification = showNotification;
  * Toggle wishlist
  */
 function toggleWishlist(productId) {
-    fetch(`${window.location.origin}/organic/api/wishlist.php`, {
+    const wishlistUrl = SITE_URL + '/api/wishlist.php';
+    fetch(wishlistUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
+        credentials: 'include',
         body: `action=toggle&product_id=${productId}`
     })
     .then(response => response.json())
@@ -283,7 +311,7 @@ function toggleWishlist(productId) {
             // Redirect to login if not logged in
             if (data.message.includes('đăng nhập')) {
                 setTimeout(() => {
-                    window.location.href = '/organic/auth.php';
+                    window.location.href = SITE_URL + '/auth.php';
                 }, 1500);
             }
         }
@@ -299,8 +327,151 @@ function toggleWishlist(productId) {
  */
 function updateWishlistCount(count) {
     // Implement if you add wishlist count to header
-    console.log('Wishlist count:', count);
 }
+
+/**
+ * Mobile Menu Functions
+ */
+function openMobileMenu() {
+    const sidebar = document.getElementById('mobileMenuSidebar');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (sidebar) sidebar.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+}
+
+function closeMobileMenu() {
+    const sidebar = document.getElementById('mobileMenuSidebar');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    
+    // Also close user dropdown when menu closes
+    const userDropdown = document.querySelector('.mobile-user-dropdown');
+    if (userDropdown) userDropdown.classList.remove('active');
+}
+
+function toggleSubmenu(event, submenuId) {
+    event.preventDefault();
+    const submenu = document.getElementById(submenuId);
+    const button = event.currentTarget;
+    
+    if (submenu) {
+        submenu.classList.toggle('open');
+        button.classList.toggle('open');
+    }
+}
+
+function toggleCategoriesDropdown(event, menuId) {
+    event.preventDefault();
+    const menu = document.getElementById(menuId);
+    const button = event.currentTarget;
+    
+    if (menu && button) {
+        menu.classList.toggle('open');
+        button.classList.toggle('open');
+    }
+}
+
+/**
+ * Mobile User Dropdown Functions
+ */
+function setupMobileUserDropdown() {
+    const userDropdown = document.querySelector('.mobile-user-dropdown');
+    if (!userDropdown) return;
+    
+    const toggleBtn = userDropdown.querySelector('.dropdown-toggle');
+    const menu = userDropdown.querySelector('.mobile-dropdown-menu');
+    
+    if (!toggleBtn || !menu) return;
+    
+    // Toggle dropdown on button click
+    toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        userDropdown.classList.toggle('active');
+    });
+    
+    // Close dropdown when clicking on menu items
+    menu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function() {
+            userDropdown.classList.remove('active');
+        });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('active');
+        }
+    });
+    
+    // Close dropdown when overlay is clicked (menu opened)
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            userDropdown.classList.remove('active');
+        });
+    }
+}
+
+/**
+ * Mobile Admin Dropdown Functions
+ */
+function setupMobileAdminDropdown() {
+    const adminDropdown = document.querySelector('.mobile-admin-dropdown');
+    if (!adminDropdown) return;
+    
+    const toggleBtn = adminDropdown.querySelector('.dropdown-toggle');
+    const menu = adminDropdown.querySelector('.mobile-admin-menu');
+    
+    if (!toggleBtn || !menu) return;
+    
+    // Toggle dropdown on button click
+    toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        adminDropdown.classList.toggle('active');
+    });
+    
+    // Close dropdown when clicking on menu items
+    menu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function() {
+            adminDropdown.classList.remove('active');
+        });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!adminDropdown.contains(e.target)) {
+            adminDropdown.classList.remove('active');
+        }
+    });
+    
+    // Close dropdown when overlay is clicked (menu opened)
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            adminDropdown.classList.remove('active');
+        });
+    }
+}
+
+// Initialize mobile menu and dropdown on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu button
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', openMobileMenu);
+    }
+    
+    // Setup mobile user dropdown
+    setupMobileUserDropdown();
+    
+    // Setup mobile admin dropdown
+    setupMobileAdminDropdown();
+});
 
 // Export for global use
 window.toggleWishlist = toggleWishlist;
+window.openMobileMenu = openMobileMenu;
+window.closeMobileMenu = closeMobileMenu;
+window.toggleSubmenu = toggleSubmenu;
+window.toggleCategoriesDropdown = toggleCategoriesDropdown;

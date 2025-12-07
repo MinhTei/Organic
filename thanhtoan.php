@@ -9,12 +9,11 @@
  * - Áp dụng mã giảm giá
  * - Tính phí vận chuyển
  * - Xác nhận và tạo đơn hàng
- * - Lưu địa chỉ mới với note "địa chỉ người nhận gần đây"
+
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
-require_once __DIR__ . '/includes/email_functions.php';
 
 $success = '';
 $error = '';
@@ -165,13 +164,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             if (!$selectedAddr) {
                 $error = 'Địa chỉ giao hàng không hợp lệ.';
             } else {
-                $name = $selectedAddr['name'];
-                $phone = $selectedAddr['phone'];
-                $address = $selectedAddr['address'];
-                $ward = $selectedAddr['ward'] ?? '';
-                $district = $selectedAddr['district'] ?? '';
-                $email = $user['email'] ?? '';
-                $city = 'TP. Hồ Chí Minh'; // Thành phố mặc định
+                // Get data from hidden inputs (sent by JavaScript) or fallback to database
+                $name = sanitize($_POST['name_saved'] ?? '') ?: $selectedAddr['name'];
+                $phone = sanitize($_POST['phone_saved'] ?? '') ?: $selectedAddr['phone'];
+                $address = sanitize($_POST['address_saved'] ?? '') ?: $selectedAddr['address'];
+                $ward = sanitize($_POST['ward_saved'] ?? '') ?: ($selectedAddr['ward'] ?? '');
+                $district = sanitize($_POST['district_saved'] ?? '') ?: ($selectedAddr['district'] ?? '');
+                $city = sanitize($_POST['city_saved'] ?? '') ?: ($selectedAddr['city'] ?? 'TP. Hồ Chí Minh');
+                $email = sanitize($_POST['email_saved'] ?? '') ?: ($user['email'] ?? '');
+                
+                // Fallback: if email still empty, use account email
+                if (empty($email)) {
+                    $email = $user['email'] ?? '';
+                }
             }
         }
     } elseif ($addressType === 'new') {
@@ -183,6 +188,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $ward = sanitize($_POST['ward'] ?? '');
         $district = sanitize($_POST['district'] ?? '');
         $city = sanitize($_POST['city'] ?? '');
+        
+        // Nếu email form rỗng, dùng email tài khoản
+        if (empty($email)) {
+            $email = $user['email'] ?? '';
+        }
     } else {
         $error = 'Vui lòng chọn hình thức giao hàng.';
     }
@@ -208,12 +218,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             $sql = "INSERT INTO orders (
                 user_id, order_code, total_amount, discount_amount, shipping_fee, 
                 final_amount, status, payment_method, payment_status,
-                shipping_name, shipping_phone, shipping_address, shipping_ward, 
+                shipping_name, shipping_phone, shipping_email, shipping_address, shipping_ward, 
                 shipping_district, shipping_city, note, coupon_code
             ) VALUES (
                 :user_id, :order_code, :total_amount, :discount_amount, :shipping_fee,
                 :final_amount, 'pending', :payment_method, 'pending',
-                :shipping_name, :shipping_phone, :shipping_address, :shipping_ward,
+                :shipping_name, :shipping_phone, :shipping_email, :shipping_address, :shipping_ward,
                 :shipping_district, :shipping_city, :note, :coupon_code
             )";
             
@@ -228,6 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 ':payment_method' => $paymentMethod,
                 ':shipping_name' => $name,
                 ':shipping_phone' => $phone,
+                ':shipping_email' => $email,
                 ':shipping_address' => $address,
                 ':shipping_ward' => $ward,
                 ':shipping_district' => $district,
@@ -259,11 +270,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 $updateStock->execute([':qty' => $item['quantity'], ':id' => $item['product']['id']]);
             }
             
-            // If new address was used, save it to customer_addresses
-            if ($addressType === 'new' && !empty($name) && !empty($phone)) {
-                $stmtAddr = $conn->prepare("INSERT INTO customer_addresses (user_id, name, phone, address, note, is_default, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
-                $stmtAddr->execute([$userId, $name, $phone, $address, 'địa chỉ người nhận gần đây']);
-            }
+            // Note: Địa chỉ mới chỉ được dùng tạm thời, không lưu vào customer_addresses
+            // Nếu khách muốn lưu, họ phải tự thêm ở trang user_info.php
             
             // Update coupon usage
             if ($couponCode) {
@@ -278,9 +286,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             unset($_SESSION['applied_coupon']);
             
             // Send order confirmation email (optional)
-            if (!empty($email)) {
-                sendOrderConfirmationEmail($email, $name, $orderId, $total);
-            }
+            // TODO: Implement email sending function later
+            // if (!empty($email)) {
+            //     sendOrderConfirmationEmail($email, $name, $orderId, $total);
+            // }
             
             // Redirect to success page
             $_SESSION['order_success'] = [
@@ -301,57 +310,67 @@ $pageTitle = 'Thanh toán';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<main class="container" style="padding: 2rem 1rem; max-width: 1200px;">
+<main style="padding: clamp(1rem, 3vw, 2rem); max-width: 1200px; margin: 0 auto;">
     <!-- Breadcrumb -->
-    <div class="breadcrumb">
-        <a href="<?= SITE_URL ?>">Trang chủ</a>
-        <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
-        <a href="<?= SITE_URL ?>/cart.php">Giỏ hàng</a>
-        <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
-        <span class="current">Thanh toán</span>
+    <div style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); flex-wrap: wrap; font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-bottom: clamp(1rem, 2vw, 1.5rem);">
+        <a href="<?= SITE_URL ?>" style="color: var(--primary); text-decoration: none;">Trang chủ</a>
+        <span class="material-symbols-outlined" style="font-size: clamp(0.875rem, 1.5vw, 1rem);">chevron_right</span>
+        <a href="<?= SITE_URL ?>/cart.php" style="color: var(--primary); text-decoration: none;">Giỏ hàng</a>
+        <span class="material-symbols-outlined" style="font-size: clamp(0.875rem, 1.5vw, 1rem);">chevron_right</span>
+        <span style="color: var(--primary); font-weight: 600;">Thanh toán</span>
     </div>
 
-    <h1 style="font-size: 2rem; font-weight: 700; margin: 2rem 0 1rem;">Thanh toán</h1>
+    <h1 style="font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; margin: clamp(1rem, 2vw, 2rem) 0 clamp(0.75rem, 1.5vw, 1rem); color: var(--text-light);">Thanh toán</h1>
 
     <?php if ($error): ?>
-        <div class="alert alert-error" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: 0.5rem; color: var(--danger);">
+        <div style="margin-bottom: clamp(1rem, 2vw, 1.5rem); padding: clamp(0.75rem, 1.5vw, 1rem); background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: clamp(0.35rem, 1vw, 0.5rem); color: var(--danger); font-size: clamp(0.875rem, 2vw, 1rem);">
             <strong>Lỗi:</strong> <?= $error ?>
         </div>
     <?php endif; ?>
 
-    <form method="POST" style="display: grid; grid-template-columns: 1fr 400px; gap: 2rem;">
+    <style>
+        @media (max-width: 768px) {
+            .checkout-form { grid-template-columns: 1fr !important; }
+            .order-summary-checkout { position: static !important; margin-top: clamp(1.5rem, 3vw, 2rem) !important; }
+        }
+    </style>
+    <form method="POST" class="checkout-form" style="display: grid; grid-template-columns: 1fr minmax(280px, 400px); gap: clamp(1.5rem, 3vw, 2rem);">
         <!-- Left Column - Shipping Info -->
         <div>
             <!-- Address Selection Section -->
-            <div style="background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 1.5rem; border: 1px solid var(--border-light);">
-                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-symbols-outlined" style="color: var(--primary-dark);">location_on</span>
+            <div style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1rem, 2vw, 2rem); margin-bottom: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--border-light);">
+                <h2 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem); display: flex; align-items: center; gap: clamp(0.35rem, 1vw, 0.5rem); color: var(--text-light);">
+                    <span class="material-symbols-outlined" style="font-size: clamp(1.25rem, 2vw, 1.5rem); color: var(--primary-dark);">location_on</span>
                     Địa chỉ giao hàng
                 </h2>
 
                 <!-- Option 1: Saved Address -->
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; transition: all 0.3s;">
-                        <input type="radio" name="address_type" value="saved" checked style="width: 20px; height: 20px; margin-top: 0.25rem; cursor: pointer; accent-color: var(--primary);">
+                <div style="margin-bottom: clamp(1rem, 2vw, 1.5rem);">
+                    <label style="display: flex; align-items: flex-start; gap: clamp(0.75rem, 2vw, 1rem); cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); transition: all 0.3s;">
+                        <input type="radio" name="address_type" value="saved" checked style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); margin-top: clamp(0.15rem, 0.5vw, 0.25rem); cursor: pointer; accent-color: var(--primary);">
                         <div style="flex: 1;">
-                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Sử dụng địa chỉ đã lưu</p>
+                            <p style="font-weight: 600; margin-bottom: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Sử dụng địa chỉ đã lưu</p>
                             <?php if (empty($savedAddresses)): ?>
-                                <p style="color: var(--muted-light); font-size: 0.9rem;">Bạn chưa lưu địa chỉ nào. <a href="<?= SITE_URL ?>/user_info.php" style="color: var(--primary);">Thêm địa chỉ</a></p>
+                                <p style="color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.9rem);">Bạn chưa lưu địa chỉ nào. <a href="<?= SITE_URL ?>/user_info.php" style="color: var(--primary);">Thêm địa chỉ</a></p>
                             <?php else: ?>
-                                <select name="saved_address_id" id="saved_address_id" onchange="updateAddressDisplay()" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; margin-top: 0.5rem; font-size: 1rem;">
+                                <select name="saved_address_id" id="saved_address_id" onchange="updateAddressDisplay()" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); margin-top: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     <?php foreach ($savedAddresses as $addr): ?>
-                                        <option value="<?= $addr['id'] ?>" <?= $addr['is_default'] ? 'selected' : '' ?>>
+                                        <option value="<?= $addr['id'] ?>" 
+                                                data-ward="<?= sanitize($addr['ward'] ?? '') ?>" 
+                                                data-district="<?= sanitize($addr['district'] ?? '') ?>" 
+                                                data-city="<?= sanitize($addr['city'] ?? 'TP. Hồ Chí Minh') ?>"
+                                                <?= $addr['is_default'] ? 'selected' : '' ?>>
                                             <?= sanitize($addr['name']) ?> - <?= sanitize($addr['phone']) ?> | <?= sanitize($addr['address']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                                 <!-- Hiển thị chi tiết địa chỉ -->
-                                <div id="address_details" style="margin-top: 1rem; padding: 1rem; background: #f0f5ee; border-radius: 0.5rem; display: none;">
-                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Người nhận:</strong> <span id="detail_name"></span></p>
-                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Điện thoại:</strong> <span id="detail_phone"></span></p>
-                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Địa chỉ:</strong> <span id="detail_address"></span></p>
-                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Phường/Xã:</strong> <span id="detail_ward"></span></p>
-                                    <p style="font-size: 0.9rem; color: var(--muted-light);"><strong>Quận/Huyện:</strong> <span id="detail_district"></span></p>
+                                <div id="address_details" style="margin-top: clamp(0.75rem, 1.5vw, 1rem); padding: clamp(0.75rem, 1.5vw, 1rem); background: #f0f5ee; border-radius: clamp(0.35rem, 1vw, 0.5rem); display: none;">
+                                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.9rem); color: var(--muted-light); margin-bottom: clamp(0.25rem, 0.5vw, 0.35rem);"><strong>Người nhận:</strong> <span id="detail_name"></span></p>
+                                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.9rem); color: var(--muted-light); margin-bottom: clamp(0.25rem, 0.5vw, 0.35rem);"><strong>Điện thoại:</strong> <span id="detail_phone"></span></p>
+                                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.9rem); color: var(--muted-light); margin-bottom: clamp(0.25rem, 0.5vw, 0.35rem);"><strong>Địa chỉ:</strong> <span id="detail_address"></span></p>
+                                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.9rem); color: var(--muted-light); margin-bottom: clamp(0.25rem, 0.5vw, 0.35rem);"><strong>Phường/Xã:</strong> <span id="detail_ward"></span></p>
+                                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.9rem); color: var(--muted-light);"><strong>Quận/Huyện:</strong> <span id="detail_district"></span></p>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -359,70 +378,70 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <!-- Option 2: New Address -->
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; transition: all 0.3s;">
-                        <input type="radio" name="address_type" value="new" style="width: 20px; height: 20px; margin-top: 0.25rem; cursor: pointer; accent-color: var(--primary);">
+                <div style="margin-bottom: clamp(0.75rem, 1.5vw, 1rem);">
+                    <label style="display: flex; align-items: flex-start; gap: clamp(0.75rem, 2vw, 1rem); cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); transition: all 0.3s;">
+                        <input type="radio" name="address_type" value="new" style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); margin-top: clamp(0.15rem, 0.5vw, 0.25rem); cursor: pointer; accent-color: var(--primary);">
                         <div style="flex: 1;">
-                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Giao đến địa chỉ khác</p>
-                            <p style="color: var(--muted-light); font-size: 0.9rem;">Nhập thông tin người nhận khác</p>
+                            <p style="font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Giao đến địa chỉ khác</p>
+                            <p style="color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.9rem);">Nhập thông tin người nhận khác</p>
                         </div>
                     </label>
                 </div>
 
                 <!-- New Address Form (Hidden by default) -->
-                <div id="new-address-form" style="display: none; background: #f9f9f9; padding: 1.5rem; border-radius: 0.75rem; margin-top: 1rem; border: 1px solid var(--border-light);">
-                    <div style="display: grid; gap: 1rem;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div id="new-address-form" style="display: none; background: #f9f9f9; padding: clamp(1rem, 2vw, 1.5rem); border-radius: clamp(0.5rem, 1vw, 0.75rem); margin-top: clamp(1rem, 2vw, 1rem); border: 1px solid var(--border-light);">
+                    <div style="display: grid; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1rem);">
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     Họ và tên <span style="color: var(--danger);">*</span>
                                 </label>
-                                    <input type="text" name="name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                <input type="text" name="name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100"
+                                       style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     Số điện thoại <span style="color: var(--danger);">*</span>
                                 </label>
-                                    <input type="text" name="phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                <input type="text" name="phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13"
+                                       style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                             </div>
                         </div>
 
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
+                            <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Email</label>
                             <input type="email" name="email" value="<?= $user ? sanitize($user['email']) : '' ?>" placeholder="Nhập email người nhận" maxlength="100"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                   style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                         </div>
 
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                            <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                 Địa chỉ <span style="color: var(--danger);">*</span>
                             </label>
                             <input type="text" name="address" placeholder="Số nhà, tên đường" required minlength="5" maxlength="255"
-                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                   style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(0.5rem, 1vw, 1rem);">
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Phường/Xã</label>
                                 <input type="text" name="ward" maxlength="100"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                       style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Quận/Huyện</label>
                                 <input type="text" name="district" maxlength="100"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                       style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                     Tỉnh/Thành phố <span style="color: var(--danger);">*</span>
                                 </label>
                                 <input type="text" name="city" value="TP. Hồ Chí Minh" required minlength="3" maxlength="100"
-                                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                       style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                             </div>
                         </div>
                     </div>
@@ -462,41 +481,70 @@ include __DIR__ . '/includes/header.php';
                         <input type="text" name="address_display" readonly
                                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
                     </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">Phường/Xã</label>
+                            <input type="text" name="ward_display" readonly
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">Quận/Huyện</label>
+                            <input type="text" name="district_display" readonly
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">Tỉnh/Thành phố</label>
+                            <input type="text" name="city_display" readonly
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: #f9f9f9;">
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Hidden inputs to store data for submission -->
+                <input type="hidden" name="name_saved" id="name_saved">
+                <input type="hidden" name="phone_saved" id="phone_saved">
+                <input type="hidden" name="email_saved" id="email_saved">
+                <input type="hidden" name="address_saved" id="address_saved">
+                <input type="hidden" name="ward_saved" id="ward_saved">
+                <input type="hidden" name="district_saved" id="district_saved">
+                <input type="hidden" name="city_saved" id="city_saved">
             </div>
 
             <!-- Payment Method -->
-            <div style="background: white; border-radius: 1rem; padding: 2rem; border: 1px solid var(--border-light);">
-                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-symbols-outlined" style="color: var(--primary-dark);">payments</span>
+            <div style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1rem, 2vw, 2rem); border: 1px solid var(--border-light);">
+                <h2 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem); display: flex; align-items: center; gap: clamp(0.35rem, 1vw, 0.5rem); color: var(--text-light);">
+                    <span class="material-symbols-outlined" style="font-size: clamp(1.25rem, 2vw, 1.5rem); color: var(--primary-dark);">payments</span>
                     Phương thức thanh toán
                 </h2>
 
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; flex-direction: column; gap: clamp(0.75rem, 1.5vw, 1rem);">
                     <!-- COD -->
-                    <label style="display: flex; gap: 1rem; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; cursor: pointer; transition: all 0.3s;"
+                    <label style="display: flex; gap: clamp(0.75rem, 2vw, 1rem); padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); cursor: pointer; transition: all 0.3s;"
                            onclick="this.querySelector('input').checked = true; updatePaymentBorder();">
                         <input type="radio" name="payment_method" value="cod" checked
-                               style="width: 20px; height: 20px; accent-color: var(--primary);">
+                               style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); accent-color: var(--primary);">
                         <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <span class="material-symbols-outlined" style="color: var(--primary-dark);">local_atm</span>
+                            <div style="display: flex; align-items: center; gap: clamp(0.35rem, 1vw, 0.5rem); margin-bottom: clamp(0.25rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
+                                <span class="material-symbols-outlined" style="font-size: clamp(1.125rem, 2vw, 1.25rem); color: var(--primary-dark);">local_atm</span>
                                 <strong>Thanh toán khi nhận hàng (COD)</strong>
                             </div>
-                            <p style="font-size: 0.875rem; color: var(--muted-light);">
+                            <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light);">
                                 Thanh toán bằng tiền mặt khi nhận hàng
                             </p>
                         </div>
                     </label>
 
                     <!-- Bank Transfer -->
-                    <label style="display: flex; gap: 1rem; padding: 1rem; border: 2px solid var(--border-light); border-radius: 0.75rem; cursor: pointer; transition: all 0.3s;"
+                    <label style="display: flex; gap: clamp(0.75rem, 2vw, 1rem); padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); cursor: pointer; transition: all 0.3s;"
                            onclick="this.querySelector('input').checked = true; updatePaymentBorder();">
                         <input type="radio" name="payment_method" value="bank_transfer"
-                               style="width: 20px; height: 20px; accent-color: var(--primary);">
+                               style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); accent-color: var(--primary);">
                         <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <span class="material-symbols-outlined" style="color: var(--primary-dark);">account_balance</span>
+                            <div style="display: flex; align-items: center; gap: clamp(0.35rem, 1vw, 0.5rem); margin-bottom: clamp(0.25rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
+                                <span class="material-symbols-outlined" style="font-size: clamp(1.125rem, 2vw, 1.25rem); color: var(--primary-dark);">account_balance</span>
                                 <strong>Chuyển khoản ngân hàng</strong>
                             </div>
                             <p style="font-size: 0.875rem; color: var(--muted-light); margin-bottom: 0.5rem;">
@@ -521,9 +569,9 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Right Column - Order Summary -->
-        <div style="position: sticky; top: 100px; height: fit-content;">
-            <div style="background: white; border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--border-light);">
-                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Đơn hàng của bạn</h2>
+        <div class="order-summary-checkout" style="position: sticky; top: clamp(60px, 10vw, 100px); height: fit-content;">
+            <div style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--border-light);">
+                <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 1.5vw, 1.5rem); color: var(--text-light);">Tóm tắt đơn hàng</h3>
 
                 <!-- Products List -->
                 <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-light);">
@@ -546,36 +594,36 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <!-- Coupon Code -->
-                <div style="margin-bottom: 1.5rem;">
+                <div style="margin-bottom: clamp(1rem, 2vw, 1.5rem);">
                     <?php if ($couponCode && !$couponError): ?>
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(182, 230, 51, 0.1); border-radius: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="material-symbols-outlined" style="color: var(--primary-dark);">confirmation_number</span>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 1vw, 0.5rem);">
+                            <div style="display: flex; align-items: center; gap: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
+                                <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem); color: var(--primary-dark);">confirmation_number</span>
                                 <span style="font-weight: 600;"><?= sanitize($couponCode) ?></span>
                             </div>
-                            <button type="submit" name="remove_coupon" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.875rem;">
+                            <button type="submit" name="remove_coupon" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                 Xóa
                             </button>
                         </div>
                     <?php else: ?>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: clamp(0.35rem, 1vw, 0.5rem); flex-wrap: wrap;">
                             <input type="text" name="coupon_code" placeholder="Mã giảm giá"
-                                   style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                            <button type="submit" name="apply_coupon" class="btn btn-secondary">
+                                   style="flex: 1; min-width: 100px; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                            <button type="submit" name="apply_coupon" style="padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem); background: var(--primary); color: var(--text-light); border: none; border-radius: clamp(0.35rem, 1vw, 0.5rem); font-weight: 600; cursor: pointer; font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                 Áp dụng
                             </button>
                         </div>
                         <?php if ($couponError): ?>
-                            <p style="color: var(--danger); font-size: 0.875rem; margin-top: 0.5rem;"><?= $couponError ?></p>
+                            <p style="color: var(--danger); font-size: clamp(0.75rem, 1.5vw, 0.875rem); margin-top: clamp(0.35rem, 0.75vw, 0.5rem);"><?= $couponError ?></p>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>
 
                 <!-- Price Summary -->
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; flex-direction: column; gap: clamp(0.5rem, 1vw, 0.75rem); margin-bottom: clamp(1rem, 2vw, 1.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--muted-light);">Tạm tính</span>
-                        <span class="font-semibold"><?= formatPrice($subtotal) ?></span>
+                        <span style="font-weight: 500;"><?= formatPrice($subtotal) ?></span>
                     </div>
 
                     <?php if ($discountAmount > 0): ?>
@@ -587,30 +635,30 @@ include __DIR__ . '/includes/header.php';
 
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--muted-light);">Phí vận chuyển</span>
-                        <span class="font-semibold" style="color: <?= $isFreeShipping ? 'var(--success)' : 'inherit' ?>;">
+                        <span style="font-weight: 500; color: <?= $isFreeShipping ? 'var(--success)' : 'inherit' ?>;">
                             <?= $isFreeShipping ? 'Miễn phí' : formatPrice($shippingFee) ?>
                         </span>
                     </div>
 
                     <?php if (!$isFreeShipping && $subtotal < $freeShippingThreshold): ?>
-                    <div style="padding: 0.75rem; background: rgba(182, 230, 51, 0.1); border-radius: 0.5rem; font-size: 0.875rem;">
+                    <div style="padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                         Mua thêm <strong><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
                     </div>
                     <?php endif; ?>
                 </div>
 
                 <!-- Total -->
-                <div style="display: flex; justify-content: space-between; padding: 1.5rem 0; border-top: 1px solid var(--border-light); font-size: 1.25rem; font-weight: 700;">
+                <div style="display: flex; justify-content: space-between; padding: clamp(1rem, 1.5vw, 1.5rem) 0; border-top: 1px solid var(--border-light); font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; color: var(--text-light);">
                     <span>Tổng cộng</span>
                     <span style="color: var(--primary-dark);"><?= formatPrice($total) ?></span>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" name="place_order" value="1" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1rem; cursor: pointer; pointer-events: auto; border-radius: 0.5rem;">
+                <button type="submit" name="place_order" value="1" style="width: 100%; padding: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(0.875rem, 2vw, 1rem); background: var(--primary); color: var(--text-light); font-weight: 600; border: none; border-radius: clamp(0.35rem, 1vw, 0.5rem); cursor: pointer; pointer-events: auto;">
                     Đặt hàng
                 </button>
 
-                <p style="text-align: center; font-size: 0.875rem; color: var(--muted-light); margin-top: 1rem;">
+                <p style="text-align: center; font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-top: clamp(0.75rem, 1.5vw, 1rem);">
                     Bằng việc đặt hàng, bạn đồng ý với 
                     <a href="#" style="color: var(--primary-dark);">Điều khoản sử dụng</a> của chúng tôi
                 </p>
@@ -650,18 +698,29 @@ function updateAddressType() {
         document.querySelector('input[name="phone"]').setAttribute('required', 'required');
         document.querySelector('input[name="address"]').setAttribute('required', 'required');
         
-        // Clear the form inputs
+        // Clear the form inputs - để trống tất cả để người dùng tự nhập
         document.querySelector('input[name="name"]').value = '';
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('input[name="email"]').value = '';
         document.querySelector('input[name="address"]').value = '';
         document.querySelector('input[name="ward"]').value = '';
         document.querySelector('input[name="district"]').value = '';
-        document.querySelector('input[name="city"]').value = 'TP. Hồ Chí Minh';
+        document.querySelector('input[name="city"]').value = ''; // Để trống, không mặc định TP. Hồ Chí Minh
         document.querySelector('textarea[name="note"]').value = '';
+        
+        // Remove readonly từ email input
+        const emailInput = document.querySelector('input[name="email"]');
+        emailInput.removeAttribute('readonly');
+        emailInput.style.backgroundColor = 'transparent';
     } else {
         newAddressForm.style.display = 'none';
         shippingInfo.style.display = 'block';
+        
+        // Khi sử dụng địa chỉ đã lưu, set email từ tài khoản
+        const emailInput = document.querySelector('input[name="email"]');
+        emailInput.value = '<?= $user ? sanitize($user['email']) : '' ?>';
+        emailInput.setAttribute('readonly', 'readonly'); // Để readonly để không người dùng sửa
+        emailInput.style.backgroundColor = '#f9f9f9';
         
         // Loại bỏ required khi form ẩn
         document.querySelector('input[name="name"]').removeAttribute('required');
@@ -676,18 +735,57 @@ function updateAddressType() {
             
             if (parts.length >= 2) {
                 const namePhone = parts[0].trim().split('-');
+                const name = namePhone[0].trim();
+                const phone = namePhone[1].trim() || '';
+                
                 const nameDisplayEl = document.querySelector('input[name="name_display"]');
                 const phoneDisplayEl = document.querySelector('input[name="phone_display"]');
                 
-                if (nameDisplayEl) nameDisplayEl.value = namePhone[0].trim();
-                if (phoneDisplayEl) phoneDisplayEl.value = namePhone[1].trim() || '';
+                if (nameDisplayEl) {
+                    nameDisplayEl.value = name;
+                    document.getElementById('name_saved').value = name;
+                }
+                if (phoneDisplayEl) {
+                    phoneDisplayEl.value = phone;
+                    document.getElementById('phone_saved').value = phone;
+                }
             }
             
             const addressDisplayEl = document.querySelector('input[name="address_display"]');
-            if (addressDisplayEl) addressDisplayEl.value = (parts[1] || '').trim();
+            const address = (parts[1] || '').trim();
+            if (addressDisplayEl) {
+                addressDisplayEl.value = address;
+                document.getElementById('address_saved').value = address;
+            }
             
             const emailDisplayEl = document.querySelector('input[name="email_display"]');
-            if (emailDisplayEl) emailDisplayEl.value = '<?= $user ? sanitize($user['email']) : '' ?>';
+            const email = '<?= $user ? sanitize($user['email']) : '' ?>';
+            if (emailDisplayEl) {
+                emailDisplayEl.value = email;
+                document.getElementById('email_saved').value = email;
+            }
+            
+            // Get ward, district, city from data attributes
+            const ward = selectedOption.getAttribute('data-ward') || '';
+            const district = selectedOption.getAttribute('data-district') || '';
+            const city = selectedOption.getAttribute('data-city') || '';
+            
+            const wardDisplayEl = document.querySelector('input[name="ward_display"]');
+            const districtDisplayEl = document.querySelector('input[name="district_display"]');
+            const cityDisplayEl = document.querySelector('input[name="city_display"]');
+            
+            if (wardDisplayEl) {
+                wardDisplayEl.value = ward;
+                document.getElementById('ward_saved').value = ward;
+            }
+            if (districtDisplayEl) {
+                districtDisplayEl.value = district;
+                document.getElementById('district_saved').value = district;
+            }
+            if (cityDisplayEl) {
+                cityDisplayEl.value = city;
+                document.getElementById('city_saved').value = city;
+            }
         }
     }
 }

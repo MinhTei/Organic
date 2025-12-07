@@ -28,11 +28,49 @@ $error = '';
 // Xử lý cập nhật trạng thái đơn hàng
 if (isset($_POST['update_status'])) {
     $orderId = (int)$_POST['order_id'];
-    $status = sanitize($_POST['status']);
+    $newStatus = sanitize($_POST['status']);
     
-    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-    if ($stmt->execute([$status, $orderId])) {
+    // Lấy trạng thái cũ
+    $checkStmt = $conn->prepare("SELECT status FROM orders WHERE id = ?");
+    $checkStmt->execute([$orderId]);
+    $oldStatusRow = $checkStmt->fetch();
+    $oldStatus = $oldStatusRow['status'] ?? null;
+    
+    try {
+        $conn->beginTransaction();
+        
+        // Nếu thay đổi sang trạng thái "cancelled" - khôi phục stock
+        if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
+            $itemsStmt = $conn->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+            $itemsStmt->execute([$orderId]);
+            $items = $itemsStmt->fetchAll();
+            
+            foreach ($items as $item) {
+                $restoreStmt = $conn->prepare("UPDATE products SET stock = stock + ? WHERE id = ?");
+                $restoreStmt->execute([$item['quantity'], $item['product_id']]);
+            }
+        }
+        // Nếu thay đổi từ "cancelled" sang trạng thái khác - trừ stock
+        elseif ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            $itemsStmt = $conn->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+            $itemsStmt->execute([$orderId]);
+            $items = $itemsStmt->fetchAll();
+            
+            foreach ($items as $item) {
+                $reduceStmt = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+                $reduceStmt->execute([$item['quantity'], $item['product_id']]);
+            }
+        }
+        
+        // Cập nhật trạng thái đơn hàng
+        $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        $stmt->execute([$newStatus, $orderId]);
+        
+        $conn->commit();
         $success = 'Cập nhật trạng thái đơn hàng thành công!';
+    } catch (Exception $e) {
+        $conn->rollBack();
+        $error = 'Có lỗi xảy ra khi cập nhật trạng thái. Vui lòng thử lại.';
     }
 }
 
@@ -250,6 +288,36 @@ $pageTitle = 'Quản lý Đơn hàng';
             <?php endif; ?>
         </main>
     </div>
+
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN TABLES ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            table {
+                font-size: 0.75rem !important;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.25rem !important;
+            }
+            
+            .actions-btn {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 0.7rem !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            table {
+                font-size: 0.85rem !important;
+            }
+            
+            th, td {
+                padding: 0.6rem 0.4rem !important;
+            }
+        }
+    </style>
 
 </body>
 </html>

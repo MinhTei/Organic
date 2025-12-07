@@ -170,6 +170,7 @@ $pageTitle = 'Chi tiết Đơn hàng';
                     <div class="space-y-2 text-sm">
                         <p><span class="text-gray-500">Người nhận:</span> <span class="font-medium"><?= sanitize($order['shipping_name']) ?></span></p>
                         <p><span class="text-gray-500">Điện thoại:</span> <span class="font-medium"><?= sanitize($order['shipping_phone']) ?></span></p>
+                        <p><span class="text-gray-500">Email:</span> <span class="font-medium"><?= sanitize($order['shipping_email'] ?? '') ?></span></p>
                         <p><span class="text-gray-500">Địa chỉ:</span> <span class="font-medium"><?= sanitize($order['shipping_address']) ?></span></p>
                         <p><span class="text-gray-500">Phường/Xã:</span> <span class="font-medium"><?= sanitize($order['shipping_ward']) ?></span></p>
                         <p><span class="text-gray-500">Quận/Huyện:</span> <span class="font-medium"><?= sanitize($order['shipping_district']) ?></span></p>
@@ -261,6 +262,35 @@ $pageTitle = 'Chi tiết Đơn hàng';
             </div>
         </main>
     </div>
+
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN DETAIL PAGES ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            table {
+                font-size: 0.75rem !important;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.25rem !important;
+            }
+            
+            h1 {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            table {
+                font-size: 0.85rem !important;
+            }
+            
+            th, td {
+                padding: 0.6rem 0.4rem !important;
+            }
+        }
+    </style>
 
 </body>
 </html>

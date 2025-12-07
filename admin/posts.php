@@ -91,7 +91,24 @@ $pageTitle = 'Quản lý bài viết';
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
-    <style>body { font-family: 'Be Vietnam Pro', sans-serif; }</style>
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+
+        /* ===== RESPONSIVE FOR POSTS ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            div[style*="grid-template-columns: 1fr 280px"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            div[style*="grid-template-columns: 1fr 280px"] {
+                grid-template-columns: 1fr 200px !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
 

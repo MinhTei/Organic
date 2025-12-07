@@ -555,5 +555,35 @@ $pageTitle = 'Cài đặt hệ thống';
     }
     </script>
 
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN FORMS ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+            
+            .form-group {
+                margin-bottom: 1rem !important;
+            }
+            
+            label {
+                font-size: 0.85rem !important;
+            }
+            
+            .tab-buttons {
+                flex-wrap: wrap !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            input, textarea, select {
+                padding: 0.6rem !important;
+                font-size: 0.9rem !important;
+            }
+        }
+    </style>
+
 </body>
 </html>

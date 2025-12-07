@@ -64,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mime = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
 
                 if (!in_array($mime, $allowed)) {
                     throw new Exception('Định dạng ảnh không được hỗ trợ. Vui lòng chọn JPG/PNG/GIF.');
@@ -162,25 +161,51 @@ $pageTitle = 'Thông tin cá nhân';
 include __DIR__ . '/includes/header.php';
 ?>
 
+<style>
+    /* Responsive layout for user info page */
+    @media (max-width: 768px) {
+        .user-info-container {
+            grid-template-columns: 1fr !important;
+        }
+        
+        aside {
+            position: relative !important;
+            top: 0 !important;
+            display: none;
+        }
+        
+        .sidebar-mobile-toggle {
+            display: flex;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .sidebar-mobile-toggle {
+            display: none;
+        }
+    }
+</style>
+
 <main style="background: var(--background-light); min-height: calc(100vh - 400px);">
-    <div style="max-width: 1400px; margin: 0 auto; padding: 2rem 1rem;">
-        <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem;">
+    <div style="max-width: 1400px; margin: 0 auto; padding: clamp(1rem, 3vw, 2rem);">
+        <div class="user-info-container" style="display: grid; grid-template-columns: clamp(250px, 25vw, 280px) 1fr; gap: clamp(1rem, 2vw, 2rem);">
+
             
             <!-- Sidebar -->
-            <aside style="background: white; border-radius: 1rem; padding: 2rem; height: fit-content; position: sticky; top: 100px;">
+            <aside style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem); height: fit-content; position: sticky; top: clamp(60px, 10vw, 100px);">
                 <!-- User Avatar -->
-                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-light);">
+                <div style="text-align: center; margin-bottom: clamp(1rem, 2vw, 2rem); padding-bottom: clamp(1rem, 2vw, 2rem); border-bottom: 1px solid var(--border-light);">
                     <?php if (!empty($user['avatar'])): ?>
-                        <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
+                        <div style="width: clamp(80px, 20vw, 100px); height: clamp(80px, 20vw, 100px); margin: 0 auto clamp(0.5rem, 1vw, 1rem); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
                             <img src="<?= sanitize($user['avatar']) ?>" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:block;">
                         </div>
                     <?php else: ?>
-                        <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: white;">
+                        <div style="width: clamp(80px, 20vw, 100px); height: clamp(80px, 20vw, 100px); margin: 0 auto clamp(0.5rem, 1vw, 1rem); border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; color: white;">
                             <?= strtoupper(substr($user['name'], 0, 1)) ?>
                         </div>
                     <?php endif; ?>
-                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem;"><?= sanitize($user['name']) ?></h3>
-                    <p style="font-size: 0.875rem; color: var(--muted-light);">
+                    <h3 style="font-size: clamp(1rem, 2vw, 1.125rem); font-weight: 700; margin-bottom: clamp(0.25rem, 0.5vw, 0.25rem);"><?= sanitize($user['name']) ?></h3>
+                    <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light);">
                         Thành viên 
                         <?php 
                         $membership = ['bronze' => 'Đồng', 'silver' => 'Bạc', 'gold' => 'Vàng'];
@@ -190,49 +215,49 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 
                 <!-- Menu -->
-                <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <nav style="display: flex; flex-direction: column; gap: clamp(0.3rem, 0.8vw, 0.5rem);">
                     <a href="?tab=profile" 
-                       style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.5rem; transition: all 0.3s; 
+                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? '700' : '500' ?>;">
-                        <span class="material-symbols-outlined">person</span>
+                        <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">person</span>
                         <span>Thông tin cá nhân</span>
                     </a>
                     
                     <a href="?tab=orders" 
-                       style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.5rem; transition: all 0.3s; 
+                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? '700' : '500' ?>;">
-                        <span class="material-symbols-outlined">receipt_long</span>
+                        <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">receipt_long</span>
                         <span>Lịch sử đơn hàng</span>
                     </a>
                     
                     <a href="?tab=addresses" 
-                       style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.5rem; transition: all 0.3s; 
+                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? '700' : '500' ?>;">
-                        <span class="material-symbols-outlined">home_pin</span>
+                        <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">home_pin</span>
                         <span>Địa chỉ đã lưu</span>
                     </a>
                     
                     <a href="?tab=settings" 
-                       style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.5rem; transition: all 0.3s; 
+                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? '700' : '500' ?>;">
-                        <span class="material-symbols-outlined">settings</span>
+                        <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">settings</span>
                         <span>Cài đặt</span>
                     </a>
                     
-                    <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-light);">
+                    <hr style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; border: none; border-top: 1px solid var(--border-light);">
                     
                     <a href="?logout=1" 
-                       style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.5rem; transition: all 0.3s; 
+                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               color: var(--danger); font-weight: 500;">
-                        <span class="material-symbols-outlined">logout</span>
+                        <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">logout</span>
                         <span>Đăng xuất</span>
                     </a>
                 </nav>
@@ -255,48 +280,48 @@ include __DIR__ . '/includes/header.php';
                     case 'profile':
                 ?>
                         <!-- Profile Tab -->
-                        <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Thông tin cá nhân</h2>                  
-                            <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                                <div style="display:flex; gap:1rem; align-items:center;">
-                                    <label style="display:block; font-weight:600;">Ảnh đại diện</label>
+                        <div style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
+                            <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem);">Thông tin cá nhân</h2>                  
+                            <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: clamp(1rem, 2vw, 1.5rem);">
+                                <div style="display:flex; gap: clamp(0.75rem, 1.5vw, 1rem); align-items:flex-start; flex-wrap: wrap;">
+                                    <label style="display:block; font-weight:600; font-size: clamp(0.85rem, 1.5vw, 0.95rem);">Ảnh đại diện</label>
                                     <div>
                                         <?php if (!empty($user['avatar'])): ?>
-                                            <img src="<?= sanitize($user['avatar']) ?>" alt="avatar" style="width:56px; height:56px; object-fit:cover; border-radius:50%; display:block; margin-bottom:0.5rem;">
+                                            <img src="<?= sanitize($user['avatar']) ?>" alt="avatar" style="width: clamp(48px, 12vw, 56px); height: clamp(48px, 12vw, 56px); object-fit:cover; border-radius:50%; display:block; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem);">
                                         <?php endif; ?>
-                                        <input type="file" name="avatar" accept="image/*" style="display:block;">
-                                        <div style="font-size:0.8rem; color:var(--muted-light); margin-top:0.25rem;">Hỗ trợ JPG/PNG/GIF, tối đa 2MB</div>
+                                        <input type="file" name="avatar" accept="image/*" style="display:block; font-size: clamp(0.8rem, 1.5vw, 0.9rem);">
+                                        <div style="font-size: clamp(0.7rem, 1.2vw, 0.8rem); color:var(--muted-light); margin-top: clamp(0.15rem, 0.3vw, 0.25rem);">Hỗ trợ JPG/PNG/GIF, tối đa 2MB</div>
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1.5rem); @media (max-width: 600px) { grid-template-columns: 1fr; }">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">
                                             Họ và tên <span style="color: var(--danger);">*</span>
                                         </label>
                                         <input type="text" name="name" value="<?= sanitize($user['name']) ?>" required minlength="3" maxlength="100"
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ngày sinh</label>
-                                             <input type="date" name="birthdate" value="<?= sanitize($user['birthdate'] ?? '') ?>"
-                                                 style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Ngày sinh</label>
+                                        <input type="date" name="birthdate" value="<?= sanitize($user['birthdate'] ?? '') ?>"
+                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
                                     </div>
                                 </div>
                                 
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1.5rem); @media (max-width: 600px) { grid-template-columns: 1fr; }">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Email</label>
+                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Email</label>
                                         <input type="email" value="<?= sanitize($user['email']) ?>" disabled
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: var(--background-light);">
+                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); background: var(--background-light); font-size: clamp(0.8rem, 1.5vw, 1rem);">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại</label>
+                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Số điện thoại</label>
                                         <input type="text" name="phone" value="<?= sanitize($user['phone']) ?>" minlength="10" maxlength="13"
                                                placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx"
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
-                                        <div id="profile-phone-error" style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
+                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
+                                        <div id="profile-phone-error" style="color: var(--danger); font-size: clamp(0.7rem, 1.2vw, 0.875rem); margin-top: clamp(0.15rem, 0.3vw, 0.25rem); display: none;"></div>
                                     </div>
                                 </div>
                                 
@@ -310,18 +335,29 @@ include __DIR__ . '/includes/header.php';
                                     }
                                 }
                                 if ($defaultAddr): ?>
-                                    <div style="margin-bottom:2rem;">
-                                        <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ giao hàng mặc định</h3>
-                                        <div style="padding:1rem; background:#f7f8f6; border-radius:0.5rem; border-left: 4px solid var(--primary);">
-                                            <div style="font-weight:600; color:#222; margin-bottom:0.25rem;"><?= sanitize($defaultAddr['name']) ?> - <?= sanitize($defaultAddr['phone']) ?></div>
-                                            <div style="color:var(--text-light); margin-bottom:0.25rem;"><?= sanitize($defaultAddr['address']) ?></div>
+                                    <div style="margin-bottom: clamp(1rem, 2vw, 2rem);">
+                                        <h3 style="font-size: clamp(0.95rem, 1.8vw, 1.1rem); font-weight:600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem);">Địa chỉ giao hàng mặc định</h3>
+                                        <div style="padding: clamp(0.75rem, 1.5vw, 1rem); background:#f7f8f6; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); border-left: 4px solid var(--primary);">
+                                            <div style="font-weight:600; color:#222; margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);"><?= sanitize($defaultAddr['name']) ?> - <?= sanitize($defaultAddr['phone']) ?></div>
+                                            <div style="color:var(--text-light); margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.75rem, 1.3vw, 0.9rem);"><?= sanitize($defaultAddr['address']) ?></div>
+                                            <div style="color:var(--text-light); margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.75rem, 1.3vw, 0.9rem);">
+                                                <?php 
+                                                $location_parts = [];
+                                                if (!empty($defaultAddr['ward'])) $location_parts[] = sanitize($defaultAddr['ward']);
+                                                if (!empty($defaultAddr['district'])) $location_parts[] = sanitize($defaultAddr['district']);
+                                                if (!empty($defaultAddr['city'])) $location_parts[] = sanitize($defaultAddr['city']);
+                                                if (!empty($location_parts)) {
+                                                    echo implode(', ', $location_parts);
+                                                }
+                                                ?>
+                                            </div>
                                             <?php if ($defaultAddr['note']): ?>
-                                                <div style="color:var(--muted-light); font-size:0.9rem;">Ghi chú: <?= sanitize($defaultAddr['note']) ?></div>
+                                                <div style="color:var(--muted-light); font-size: clamp(0.7rem, 1.2vw, 0.9rem);">Ghi chú: <?= sanitize($defaultAddr['note']) ?></div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                    <div style="margin-bottom:2rem;">
+                                    <div style="margin-bottom: clamp(1rem, 2vw, 2rem);">
                                         <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Địa chỉ giao hàng mặc định</h3>
                                         <div style="padding:1rem; background:#f7f8f6; border-radius:0.5rem; color:var(--muted-light);">
                                             Chưa có địa chỉ mặc định. <a href="?tab=addresses" style="color:var(--primary); font-weight:600;">Thêm địa chỉ</a>
@@ -330,7 +366,6 @@ include __DIR__ . '/includes/header.php';
                                 <?php endif; ?>
 
                                 <div style="display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-                                    <button type="button" class="btn btn-secondary">Hủy</button>
                                     <button type="submit" name="update_profile" class="btn btn-primary">Lưu thay đổi</button>
                                 </div>
                             </form>
@@ -509,6 +544,17 @@ include __DIR__ . '/includes/header.php';
                                                     <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1rem;">location_on</span>
                                                     <?= sanitize($addr['address']) ?>
                                                 </p>
+                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                                    <?php 
+                                                    $location_parts = [];
+                                                    if (!empty($addr['ward'])) $location_parts[] = sanitize($addr['ward']);
+                                                    if (!empty($addr['district'])) $location_parts[] = sanitize($addr['district']);
+                                                    if (!empty($addr['city'])) $location_parts[] = sanitize($addr['city']);
+                                                    if (!empty($location_parts)) {
+                                                        echo implode(', ', $location_parts);
+                                                    }
+                                                    ?>
+                                                </p>
                                                 <p style="color: var(--muted-light); font-size: 0.875rem;">
                                                     Thêm <?= date('d/m/Y', strtotime($addr['created_at'])) ?>
                                                 </p>
@@ -680,7 +726,6 @@ function setDefaultAddress(id) {
     })
     .then(res => res.text())
     .then(text => {
-        console.log('set_default response:', text);
         try {
             const data = JSON.parse(text);
             if (data.success) {
@@ -711,7 +756,6 @@ function deleteAddress(id) {
     })
     .then(res => res.text())
     .then(text => {
-        console.log('delete response:', text);
         try {
             const data = JSON.parse(text);
             if (data.success) {
@@ -774,11 +818,9 @@ document.getElementById('address-form-element').addEventListener('submit', funct
         body: JSON.stringify(data)
     })
     .then(res => {
-        console.log('Response status:', res.status);
         return res.text();
     })
     .then(text => {
-        console.log('Response text:', text);
         try {
             const data = JSON.parse(text);
             if (data.success) {

@@ -229,6 +229,46 @@ $pageTitle = 'Import sản phẩm';
             </a>
         </div>
     </div>
+
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN FORMS ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+            
+            label {
+                font-size: 0.85rem !important;
+            }
+            
+            button, a {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
+            
+            table {
+                font-size: 0.75rem !important;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.25rem !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            input, textarea, select {
+                padding: 0.6rem !important;
+                font-size: 0.9rem !important;
+            }
+            
+            table {
+                font-size: 0.85rem !important;
+            }
+        }
+    </style>
+
 </body>
 
 </html>

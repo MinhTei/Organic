@@ -41,8 +41,8 @@ include __DIR__ . '/includes/header.php';
 
 <!-- Hero Slideshow Section -->
 <section style="padding: 0 1rem;">
-    <div style="max-width: 1280px; margin: 2rem auto;">
-        <div class="hero-slideshow" style="position: relative; min-height: 520px; border-radius: 1rem; overflow: hidden;">
+    <div style="max-width: 1280px; margin: 2rem auto; margin-top: 0;">
+        <div class="hero-slideshow" style="position: relative; min-height: 520px; border-radius: 1rem; overflow: hidden; margin-top: 1.5rem;">
             <!-- Slide 1 -->
             <div class="hero-slide active" style="position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out;
                         background: linear-gradient(90deg, rgba(247, 248, 246, 0.95) 0%, rgba(247, 248, 246, 0.3) 60%), 
@@ -148,6 +148,21 @@ include __DIR__ . '/includes/header.php';
     .slide-dot.active {
         background: var(--primary) !important;
         transform: scale(1.3);
+    }
+
+    /* Mobile responsive - push hero down to avoid search bar overlap */
+    @media (max-width: 767px) {
+        .hero-slideshow {
+            margin-top: 2rem !important;
+            min-height: 380px;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .hero-slideshow {
+            margin-top: 1.5rem !important;
+            min-height: 520px;
+        }
     }
 </style>
 

@@ -42,24 +42,36 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Hero Section -->
-<section style="padding: 3rem 1rem; background: rgba(182, 230, 51, 0.05);">
+<section style="padding: 2rem 1rem; background: rgba(182, 230, 51, 0.05);">
     <div style="max-width: 1280px; margin: 0 auto; text-align: center;">
-        <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem;">Liên Hệ Với Chúng Tôi</h1>
-        <p style="font-size: 1.125rem; color: var(--muted-light);">
+        <h1 style="font-size: clamp(1.75rem, 8vw, 3rem); font-weight: 900; margin-bottom: 0.75rem;">Liên Hệ Với Chúng Tôi</h1>
+        <p style="font-size: clamp(0.95rem, 3vw, 1.125rem); color: var(--muted-light);">
             Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn
         </p>
     </div>
 </section>
 
 <!-- Contact Content -->
-<section style="padding: 4rem 1rem;">
+<section style="padding: clamp(2rem, 5vw, 4rem) 1rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
+        <style>
+            @media(max-width: 767px) {
+                .contact-grid { grid-template-columns: 1fr !important; }
+                .email-phone-grid { grid-template-columns: 1fr !important; }
+            }
+            @media(min-width: 768px) {
+                .contact-grid { grid-template-columns: 1fr 1fr !important; }
+            }
+            @media(min-width: 576px) {
+                .email-phone-grid { grid-template-columns: 1fr 1fr !important; }
+            }
+        </style>
+        <div class="contact-grid" style="display: grid; gap: clamp(2rem, 5vw, 4rem);">
             
             <!-- Contact Form -->
             <div>
-                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">Gửi Tin Nhắn</h2>
-                <p style="color: var(--muted-light); margin-bottom: 2rem;">
+                <h2 style="font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 700; margin-bottom: 1rem;">Gửi Tin Nhắn</h2>
+                <p style="color: var(--muted-light); margin-bottom: 2rem; font-size: clamp(0.9rem, 2vw, 1rem);">
                     Điền thông tin vào form dưới đây, chúng tôi sẽ phản hồi trong vòng 24 giờ.
                 </p>
                 
@@ -71,9 +83,9 @@ include __DIR__ . '/includes/header.php';
                     <div class="alert alert-error"><?= $error ?></div>
                 <?php endif; ?>
                 
-                <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <form method="POST" style="display: flex; flex-direction: column; gap: clamp(1rem, 3vw, 1.5rem);">
                     <div>
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: clamp(0.85rem, 2vw, 1rem);">
                             Họ và tên <span style="color: var(--danger);">*</span>
                         </label>
                         <input type="text" name="name" required
@@ -82,9 +94,9 @@ include __DIR__ . '/includes/header.php';
                                placeholder="Nhập họ và tên của bạn">
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="email-phone-grid" style="display: grid; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: clamp(0.85rem, 2vw, 1rem);">
                                 Email <span style="color: var(--danger);">*</span>
                             </label>
                             <input type="email" name="email" required
@@ -94,7 +106,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: clamp(0.85rem, 2vw, 1rem);">
                                 Số điện thoại
                             </label>
                             <input type="tel" name="phone"
@@ -120,15 +132,15 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     
                     <div>
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: clamp(0.85rem, 2vw, 1rem);">
                             Nội dung <span style="color: var(--danger);">*</span>
                         </label>
-                        <textarea name="message" rows="6" required
+                        <textarea name="message" rows="5" required
                                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem; resize: vertical;"
                                   placeholder="Nhập nội dung tin nhắn..."><?= htmlspecialchars($message ?? '') ?></textarea>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: clamp(0.9rem, 2vw, 1.125rem);">
                         <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem;">send</span>
                         Gửi tin nhắn
                     </button>
@@ -137,33 +149,33 @@ include __DIR__ . '/includes/header.php';
             
             <!-- Contact Info -->
             <div>
-                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">Thông Tin Liên Hệ</h2>
-                <p style="color: var(--muted-light); margin-bottom: 2rem;">
+                <h2 style="font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 700; margin-bottom: 1rem;">Thông Tin Liên Hệ</h2>
+                <p style="color: var(--muted-light); margin-bottom: 2rem; font-size: clamp(0.9rem, 2vw, 1rem);">
                     Bạn có thể liên hệ với chúng tôi qua các kênh sau:
                 </p>
                 
-                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div style="display: flex; flex-direction: column; gap: clamp(1.5rem, 4vw, 2rem);">
                     <!-- Address -->
-                    <div style="display: flex; gap: 1rem;">
-                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="display: flex; gap: clamp(0.75rem, 2vw, 1rem);">
+                        <div style="width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                             <span class="material-symbols-outlined" style="color: var(--primary-dark);">location_on</span>
                         </div>
                         <div>
-                            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">Địa chỉ</h3>
-                            <p style="color: var(--muted-light);">
+                            <h3 style="font-weight: 700; margin-bottom: 0.5rem; font-size: clamp(0.95rem, 2vw, 1.125rem);">Địa chỉ</h3>
+                            <p style="color: var(--muted-light); font-size: clamp(0.85rem, 2vw, 1rem); line-height: 1.6;">
                                 <?= function_exists('getSystemSetting') ? nl2br(htmlspecialchars(getSystemSetting('site_address', '123 Đường Xanh, Phường 1, Quận 1, TP. Hồ Chí Minh'))) : '123 Đường Xanh, Phường 1, Quận 1, TP. Hồ Chí Minh' ?>
                             </p>
                         </div>
                     </div>
                     
                     <!-- Phone -->
-                    <div style="display: flex; gap: 1rem;">
-                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="display: flex; gap: clamp(0.75rem, 2vw, 1rem);">
+                        <div style="width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                             <span class="material-symbols-outlined" style="color: var(--primary-dark);">call</span>
                         </div>
                         <div>
-                            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">Điện thoại</h3>
-                            <p style="color: var(--muted-light);">
+                            <h3 style="font-weight: 700; margin-bottom: 0.5rem; font-size: clamp(0.95rem, 2vw, 1.125rem);">Điện thoại</h3>
+                            <p style="color: var(--muted-light); font-size: clamp(0.85rem, 2vw, 1rem);">
                                 Hotline: <a href="tel:<?= function_exists('getSystemSetting') ? htmlspecialchars(getSystemSetting('site_phone', '1900123456')) : '1900123456' ?>" style="color: var(--primary-dark); font-weight: 600;">
                                     <?= function_exists('getSystemSetting') ? htmlspecialchars(getSystemSetting('site_phone', '1900 123 456')) : '1900 123 456' ?>
                                 </a><br>
@@ -173,13 +185,13 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     
                     <!-- Email -->
-                    <div style="display: flex; gap: 1rem;">
-                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="display: flex; gap: clamp(0.75rem, 2vw, 1rem);">
+                        <div style="width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                             <span class="material-symbols-outlined" style="color: var(--primary-dark);">mail</span>
                         </div>
                         <div>
-                            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">Email</h3>
-                            <p style="color: var(--muted-light);">
+                            <h3 style="font-weight: 700; margin-bottom: 0.5rem; font-size: clamp(0.95rem, 2vw, 1.125rem);">Email</h3>
+                            <p style="color: var(--muted-light); font-size: clamp(0.85rem, 2vw, 1rem);">
                                 <a href="mailto:<?= function_exists('getSystemSetting') ? htmlspecialchars(getSystemSetting('site_email', 'info@xanhorganic.vn')) : 'info@xanhorganic.vn' ?>" style="color: var(--primary-dark); font-weight: 600;">
                                     <?= function_exists('getSystemSetting') ? htmlspecialchars(getSystemSetting('site_email', 'info@xanhorganic.vn')) : 'info@xanhorganic.vn' ?>
                                 </a>
@@ -193,13 +205,13 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     
                     <!-- Social Media -->
-                    <div style="display: flex; gap: 1rem;">
-                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="display: flex; gap: clamp(0.75rem, 2vw, 1rem);">
+                        <div style="width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); border-radius: 50%; background: rgba(182, 230, 51, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                             <span class="material-symbols-outlined" style="color: var(--primary-dark);">share</span>
                         </div>
                         <div>
-                            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">Mạng xã hội</h3>
-                            <div style="display: flex; gap: 1rem; margin-top: 0.75rem;">
+                            <h3 style="font-weight: 700; margin-bottom: 0.5rem; font-size: clamp(0.95rem, 2vw, 1.125rem);">Mạng xã hội</h3>
+                            <div style="display: flex; gap: clamp(0.5rem, 1vw, 1rem); margin-top: 0.75rem;">
                                 <?php if (function_exists('getSystemSetting') && getSystemSetting('social_facebook')): ?>
                                     <a href="<?= htmlspecialchars(getSystemSetting('social_facebook')) ?>" target="_blank" style="width: 40px; height: 40px; border-radius: 50%; background: #1877f2; display: flex; align-items: center; justify-content: center; color: white;">
                                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -223,10 +235,10 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 
                 <!-- Map -->
-                <div style="margin-top: 3rem;">
-                    <h3 style="font-weight: 700; margin-bottom: 1rem;">Vị trí của chúng tôi</h3>
-                    <div style="width: 100%; height: 300px; border-radius: 1rem; overflow: hidden; border: 1px solid var(--border-light);">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4943078086524!2d106.69746731533459!3d10.77264926226956!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4b3330bcc7%3A0xc1fd2781577bff14!2zVHLGsOG7nW5nIMSQ4bqhaSBI4buNYyBLaG9hIEjhu41jIFThu7Egbmhpw6puIFRQLiBIQ00!5e0!3m2!1svi!2s!4v1234567890123!5m2!1svi!2s" 
+                <div style="margin-top: clamp(2rem, 5vw, 3rem);">
+                    <h3 style="font-weight: 700; margin-bottom: 1rem; font-size: clamp(0.95rem, 2vw, 1.125rem);">Vị trí của chúng tôi</h3>
+                    <div style="width: 100%; height: clamp(200px, 50vw, 300px); border-radius: 1rem; overflow: hidden; border: 1px solid var(--border-light);">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4943078086524!2d106.69746731533459!3d10.77264926226956!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4b3330bcc7%3A0xc1fd2781577bff14!2zVHLGsOG7nW5nIMSQ4bqhaSBI4buNYyBLaG9hIEjhu41jIFThu7Luong4TCBUUi4gSMOU!5e0!3m2!1svi!2s!4v1234567890123!5m2!1svi!2s" 
                                 width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
                     </div>
                 </div>
@@ -236,35 +248,35 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 <!-- FAQ Section -->
-<section style="padding: 4rem 1rem; background: rgba(182, 230, 51, 0.05);">
+<section style="padding: clamp(2rem, 5vw, 4rem) 1rem; background: rgba(182, 230, 51, 0.05);">
     <div style="max-width: 900px; margin: 0 auto;">
-        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem; text-align: center;">Câu Hỏi Thường Gặp</h2>
+        <h2 style="font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 700; margin-bottom: clamp(1.5rem, 4vw, 2rem); text-align: center;">Câu Hỏi Thường Gặp</h2>
         
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <details style="background: white; padding: 1.5rem; border-radius: 0.75rem; cursor: pointer;">
-                <summary style="font-weight: 700; font-size: 1.125rem;">Làm sao để đặt hàng?</summary>
-                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6;">
+        <div style="display: flex; flex-direction: column; gap: clamp(0.75rem, 2vw, 1rem);">
+            <details style="background: white; padding: clamp(1rem, 3vw, 1.5rem); border-radius: 0.75rem; cursor: pointer;">
+                <summary style="font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.125rem);">Làm sao để đặt hàng?</summary>
+                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6; font-size: clamp(0.85rem, 2vw, 1rem);">
                     Bạn có thể đặt hàng trực tiếp trên website hoặc gọi hotline 1900 123 456. Chúng tôi hỗ trợ đặt hàng 24/7.
                 </p>
             </details>
             
-            <details style="background: white; padding: 1.5rem; border-radius: 0.75rem; cursor: pointer;">
-                <summary style="font-weight: 700; font-size: 1.125rem;">Thời gian giao hàng là bao lâu?</summary>
-                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6;">
+            <details style="background: white; padding: clamp(1rem, 3vw, 1.5rem); border-radius: 0.75rem; cursor: pointer;">
+                <summary style="font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.125rem);">Thời gian giao hàng là bao lâu?</summary>
+                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6; font-size: clamp(0.85rem, 2vw, 1rem);">
                     Đơn hàng trong nội thành TP.HCM sẽ được giao trong vòng 24h. Các tỉnh thành khác từ 2-3 ngày.
                 </p>
             </details>
             
-            <details style="background: white; padding: 1.5rem; border-radius: 0.75rem; cursor: pointer;">
-                <summary style="font-weight: 700; font-size: 1.125rem;">Sản phẩm có được chứng nhận hữu cơ không?</summary>
-                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6;">
+            <details style="background: white; padding: clamp(1rem, 3vw, 1.5rem); border-radius: 0.75rem; cursor: pointer;">
+                <summary style="font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.125rem);">Sản phẩm có được chứng nhận hữu cơ không?</summary>
+                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6; font-size: clamp(0.85rem, 2vw, 1rem);">
                     Tất cả sản phẩm của chúng tôi đều được chứng nhận hữu cơ VietGAP và đáp ứng tiêu chuẩn quốc tế.
                 </p>
             </details>
             
-            <details style="background: white; padding: 1.5rem; border-radius: 0.75rem; cursor: pointer;">
-                <summary style="font-weight: 700; font-size: 1.125rem;">Chính sách đổi trả như thế nào?</summary>
-                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6;">
+            <details style="background: white; padding: clamp(1rem, 3vw, 1.5rem); border-radius: 0.75rem; cursor: pointer;">
+                <summary style="font-weight: 700; font-size: clamp(0.95rem, 2vw, 1.125rem);">Chính sách đổi trả như thế nào?</summary>
+                <p style="margin-top: 1rem; color: var(--muted-light); line-height: 1.6; font-size: clamp(0.85rem, 2vw, 1rem);">
                     Chúng tôi chấp nhận đổi trả trong vòng 24h nếu sản phẩm có vấn đề về chất lượng hoặc giao sai hàng.
                 </p>
             </details>

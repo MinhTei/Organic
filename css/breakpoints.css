@@ -1,0 +1,73 @@
+/**
+ * BREAKPOINTS - Kích thước màn hình chuẩn
+ * 
+ * Mobile:  < 768px
+ * Tablet:  768px - 1024px
+ * Desktop: >= 1025px
+ */
+
+:root {
+    /* Breakpoint values */
+    --breakpoint-mobile-max: 767px;
+    --breakpoint-tablet-min: 768px;
+    --breakpoint-tablet-max: 1024px;
+    --breakpoint-desktop-min: 1025px;
+}
+
+/* =============================================
+   MOBILE: < 768px (iPhone, Small Phones)
+   ============================================= */
+@media (max-width: 767px) {
+    /* Áp dụng CSS mobile tại đây */
+}
+
+/* =============================================
+   TABLET: 768px - 1024px (iPad, Tablet Devices)
+   ============================================= */
+@media (min-width: 768px) and (max-width: 1024px) {
+    /* Áp dụng CSS tablet tại đây */
+}
+
+/* =============================================
+   DESKTOP: >= 1025px (Desktop, Large Screens)
+   ============================================= */
+@media (min-width: 1025px) {
+    /* Áp dụng CSS desktop tại đây */
+}
+
+/* =============================================
+   UTILITY CLASSES
+   ============================================= */
+
+/* Ẩn trên mobile, hiện trên tablet & desktop */
+.hide-mobile {
+    display: none !important;
+}
+
+@media (min-width: 768px) {
+    .hide-mobile {
+        display: block !important;
+    }
+}
+
+/* Ẩn trên tablet & desktop, hiện trên mobile */
+@media (min-width: 768px) {
+    .show-mobile {
+        display: none !important;
+    }
+}
+
+
+
+@media (min-width: 1025px) {
+    .hide-desktop {
+        display: none !important;
+    }
+}
+
+/* Ẩn trên mobile & tablet, hiện trên desktop */
+@media (max-width: 1024px) {
+    .show-desktop {
+        display: none !important;
+    }
+}

@@ -408,5 +408,42 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
     });
     </script>
 
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN CHARTS ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
+            .grid, main > div {
+                grid-template-columns: 1fr !important;
+            }
+            
+            table {
+                font-size: 0.75rem !important;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.25rem !important;
+            }
+            
+            h1 {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            table {
+                font-size: 0.85rem !important;
+            }
+            
+            th, td {
+                padding: 0.6rem 0.4rem !important;
+            }
+        }
+    </style>
+
 </body>
 </html>

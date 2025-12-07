@@ -19,6 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
     $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
     
+    error_log('Cart action: ' . $action . ', productId: ' . $productId . ', quantity: ' . $quantity);
+    
     if (!isset($_SESSION['cart'])) {
         $_SESSION['cart'] = [];
     }
@@ -112,7 +114,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $_SESSION['cart'] = [];
             echo json_encode(['success' => true, 'message' => 'Đã xóa giỏ hàng']);
             exit;
+            
+        default:
+            echo json_encode(['success' => false, 'message' => 'Action không hợp lệ']);
+            exit;
     }
+    exit;
+} else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // POST nhưng không có action
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Thiếu tham số action', 'received_post' => $_POST]);
     exit;
 }
 
@@ -159,73 +170,84 @@ $pageTitle = 'Giỏ hàng';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<main class="container" style="padding: 2rem 1rem; max-width: 1000px;">
-    <h1 class="section-title" style="margin-bottom: 2rem;">Giỏ hàng của bạn</h1>
+<main style="padding: clamp(1rem, 3vw, 2rem); max-width: 1200px; margin: 0 auto;">
+    <h1 style="font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 700; margin-bottom: clamp(1rem, 3vw, 2rem); color: var(--text-light);">Giỏ hàng của bạn</h1>
     
     <?php if (empty($cartItems)): ?>
         <!-- Empty Cart -->
-        <div style="text-align: center; padding: 4rem 2rem; background: var(--card-light); border-radius: 1rem;">
-            <span class="material-symbols-outlined" style="font-size: 5rem; color: var(--muted-light);">shopping_cart</span>
-            <h2 style="margin-top: 1rem; font-size: 1.5rem;">Giỏ hàng trống</h2>
-            <p style="color: var(--muted-light); margin-top: 0.5rem;">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm.</p>
-            <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary" style="margin-top: 1.5rem;">
+        <div style="text-align: center; padding: clamp(2rem, 5vw, 4rem); background: var(--card-light); border-radius: clamp(0.5rem, 2vw, 1rem); border: 1px solid var(--border-light);">
+            <span class="material-symbols-outlined" style="font-size: clamp(3rem, 15vw, 5rem); color: var(--muted-light);">shopping_cart</span>
+            <h2 style="margin-top: clamp(0.5rem, 2vw, 1rem); font-size: clamp(1.25rem, 4vw, 1.5rem); font-weight: 600;">Giỏ hàng trống</h2>
+            <p style="color: var(--muted-light); margin-top: clamp(0.25rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm.</p>
+            <a href="<?= SITE_URL ?>/products.php" style="display: inline-block; margin-top: clamp(1rem, 3vw, 1.5rem); padding: clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem); background: var(--primary); color: var(--text-light); font-weight: 600; border-radius: 0.5rem; text-decoration: none; font-size: clamp(0.875rem, 2vw, 1rem);">
                 Tiếp tục mua sắm
             </a>
         </div>
     <?php else: ?>
-        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+        <style>
+            @media (max-width: 768px) {
+                .cart-grid {
+                    grid-template-columns: 1fr !important;
+                }
+                .order-summary-mobile {
+                    position: static !important;
+                    margin-top: clamp(1.5rem, 3vw, 2rem) !important;
+                }
+            }
+        </style>
+        <div class="cart-grid" style="display: grid; grid-template-columns: 1fr minmax(300px, 350px); gap: clamp(1.5rem, 3vw, 2rem);">
             <!-- Cart Items -->
             <div>
                 <?php foreach ($cartItems as $item): ?>
                  <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
-                     style="display: flex; gap: 1rem; padding: 1.5rem; background: var(--card-light); border-radius: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--border-light);">
+                     style="display: grid; grid-template-columns: clamp(80px, 20vw, 120px) 1fr; gap: clamp(0.75rem, 2vw, 1rem); padding: clamp(1rem, 2vw, 1.5rem); background: var(--card-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); margin-bottom: clamp(0.75rem, 2vw, 1rem); border: 1px solid var(--border-light);">
                     
                     <!-- Product Image -->
                     <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                       style="width: 100px; height: 100px; border-radius: 0.5rem; overflow: hidden; flex-shrink: 0;">
+                       style="width: 100%; aspect-ratio: 1; border-radius: clamp(0.35rem, 1vw, 0.5rem); overflow: hidden;">
                         <img src="<?= $item['product']['image'] ?>" alt="<?= sanitize($item['product']['name']) ?>"
                              style="width: 100%; height: 100%; object-fit: cover;">
                     </a>
                     
                     <!-- Product Info -->
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; flex-direction: column; gap: clamp(0.25rem, 1vw, 0.5rem); grid-column: 1 / -1;">
                         <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                           style="font-weight: 600; font-size: 1rem;">
+                           style="font-weight: 600; font-size: clamp(0.875rem, 2vw, 1rem); color: var(--text-light);">
                             <?= sanitize($item['product']['name']) ?>
                         </a>
-                        <p class="item-price" data-unit-price="<?= $item['price'] ?>" style="color: var(--muted-light); font-size: 0.875rem;">
+                        <p class="item-price" data-unit-price="<?= $item['price'] ?>" style="color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                             <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
                         </p>
                         
                         <!-- Quantity Controls -->
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-top: auto; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: clamp(0.5rem, 2vw, 1rem); margin-top: auto; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem);">
                                 <button type="button" class="qty-decrease" data-product-id="<?= $item['product']['id'] ?>"
-                                    style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">−</button>
+                                    style="padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: none; border: none; cursor: pointer; font-size: clamp(0.875rem, 2vw, 1.2rem); font-weight: 600;">−</button>
                                 <input type="number" min="1" max="<?= $item['product']['stock'] ?>" 
                                        class="cart-qty-input" 
                                        data-product-id="<?= $item['product']['id'] ?>" 
                                        data-stock="<?= $item['product']['stock'] ?>" 
                                        value="<?= $item['quantity'] ?>" 
-                                       style="width: 60px; text-align: center; border: none; font-size: 1rem;" 
+                                       style="width: clamp(40px, 10vw, 60px); text-align: center; border: none; font-size: clamp(0.875rem, 2vw, 1rem);" 
                                        onkeypress="handleCartEnterKey(event, <?= $item['product']['id'] ?>)" />
                                 <button type="button" class="qty-increase" data-product-id="<?= $item['product']['id'] ?>"
-                                    style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">+</button>
+                                    style="padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: none; border: none; cursor: pointer; font-size: clamp(0.875rem, 2vw, 1.2rem); font-weight: 600;">+</button>
                             </div>
                             
                             <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
-                                    style="color: var(--danger); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
-                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">delete</span>
+                                    style="color: var(--danger); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete</span>
                                 Xóa
                             </button>
                         </div>
                         
                         <!-- Quantity Error Message -->
-                        <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>" style="display: none; margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 0.25rem; font-size: 0.875rem; color: var(--danger);"></div>
+                        <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>" style="display: none; margin-top: clamp(0.25rem, 1vw, 0.5rem); padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 0.25rem; font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--danger);"></div>
                     </div>
                     
                     <!-- Item Total -->
-                    <div class="item-total" style="font-weight: 700; color: var(--primary-dark);">
+                    <div class="item-total" style="font-weight: 700; color: var(--primary-dark); font-size: clamp(0.875rem, 2vw, 1rem); grid-column: 2; text-align: right; padding-top: clamp(0.5rem, 1vw, 0.75rem);">
                         <?= formatPrice($item['total']) ?>
                     </div>
                 </div>
@@ -233,25 +255,25 @@ include __DIR__ . '/includes/header.php';
                 
                 <!-- Clear Cart -->
                 <button onclick="clearCart()" 
-                        style="color: var(--muted-light); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; margin-top: 1rem;">
-                    <span class="material-symbols-outlined">delete_sweep</span>
+                        style="color: var(--muted-light); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); margin-top: clamp(0.75rem, 2vw, 1rem); font-size: clamp(0.875rem, 1.5vw, 1rem);">
+                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete_sweep</span>
                     Xóa tất cả
                 </button>
             </div>
             
             <!-- Order Summary -->
-            <div style="position: sticky; top: 100px; height: fit-content;">
-                <div style="background: var(--card-light); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid var(--border-light);">
-                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Tóm tắt đơn hàng</h3>
+            <div class="order-summary-mobile" style="position: sticky; top: clamp(60px, 10vw, 100px); height: fit-content;">
+                <div style="background: var(--card-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--border-light);">
+                    <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem); color: var(--text-light);">Tóm tắt đơn hàng</h3>
                     
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
-                        <div style="display: flex; justify-content: space-between;">
+                    <div style="display: flex; flex-direction: column; gap: clamp(0.5rem, 1vw, 0.75rem); padding-bottom: clamp(0.75rem, 1vw, 1rem); border-bottom: 1px solid var(--border-light);">
+                        <div style="display: flex; justify-content: space-between; font-size: clamp(0.875rem, 2vw, 1rem);">
                             <span style="color: var(--muted-light);">Tạm tính</span>
-                            <span class="cart-subtotal"><?= formatPrice($subtotal) ?></span>
+                            <span class="cart-subtotal" style="font-weight: 500;"><?= formatPrice($subtotal) ?></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
+                        <div style="display: flex; justify-content: space-between; font-size: clamp(0.875rem, 2vw, 1rem);">
                             <span style="color: var(--muted-light);">Phí vận chuyển</span>
-                            <span class="cart-shipping" style="color: var(--success);">
+                            <span class="cart-shipping" style="color: var(--success); font-weight: 500;">
                                 <?php if ($isFreeShipping): ?>
                                     Miễn phí
                                 <?php else: ?>
@@ -262,23 +284,23 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     
                     <?php if (!$isFreeShipping): ?>
-                    <div style="margin: 1rem 0; padding: 0.75rem; background: rgba(182, 230, 51, 0.1); border-radius: 0.5rem;">
-                        <p style="font-size: 0.875rem; color: var(--text-light);">
+                    <div style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 0.5vw, 0.5rem);">
+                        <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--text-light);">
                             Mua thêm <strong><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
                         </p>
                     </div>
                     <?php endif; ?>
                     
-                    <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
-                        <span>Tổng cộng</span>
+                    <div style="display: flex; justify-content: space-between; margin-top: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700;">
+                        <span style="color: var(--text-light);">Tổng cộng</span>
                         <span class="cart-grandtotal" style="color: var(--primary-dark);"><?= formatPrice($total) ?></span>
                     </div>
                     
-                    <a href="<?= SITE_URL ?>/thanhtoan.php" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                    <a href="<?= SITE_URL ?>/thanhtoan.php" style="display: block; text-align: center; margin-top: clamp(1rem, 2vw, 1.5rem); padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.5rem); background: var(--primary); color: var(--text-light); font-weight: 600; border-radius: clamp(0.35rem, 1vw, 0.5rem); text-decoration: none; font-size: clamp(0.875rem, 2vw, 1rem); border: none; cursor: pointer;">
                         Tiến hành thanh toán
                     </a>
                     
-                    <a href="<?= SITE_URL ?>/products.php" style="display: block; text-align: center; margin-top: 1rem; color: var(--muted-light); font-size: 0.875rem;">
+                    <a href="<?= SITE_URL ?>/products.php" style="display: block; text-align: center; margin-top: clamp(0.75rem, 1.5vw, 1rem); color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.875rem); text-decoration: none;">
                         ← Tiếp tục mua sắm
                     </a>
                 </div>
