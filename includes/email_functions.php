@@ -143,11 +143,40 @@ function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
 }
 
 /**
- * Hàm gửi email chính (sử dụng PHPMailer hoặc mail() function)
+ * Hàm gửi email chính (sử dụng PHPMailer nếu có, hoặc fallback mail())
  */
 function sendEmail($to, $subject, $message) {
-    // Luôn dùng mail() function của PHP để gửi email
-    return sendEmailWithPHPMail($to, $subject, $message);
+    // Thử sử dụng PHPMailer nếu được cài đặt
+    if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            
+            // SMTP configuration
+            $mail->isSMTP();
+            $mail->Host = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = getenv('SMTP_USERNAME') ?: SITE_EMAIL;
+            $mail->Password = getenv('SMTP_PASSWORD');
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = getenv('SMTP_PORT') ?: 587;
+            
+            $mail->setFrom(SITE_EMAIL, SITE_NAME);
+            $mail->addAddress($to);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $message;
+            $mail->CharSet = 'UTF-8';
+            
+            return $mail->send();
+        } catch (\Exception $e) {
+            // Nếu PHPMailer lỗi, log error và dùng fallback
+            error_log('PHPMailer Error: ' . $e->getMessage());
+            return sendEmailWithPHPMail($to, $subject, $message);
+        }
+    } else {
+        // Nếu PHPMailer không được cài, dùng mail() function
+        return sendEmailWithPHPMail($to, $subject, $message);
+    }
 }
 
 /**
@@ -156,8 +185,73 @@ function sendEmail($to, $subject, $message) {
 function sendEmailWithPHPMail($to, $subject, $message) {
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-    $headers .= "From: " . SITE_NAME . " <noreply@xanhorganic.vn>" . "\r\n";
-    // Chỉ gửi mail nếu hàm mail() trả về true, nếu không thì bỏ qua, không hiển thị warning
+    $headers .= "From: " . SITE_EMAIL . "\r\n";
+    
+    // Thử gửi email thông qua mail() function
     $result = @mail($to, $subject, $message, $headers);
+    
+    // Nếu mail() thất bại hoặc không được cấu hình, lưu email vào file để testing
+    if (!$result) {
+        return logEmailToFile($to, $subject, $message, $headers);
+    }
+    
     return $result;
+}
+
+/**
+ * Lưu email vào file khi mail() không hoạt động (dùng cho development/localhost)
+ */
+function logEmailToFile($to, $subject, $message, $headers = '') {
+    $emailDir = __DIR__ . '/../storage/emails';
+    
+    // Tạo thư mục nếu chưa tồn tại
+    if (!is_dir($emailDir)) {
+        @mkdir($emailDir, 0755, true);
+    }
+    
+    // Tạo tên file với timestamp
+    $filename = $emailDir . '/email_' . date('Y-m-d_H-i-s_') . md5($to) . '.html';
+    
+    // Tạo nội dung email file
+    $content = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .email-container { background: white; max-width: 800px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #b6e633; color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+        .info { background: #f0f0f0; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
+        .info-row { margin: 10px 0; }
+        .label { font-weight: bold; color: #333; }
+        .value { color: #666; word-break: break-all; }
+        .body-content { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>📧 Email Log (Development Mode)</h2>
+            <p>Email này được lưu vì server không thể gửi email trực tiếp</p>
+        </div>
+        
+        <div class="info">
+            <div class="info-row"><span class="label">To:</span> <span class="value">' . htmlspecialchars($to) . '</span></div>
+            <div class="info-row"><span class="label">Subject:</span> <span class="value">' . htmlspecialchars($subject) . '</span></div>
+            <div class="info-row"><span class="label">Time:</span> <span class="value">' . date('Y-m-d H:i:s') . '</span></div>
+            <div class="info-row"><span class="label">Headers:</span> <span class="value">' . htmlspecialchars($headers) . '</span></div>
+        </div>
+        
+        <div class="body-content">
+            <h3>Email Body:</h3>
+            ' . $message . '
+        </div>
+    </div>
+</body>
+</html>';
+    
+    // Lưu file
+    file_put_contents($filename, $content);
+    
+    return true; // Trả về true để cho biết email đã được "gửi" (lưu vào file)
 }

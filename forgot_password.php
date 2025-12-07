@@ -28,10 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
         if ($user) {
             // Generate reset token
             $token = bin2hex(random_bytes(32));
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+3 minutes'));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+            
             // Delete old tokens for this email
             $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = :email");
             $stmt->execute([':email' => $email]);
+            
             // Insert new token
             $stmt = $conn->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (:email, :token, :expires_at)");
             $stmt->execute([
@@ -39,11 +41,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
                 ':token' => $token,
                 ':expires_at' => $expiresAt
             ]);
-            // Tạo link reset để hiển thị ngay bên dưới ô nhập email
+            
+            // Create reset link
             $resetLink = SITE_URL . "/reset_password.php?token=" . $token;
-            $showResetLink = true;
+            
+            // Send email with reset link
+            $subject = "Đặt lại mật khẩu - " . SITE_NAME;
+            $message = '
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #b6e633 0%, #9acc2a 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .header h1 { color: white; margin: 0; font-size: 24px; }
+                    .content { background: #ffffff; padding: 30px; border: 1px solid #e3e5dc; border-top: none; }
+                    .button { display: inline-block; padding: 12px 30px; background: #b6e633; color: #161811; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+                    .footer { text-align: center; padding: 20px; color: #7e8863; font-size: 12px; }
+                    .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🌱 ' . SITE_NAME . '</h1>
+                    </div>
+                    <div class="content">
+                        <p>Xin chào <strong>' . htmlspecialchars($user['name']) . '</strong>,</p>
+                        
+                        <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+                        
+                        <p>Vui lòng nhấn nút dưới đây để đặt lại mật khẩu:</p>
+                        
+                        <center>
+                            <a href="' . htmlspecialchars($resetLink) . '" class="button">Đặt lại mật khẩu</a>
+                        </center>
+                        
+                        <p>Hoặc sao chép liên kết này vào trình duyệt của bạn:</p>
+                        <p style="word-break: break-all; color: #2563eb;">
+                            ' . htmlspecialchars($resetLink) . '
+                        </p>
+                        
+                        <div class="warning">
+                            <strong>⚠️ Lưu ý:</strong> Link này sẽ hết hạn sau 24 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
+                        </div>
+                        
+                        <p style="margin-top: 2rem; color: #7e8863;">
+                            Trân trọng,<br>
+                            <strong>' . SITE_NAME . '</strong>
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>© ' . date('Y') . ' ' . SITE_NAME . '. Tất cả quyền được bảo lưu.</p>
+                    </div>
+                </div>
+            </body>
+            </html>';
+            
+            // Send email using sendEmail function with fallback to mail()
+            if (sendEmail($email, $subject, $message)) {
+                $success = '✅ Email đặt lại mật khẩu đã được gửi! Vui lòng kiểm tra hộp thư của bạn.';
+                $step = 'sent';
+            } else {
+                $error = 'Không thể gửi email. Vui lòng thử lại sau.';
+            }
         } else {
-            $showResetLink = false;
+            // Email không tồn tại - hiển thị lỗi
+            $error = 'Email này không được đăng ký trong hệ thống. Vui lòng kiểm tra lại hoặc <a href="' . SITE_URL . '/auth.php" style="color: var(--primary-dark); font-weight: 600;">đăng ký tài khoản mới</a>.';
         }
     }
 }
@@ -66,6 +132,10 @@ include __DIR__ . '/includes/header.php';
                 <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;">Quên mật khẩu?</h1>
                 <p style="color: var(--muted-light);">Nhập email để nhận link đặt lại mật khẩu</p>
             </div>
+            
+            <?php if ($success): ?>
+                <div class="alert alert-success" style="margin-bottom: 1.5rem; background-color: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; padding: 1rem; border-radius: 0.5rem;"><?= $success ?></div>
+            <?php endif; ?>
             
             <?php if ($error): ?>
                 <div class="alert alert-error" style="margin-bottom: 1.5rem;"><?= $error ?></div>

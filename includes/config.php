@@ -1,6 +1,24 @@
 <?php
 // config.php - Cấu hình database và các hằng số (Updated)
 
+// Load Composer autoloader (for PHPMailer and other packages)
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Load environment variables from .env file
+if (file_exists(__DIR__ . '/../.env')) {
+    $env_file = __DIR__ . '/../.env';
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '#') === 0) continue; // Skip comments
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            putenv("$key=$value");
+        }
+    }
+}
+
 // Database Configuration
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
