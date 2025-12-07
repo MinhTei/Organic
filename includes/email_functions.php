@@ -1,89 +1,21 @@
-
 <?php
 /**
- * email_functions.php - Hàm gửi email
+ * email_functions.php - Các hàm gửi email
+ * 
+ * Hỗ trợ:
+ * - Gửi email xác nhận đơn hàng
+ * - Gửi email đặt lại mật khẩu
+ * - Fallback: PHPMailer → mail() → lưu file (development mode)
  */
-
-/**
- * Gửi email đặt lại mật khẩu
- */
-function sendPasswordResetEmail($email, $name, $resetLink) {
-    $subject = "Đặt lại mật khẩu - " . SITE_NAME;
-    
-    $message = '
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #b6e633 0%, #9acc2a 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-            .header h1 { color: white; margin: 0; font-size: 24px; }
-            .content { background: #ffffff; padding: 30px; border: 1px solid #e3e5dc; border-top: none; }
-            .button { display: inline-block; padding: 12px 30px; background: #b6e633; color: #161811; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #7e8863; font-size: 12px; }
-            .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>🌱 ' . SITE_NAME . '</h1>
-            </div>
-        // email_functions.php - Đã xóa toàn bộ hàm gửi mail theo yêu cầu
-                <h1>🌱 Chào mừng đến với ' . SITE_NAME . '!</h1>
-            </div>
-            <div class="content">
-                <p>Xin chào <strong>' . htmlspecialchars($name) . '</strong>,</p>
-                
-                <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>' . SITE_NAME . '</strong>! Chúng tôi rất vui được phục vụ bạn.</p>
-                
-                <div class="features">
-                    <div class="feature">
-                        <span class="feature-icon">✅</span>
-                        <div>
-                            <strong>Sản phẩm 100% hữu cơ</strong><br>
-                            <small>Được chứng nhận an toàn cho sức khỏe</small>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <span class="feature-icon">🚚</span>
-                        <div>
-                            <strong>Giao hàng nhanh chóng</strong><br>
-                            <small>Miễn phí vận chuyển cho đơn từ 500.000₫</small>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <span class="feature-icon">🎁</span>
-                        <div>
-                            <strong>Ưu đãi thành viên</strong><br>
-                            <small>Tích điểm và nhận quà hấp dẫn</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="text-align: center;">
-                    <a href="' . SITE_URL . '/products.php" class="button">Khám phá sản phẩm</a>
-                </div>
-                
-                <p>Nếu bạn có bất kỳ câu hỏi nào, đừng ngại liên hệ với chúng tôi!</p>
-                
-                <p>Trân trọng,<br><strong>Đội ngũ ' . SITE_NAME . '</strong></p>
-            </div>
-            <div class="footer">
-                <p>&copy; ' . date('Y') . ' ' . SITE_NAME . '. All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ';
-    
-    return sendEmail($email, $subject, $message);
-}
 
 /**
  * Gửi email xác nhận đơn hàng
+ * 
+ * @param string $email Email người nhận
+ * @param string $name Tên người nhận
+ * @param int $orderId ID đơn hàng
+ * @param float $orderTotal Tổng tiền
+ * @return bool
  */
 function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
     $subject = "Xác nhận đơn hàng #$orderId - " . SITE_NAME;
@@ -94,45 +26,103 @@ function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
     <head>
         <meta charset="UTF-8">
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #b6e633 0%, #9acc2a 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-            .header h1 { color: white; margin: 0; font-size: 24px; }
-            .content { background: #ffffff; padding: 30px; border: 1px solid #e3e5dc; border-top: none; }
-            .order-box { background: #f7f8f6; padding: 20px; border-radius: 6px; margin: 20px 0; }
-            .button { display: inline-block; padding: 12px 30px; background: #b6e633; color: #161811; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #7e8863; font-size: 12px; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+            .container { max-width: 650px; margin: 0 auto; background: #fff; }
+            .hero { background: linear-gradient(135deg, #a8e6c1 0%, #56d679 50%, #2ecc71 100%); padding: 40px 30px; text-align: center; }
+            .hero-icon { font-size: 50px; margin-bottom: 15px; }
+            .hero h1 { color: #fff; margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 0.5px; }
+            .hero p { color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 14px; }
+            .content { padding: 30px; }
+            .section { background: #f8fffe; border: 1px solid #e8f5f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+            .section-title { display: flex; align-items: center; gap: 10px; color: #2d3436; font-size: 16px; font-weight: bold; margin: 0 0 15px 0; }
+            .section-title-icon { font-size: 20px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .info-label { color: #636e72; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+            .info-value { color: #2d3436; font-size: 14px; font-weight: 600; }
+            .info-value.highlight { color: #2ecc71; font-size: 18px; }
+            .info-full .info-label { color: #636e72; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+            .info-full .info-value { color: #2d3436; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+            .steps { background: #f8fffe; border: 1px solid #e8f5f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+            .steps h3 { display: flex; align-items: center; gap: 10px; color: #2d3436; font-size: 16px; font-weight: bold; margin: 0 0 12px 0; }
+            .steps ul { margin: 0; padding-left: 20px; }
+            .steps li { color: #636e72; font-size: 13px; margin: 8px 0; line-height: 1.5; }
+            .button-wrap { text-align: center; margin: 25px 0; }
+            .button { display: inline-block; padding: 13px 32px; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; border: none; cursor: pointer; }
+            .footer { padding: 20px 30px; border-top: 1px solid #e8f5f0; text-align: center; color: #636e72; font-size: 12px; }
+            .footer p { margin: 5px 0; }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <h1>✅ Đơn hàng đã được xác nhận</h1>
+            <div class="hero">
+                <div class="hero-icon">✅</div>
+                <h1>Đặt Hàng Thành Công!</h1>
+                <p>Cảm ơn bạn đã tin tưởng và mua sắm tại ' . htmlspecialchars(SITE_NAME) . '</p>
             </div>
+
             <div class="content">
-                <p>Xin chào <strong>' . htmlspecialchars($name) . '</strong>,</p>
-                
-                <p>Cảm ơn bạn đã đặt hàng tại <strong>' . SITE_NAME . '</strong>!</p>
-                
-                <div class="order-box">
-                    <h3 style="margin-top: 0;">Thông tin đơn hàng</h3>
-                    <p><strong>Mã đơn hàng:</strong> #' . $orderId . '</p>
-                    <p><strong>Tổng tiền:</strong> ' . formatPrice($orderTotal) . '</p>
-                    <p><strong>Trạng thái:</strong> Đang xử lý</p>
+                <p style="color: #636e72; font-size: 14px; margin: 0 0 20px 0;">Xin chào <strong>' . htmlspecialchars($name) . '</strong>,</p>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-title-icon">📦</span>
+                        Thông Tin Đơn Hàng
+                    </h3>
+                    <div class="info-grid">
+                        <div>
+                            <div class="info-label">Mã đơn hàng</div>
+                            <div class="info-value">#' . htmlspecialchars($orderId) . '</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Ngày đặt hàng</div>
+                            <div class="info-value">' . date('d/m/Y H:i') . '</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Tổng tiền</div>
+                            <div class="info-value highlight">' . formatPrice($orderTotal) . '</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Phương thức</div>
+                            <div class="info-value">Thanh toán khi nhận hàng</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <p>Chúng tôi đang chuẩn bị đơn hàng của bạn và sẽ giao trong thời gian sớm nhất.</p>
-                
-                <div style="text-align: center;">
-                    <a href="' . SITE_URL . '/user_info.php?tab=orders" class="button">Xem chi tiết đơn hàng</a>
+
+                <div class="section">
+                    <h3 class="section-title">
+                        <span class="section-title-icon">👤</span>
+                        Thông Tin Nhận Hàng
+                    </h3>
+                    <div class="info-full">
+                        <div class="info-label">Người nhận</div>
+                        <div class="info-value">' . htmlspecialchars($name) . '</div>
+                    </div>
                 </div>
-                
-                <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi.</p>
-                
-                <p>Trân trọng,<br><strong>Đội ngũ ' . SITE_NAME . '</strong></p>
+
+                <div class="steps">
+                    <h3>
+                        <span class="section-title-icon">📋</span>
+                        Các Bước Tiếp Theo
+                    </h3>
+                    <ul>
+                        <li>Chúng tôi sẽ xác nhận chi tiết đơn hàng trong vòng 30 phút</li>
+                        <li>Đơn hàng sẽ được chuẩn bị và đóng gói cẩn thận</li>
+                        <li>Giao hàng nhanh chóng (2-4 giờ tại TP.HCM)</li>
+                        <li>Bạn sẽ nhận thông báo qua email khi đơn hàng được giao</li>
+                    </ul>
+                </div>
+
+                <div class="button-wrap">
+                    <a href="' . SITE_URL . '/user_info.php?tab=orders" class="button">Xem Chi Tiết Đơn Hàng</a>
+                </div>
+
+                <p style="color: #636e72; font-size: 13px; line-height: 1.6; margin: 20px 0 0 0;">Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi. Chúng tôi luôn sẵn sàng hỗ trợ!</p>
             </div>
+
             <div class="footer">
-                <p>&copy; ' . date('Y') . ' ' . SITE_NAME . '. All rights reserved.</p>
+                <p><strong>Trân trọng,</strong></p>
+                <p>Đội ngũ ' . htmlspecialchars(SITE_NAME) . '</p>
+                <p style="margin-top: 10px; color: #adb5bd;">&copy; ' . date('Y') . ' ' . htmlspecialchars(SITE_NAME) . '. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -143,7 +133,75 @@ function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
 }
 
 /**
- * Hàm gửi email chính (sử dụng PHPMailer nếu có, hoặc fallback mail())
+ * Gửi email đặt lại mật khẩu
+ * 
+ * @param string $email Email người nhận
+ * @param string $name Tên người dùng
+ * @param string $resetLink Link đặt lại mật khẩu
+ * @return bool
+ */
+function sendPasswordResetEmail($email, $name, $resetLink) {
+    $subject = "Đặt lại mật khẩu - " . SITE_NAME;
+    
+    $message = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; }
+            .header { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+            .header h1 { color: white; margin: 0; font-size: 24px; }
+            .content { color: #333; }
+            .button { display: inline-block; padding: 12px 30px; background: #2ecc71; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+            .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; text-align: center; color: #636e72; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔐 Đặt Lại Mật Khẩu</h1>
+            </div>
+
+            <div class="content">
+                <p>Xin chào <strong>' . htmlspecialchars($name) . '</strong>,</p>
+                
+                <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản tại ' . htmlspecialchars(SITE_NAME) . '. Hãy click vào link dưới để tiến hành đặt lại mật khẩu:</p>
+                
+                <div style="text-align: center;">
+                    <a href="' . htmlspecialchars($resetLink) . '" class="button">Đặt Lại Mật Khẩu</a>
+                </div>
+
+                <p>Link này sẽ hết hạn trong vòng 24 giờ. Nếu bạn không yêu cầu việc này, vui lòng bỏ qua email này.</p>
+
+                <div class="warning">
+                    <strong>⚠️ Lưu ý:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng liên hệ với chúng tôi ngay để bảo vệ tài khoản của bạn.
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Trân trọng,<br><strong>Đội ngũ ' . htmlspecialchars(SITE_NAME) . '</strong></p>
+                <p>&copy; ' . date('Y') . ' ' . htmlspecialchars(SITE_NAME) . '. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ';
+    
+    return sendEmail($email, $subject, $message);
+}
+
+/**
+ * Hàm gửi email chính
+ * 
+ * Ưu tiên: PHPMailer → mail() → lưu file (development mode)
+ * 
+ * @param string $to Email người nhận
+ * @param string $subject Tiêu đề email
+ * @param string $message Nội dung HTML
+ * @return bool
  */
 function sendEmail($to, $subject, $message) {
     // Thử sử dụng PHPMailer nếu được cài đặt
@@ -181,10 +239,15 @@ function sendEmail($to, $subject, $message) {
 
 /**
  * Gửi email qua mail() function (fallback)
+ * 
+ * @param string $to Email người nhận
+ * @param string $subject Tiêu đề
+ * @param string $message Nội dung HTML
+ * @return bool
  */
 function sendEmailWithPHPMail($to, $subject, $message) {
-    $headers = "MIME-Version: 1.0" . "\r\n";
-    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=UTF-8\r\n";
     $headers .= "From: " . SITE_EMAIL . "\r\n";
     
     // Thử gửi email thông qua mail() function
@@ -199,40 +262,47 @@ function sendEmailWithPHPMail($to, $subject, $message) {
 }
 
 /**
- * Lưu email vào file khi mail() không hoạt động (dùng cho development/localhost)
+ * Lưu email vào file (development mode)
+ * 
+ * Khi mail() hoặc SMTP không hoạt động, email sẽ được lưu vào:
+ * /storage/emails/email_YYYY-MM-DD_HH-MM-SS_MD5HASH.html
+ * 
+ * @param string $to Email người nhận
+ * @param string $subject Tiêu đề
+ * @param string $message Nội dung
+ * @param string $headers Headers
+ * @return bool
  */
 function logEmailToFile($to, $subject, $message, $headers = '') {
-    $emailDir = __DIR__ . '/../storage/emails';
+    $emailDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'emails';
     
     // Tạo thư mục nếu chưa tồn tại
     if (!is_dir($emailDir)) {
         @mkdir($emailDir, 0755, true);
     }
     
-    // Tạo tên file với timestamp
-    $filename = $emailDir . '/email_' . date('Y-m-d_H-i-s_') . md5($to) . '.html';
+    $filename = $emailDir . DIRECTORY_SEPARATOR . 'email_' . date('Y-m-d_H-i-s_') . md5($to) . '.html';
     
-    // Tạo nội dung email file
     $content = '<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .email-container { background: white; max-width: 800px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background: #b6e633; color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
-        .info { background: #f0f0f0; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
-        .info-row { margin: 10px 0; }
+        .container { background: white; max-width: 800px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #2ecc71; color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+        .info { background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #2ecc71; }
+        .info-row { margin: 10px 0; font-family: monospace; font-size: 12px; }
         .label { font-weight: bold; color: #333; }
         .value { color: #666; word-break: break-all; }
         .body-content { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="email-container">
+    <div class="container">
         <div class="header">
             <h2>📧 Email Log (Development Mode)</h2>
-            <p>Email này được lưu vì server không thể gửi email trực tiếp</p>
+            <p>Email được lưu vì server không thể gửi trực tiếp</p>
         </div>
         
         <div class="info">
@@ -250,8 +320,7 @@ function logEmailToFile($to, $subject, $message, $headers = '') {
 </body>
 </html>';
     
-    // Lưu file
     file_put_contents($filename, $content);
     
-    return true; // Trả về true để cho biết email đã được "gửi" (lưu vào file)
+    return true;
 }

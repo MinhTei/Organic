@@ -289,4 +289,67 @@ function renderProductCard($product) {
     <?php
     return ob_get_clean();
 }
+
+/**
+ * Lấy thông tin trạng thái đơn hàng (nhãn, màu, CSS class)
+ * 
+ * @param string $status Trạng thái đơn hàng (pending, confirmed, processing, shipping, delivered, cancelled, refunded)
+ * @return array Mảng chứa label, color, css_class
+ */
+function getOrderStatusInfo($status) {
+    $statuses = [
+        'pending' => [
+            'label' => 'Chờ xác nhận',
+            'color' => '#f59e0b',
+            'css_class' => 'bg-yellow-100 text-yellow-800'
+        ],
+        'confirmed' => [
+            'label' => 'Đã xác nhận',
+            'color' => '#3b82f6',
+            'css_class' => 'bg-blue-100 text-blue-800'
+        ],
+        'processing' => [
+            'label' => 'Đang xử lý',
+            'color' => '#06b6d4',
+            'css_class' => 'bg-cyan-100 text-cyan-800'
+        ],
+        'shipping' => [
+            'label' => 'Đang giao',
+            'color' => '#06b6d4',
+            'css_class' => 'bg-cyan-100 text-cyan-800'
+        ],
+        'delivered' => [
+            'label' => 'Đã giao',
+            'color' => '#22c55e',
+            'css_class' => 'bg-green-100 text-green-800'
+        ],
+        'cancelled' => [
+            'label' => 'Đã hủy',
+            'color' => '#ef4444',
+            'css_class' => 'bg-red-100 text-red-800'
+        ],
+        'refunded' => [
+            'label' => 'Đã hoàn tiền',
+            'color' => '#8b5cf6',
+            'css_class' => 'bg-purple-100 text-purple-800'
+        ]
+    ];
+    
+    return $statuses[$status] ?? $statuses['pending'];
+}
+
+/**
+ * Lấy thông tin phương thức thanh toán
+ * 
+ * @param string $method Phương thức (cod, bank_transfer)
+ * @return string Nhãn phương thức thanh toán
+ */
+function getPaymentMethodLabel($method) {
+    $methods = [
+        'cod' => 'Thanh toán khi nhận',
+        'bank_transfer' => 'Chuyển khoản'
+    ];
+    
+    return $methods[$method] ?? 'Không xác định';
+}
 ?>

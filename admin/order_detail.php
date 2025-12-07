@@ -41,32 +41,6 @@ $stmt = $conn->prepare("
 $stmt->execute([$orderId]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Nhãn và màu cho trạng thái
-$statusLabels = [
-    'pending' => 'Chờ xác nhận',
-    'confirmed' => 'Đã xác nhận',
-    'processing' => 'Đang xử lý',
-    'shipping' => 'Đang giao',
-    'delivered' => 'Đã giao',
-    'cancelled' => 'Đã hủy',
-    'refunded' => 'Đã hoàn tiền'
-];
-
-$statusColors = [
-    'pending' => '#f59e0b',
-    'confirmed' => '#3b82f6',
-    'processing' => '#06b6d4',
-    'shipping' => '#06b6d4',
-    'delivered' => '#22c55e',
-    'cancelled' => '#ef4444',
-    'refunded' => '#8b5cf6'
-];
-
-$paymentMethods = [
-    'cod' => 'Thanh toán khi nhận',
-    'bank_transfer' => 'Chuyển khoản'
-];
-
 $pageTitle = 'Chi tiết Đơn hàng';
 ?>
 
@@ -129,16 +103,21 @@ $pageTitle = 'Chi tiết Đơn hàng';
                         <h2 class="text-2xl font-bold text-gray-900">Đơn hàng #<?= $order['id'] ?></h2>
                         <p class="text-gray-500 text-sm mt-1"><?= $order['order_code'] ?></p>
                     </div>
+                    <?php 
+                        $statusInfo = getOrderStatusInfo($order['status']);
+                        $color = $statusInfo['color'];
+                    ?>
                     <span style="
                         display: inline-block;
-                        background: <?= $statusColors[$order['status']] ?>20;
-                        color: <?= $statusColors[$order['status']] ?>;
+                        background: <?= $color ?>20;
+                        color: <?= $color ?>;
                         padding: 0.5rem 1rem;
                         border-radius: 9999px;
                         font-weight: 600;
                         font-size: 0.875rem;
-                    " <?= $order['status'] === 'cancelled' ? 'style="opacity: 0.5;"' : '' ?>>
-                        <?= $statusLabels[$order['status']] ?>
+                        <?= $order['status'] === 'cancelled' ? 'opacity: 0.5;' : '' ?>
+                    ">
+                        <?= $statusInfo['label'] ?>
                     </span>
                 </div>
 
@@ -149,7 +128,7 @@ $pageTitle = 'Chi tiết Đơn hàng';
                     </div>
                     <div>
                         <p class="text-gray-500">Phương thức thanh toán</p>
-                        <p class="font-medium text-gray-900"><?= $paymentMethods[$order['payment_method']] ?? $order['payment_method'] ?></p>
+                        <p class="font-medium text-gray-900"><?= getPaymentMethodLabel($order['payment_method']) ?></p>
                     </div>
                 </div>
             </div>

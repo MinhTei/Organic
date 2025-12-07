@@ -387,7 +387,4 @@ include __DIR__ . '/includes/header.php';
     }
 </style>
 
-<script>
-</script>
-
 <?php include __DIR__ . '/includes/footer.php'; ?>

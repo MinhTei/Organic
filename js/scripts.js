@@ -85,7 +85,8 @@ function toggleFavorite(productId) {
         icon.style.color = '#ef4444';
     }
     
-    // TODO: Save to server/localStorage
+    // Delegate to the proper wishlist function for persistence
+    toggleWishlist(productId);
     showNotification('Đã cập nhật yêu thích', 'success');
 }
 

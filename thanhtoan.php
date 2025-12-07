@@ -14,6 +14,7 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/email_functions.php';
 
 $success = '';
 $error = '';
@@ -285,11 +286,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             unset($_SESSION['cart']);
             unset($_SESSION['applied_coupon']);
             
-            // Send order confirmation email (optional)
-            // TODO: Implement email sending function later
-            // if (!empty($email)) {
-            //     sendOrderConfirmationEmail($email, $name, $orderId, $total);
-            // }
+            // Send order confirmation email
+            if (!empty($email)) {
+                sendOrderConfirmationEmail($email, $name, $orderId, $total);
+            }
             
             // Redirect to success page
             $_SESSION['order_success'] = [
