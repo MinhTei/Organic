@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .email-container { background: white; max-width: 800px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #b6e633; color: white; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+        .info { background: #f0f0f0; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-family: monospace; font-size: 12px; }
+        .info-row { margin: 10px 0; }
+        .label { font-weight: bold; color: #333; }
+        .value { color: #666; word-break: break-all; }
+        .body-content { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>📧 Email Log (Development Mode)</h2>
+            <p>Email này được lưu vì server không thể gửi email trực tiếp</p>
+        </div>
+        
+        <div class="info">
+            <div class="info-row"><span class="label">To:</span> <span class="value">buiminhtai97@gmail.com</span></div>
+            <div class="info-row"><span class="label">Subject:</span> <span class="value">Đặt lại mật khẩu - Xanh Organic</span></div>
+            <div class="info-row"><span class="label">Time:</span> <span class="value">2025-12-07 16:07:40</span></div>
+            <div class="info-row"><span class="label">Headers:</span> <span class="value">MIME-Version: 1.0
+Content-type:text/html;charset=UTF-8
+From: info@xanhorganic.vn
+</span></div>
+        </div>
+        
+        <div class="body-content">
+            <h3>Email Body:</h3>
+            
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #b6e633 0%, #9acc2a 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .header h1 { color: white; margin: 0; font-size: 24px; }
+                    .content { background: #ffffff; padding: 30px; border: 1px solid #e3e5dc; border-top: none; }
+                    .button { display: inline-block; padding: 12px 30px; background: #b6e633; color: #161811; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+                    .footer { text-align: center; padding: 20px; color: #7e8863; font-size: 12px; }
+                    .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🌱 Xanh Organic</h1>
+                    </div>
+                    <div class="content">
+                        <p>Xin chào <strong>Bùi Minh Tài</strong>,</p>
+                        
+                        <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+                        
+                        <p>Vui lòng nhấn nút dưới đây để đặt lại mật khẩu:</p>
+                        
+                        <center>
+                            <a href="http://localhost/organic/reset_password.php?token=df49dd2542ab5895298b3bad0804f9096e7f1ab2b9e6303b67ca5d4983b0a749" class="button">Đặt lại mật khẩu</a>
+                        </center>
+                        
+                        <p>Hoặc sao chép liên kết này vào trình duyệt của bạn:</p>
+                        <p style="word-break: break-all; color: #2563eb;">
+                            http://localhost/organic/reset_password.php?token=df49dd2542ab5895298b3bad0804f9096e7f1ab2b9e6303b67ca5d4983b0a749
+                        </p>
+                        
+                        <div class="warning">
+                            <strong>⚠️ Lưu ý:</strong> Link này sẽ hết hạn sau 24 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
+                        </div>
+                        
+                        <p style="margin-top: 2rem; color: #7e8863;">
+                            Trân trọng,<br>
+                            <strong>Xanh Organic</strong>
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 Xanh Organic. Tất cả quyền được bảo lưu.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        </div>
+    </div>
+</body>
+</html>
