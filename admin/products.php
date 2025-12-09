@@ -27,14 +27,28 @@ $error = '';
 
 // Xử lý các hành động với sản phẩm (xóa, chuyển trạng thái nổi bật/mới)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Xóa sản phẩm
+    // Xóa sản phẩm và cập nhật ID tự động
     if (isset($_POST['delete_product'])) {
         $productId = (int)$_POST['product_id'];
-        $stmt = $conn->prepare("DELETE FROM products WHERE id = :id");
-        if ($stmt->execute([':id' => $productId])) {
-            $success = 'Đã xóa sản phẩm thành công!';
-        } else {
+        
+        try {
+            // Kiểm tra sản phẩm có tồn tại không
+            $stmt = $conn->prepare("SELECT id FROM products WHERE id = :id");
+            $stmt->execute([':id' => $productId]);
+            if (!$stmt->fetch()) {
+                $error = 'Sản phẩm không tồn tại!';
+            } else {
+                // Xóa sản phẩm (không cập nhật ID)
+                $stmt = $conn->prepare("DELETE FROM products WHERE id = :id");
+                $stmt->execute([':id' => $productId]);
+                $success = 'Đã xóa sản phẩm thành công!';
+                // Redirect để tránh form resubmission
+                header("Location: " . $_SERVER['PHP_SELF'] . "?" . http_build_query($_GET));
+                exit();
+            }
+        } catch (Exception $e) {
             $error = 'Không thể xóa sản phẩm!';
+            error_log("Error deleting product: " . $e->getMessage());
         }
     }
 
@@ -129,26 +143,26 @@ $pageTitle = 'Quản lý sản phẩm';
 
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -160,7 +174,7 @@ $pageTitle = 'Quản lý sản phẩm';
         <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <?php if ($success): ?>
                 <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center gap-2">
                     <span class="material-symbols-outlined">check_circle</span>
@@ -175,13 +189,15 @@ $pageTitle = 'Quản lý sản phẩm';
                 </div>
             <?php endif; ?>
 
+
+
             <!-- Page Header -->
-            <div class="mb-8 flex items-center justify-between">
+            <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Quản lý sản phẩm</h2>
                     <p class="text-gray-600 mt-1">Quản lý danh sách sản phẩm và thông tin</p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                     <a href="product_import.php" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                         <span class="material-symbols-outlined">upload_file</span>
                         Import Excel
@@ -194,11 +210,11 @@ $pageTitle = 'Quản lý sản phẩm';
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Tổng sản phẩm</p>
+                            <p class="text-gray-600 text-xs sm:text-sm">Tổng sản phẩm</p>
                             <h3 class="text-2xl font-bold mt-1"><?= $stats['total'] ?></h3>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -207,10 +223,10 @@ $pageTitle = 'Quản lý sản phẩm';
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Sản phẩm nổi bật</p>
+                            <p class="text-gray-600 text-xs sm:text-sm">Sản phẩm nổi bật</p>
                             <h3 class="text-2xl font-bold mt-1"><?= $stats['featured'] ?></h3>
                         </div>
                         <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -219,10 +235,10 @@ $pageTitle = 'Quản lý sản phẩm';
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Hàng mới</p>
+                            <p class="text-gray-600 text-xs sm:text-sm">Hàng mới</p>
                             <h3 class="text-2xl font-bold mt-1"><?= $stats['new'] ?></h3>
                         </div>
                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -231,10 +247,10 @@ $pageTitle = 'Quản lý sản phẩm';
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Hết hàng</p>
+                            <p class="text-gray-600 text-xs sm:text-sm">Hết hàng</p>
                             <h3 class="text-2xl font-bold mt-1 text-red-600"><?= $stats['out_of_stock'] ?></h3>
                         </div>
                         <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -245,7 +261,7 @@ $pageTitle = 'Quản lý sản phẩm';
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6 mb-6">
                 <form method="GET" class="flex flex-wrap gap-4">
                     <div class="flex-1 min-w-[250px]">
                         <input type="text" name="search" value="<?= sanitize($search) ?>"
@@ -285,18 +301,18 @@ $pageTitle = 'Quản lý sản phẩm';
             </div>
 
             <!-- Products Table -->
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto -mx-3 sm:mx-0">
+                    <table class="w-full text-xs sm:text-sm">
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">ID</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Sản phẩm</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Danh mục</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Giá</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Tồn kho</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Trạng thái</th>
-                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Thao tác</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">ID</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Sản phẩm</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Danh mục</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Giá</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Tồn kho</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Trạng thái</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -310,44 +326,44 @@ $pageTitle = 'Quản lý sản phẩm';
                             <?php else: ?>
                                 <?php foreach ($products as $product): ?>
                                     <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                        <td class="py-4 px-4 font-medium text-gray-900">#<?= $product['id'] ?></td>
-                                        <td class="py-4 px-4">
-                                            <div class="flex items-center gap-3">
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium text-gray-900">#<?= $product['id'] ?></td>
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                            <div class="flex items-center gap-2 sm:gap-3">
                                                 <img src="<?= imageUrl($product['image']) ?>" alt="<?= sanitize($product['name']) ?>"
-                                                    class="w-16 h-16 rounded-lg object-cover border border-gray-200">
-                                                <div>
-                                                    <p class="font-medium text-gray-900"><?= sanitize($product['name']) ?></p>
-                                                    <p class="text-sm text-gray-500"><?= sanitize($product['unit']) ?></p>
+                                                    class="w-10 h-10 sm:w-16 sm:h-16 rounded-lg object-cover border border-gray-200 flex-shrink-0">
+                                                <div class="min-w-0">
+                                                    <p class="font-medium text-gray-900 text-xs sm:text-sm truncate"><?= sanitize($product['name']) ?></p>
+                                                    <p class="text-xs text-gray-500"><?= sanitize($product['unit']) ?></p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-4 px-4">
-                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium font-['Be_Vietnam_Pro']">
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                            <span class="px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium font-['Be_Vietnam_Pro']">
                                                 <?= sanitize($product['category_name']) ?>
                                             </span>
                                         </td>
-                                        <td class="py-4 px-4">
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4">
                                             <?php if ($product['sale_price']): ?>
                                                 <div>
-                                                    <p class="font-semibold text-green-600"><?= formatPrice($product['sale_price']) ?></p>
-                                                    <p class="text-sm text-gray-400 line-through"><?= formatPrice($product['price']) ?></p>
+                                                    <p class="font-semibold text-green-600 text-xs sm:text-sm"><?= formatPrice($product['sale_price']) ?></p>
+                                                    <p class="text-xs text-gray-400 line-through"><?= formatPrice($product['price']) ?></p>
                                                 </div>
                                             <?php else: ?>
-                                                <p class="font-semibold text-gray-900"><?= formatPrice($product['price']) ?></p>
+                                                <p class="font-semibold text-gray-900 text-xs sm:text-sm"><?= formatPrice($product['price']) ?></p>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="py-4 px-4">
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4">
                                             <?php if ($product['stock'] > 0): ?>
-                                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                                <span class="px-2 sm:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                                                     <?= $product['stock'] ?> <?= $product['unit'] ?>
                                                 </span>
                                             <?php else: ?>
-                                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                                                <span class="px-2 sm:px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
                                                     Hết hàng
                                                 </span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="py-4 px-4">
+                                        <td class="py-2 sm:py-4 px-3 sm:px-4">
                                             <div class="flex flex-wrap gap-1">
                                                 <?php if ($product['is_featured']): ?>
                                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">

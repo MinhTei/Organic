@@ -14,6 +14,7 @@ require_once __DIR__ . '/includes/functions.php';
 // Handle cart actions via AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
+
     
     $action = $_POST['action'];
     $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
@@ -196,70 +197,116 @@ include __DIR__ . '/includes/header.php';
             }
         </style>
         <div class="cart-grid" style="display: grid; grid-template-columns: 1fr minmax(300px, 350px); gap: clamp(1.5rem, 3vw, 2rem);">
-            <!-- Cart Items -->
-            <div>
-                <?php foreach ($cartItems as $item): ?>
-                 <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
-                     style="display: grid; grid-template-columns: clamp(80px, 20vw, 120px) 1fr; gap: clamp(0.75rem, 2vw, 1rem); padding: clamp(1rem, 2vw, 1.5rem); background: var(--card-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); margin-bottom: clamp(0.75rem, 2vw, 1rem); border: 1px solid var(--border-light);">
+                    <!-- Cart Items -->
+        <div>
+            <?php foreach ($cartItems as $item): ?>
+            <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
+                style="background: var(--card-light); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-light); overflow: hidden; transition: box-shadow 0.3s ease;">
+                
+                <div class="cart-item-inner" style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; padding: 1.25rem;">
                     
                     <!-- Product Image -->
                     <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                       style="width: 100%; aspect-ratio: 1; border-radius: clamp(0.35rem, 1vw, 0.5rem); overflow: hidden;">
-                        <img src="<?= $item['product']['image'] ?>" alt="<?= sanitize($item['product']['name']) ?>"
-                             style="width: 100%; height: 100%; object-fit: cover;">
+                    class="cart-item-image"
+                    style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #f5f5f5;">
+                        <img src="<?= imageUrl($item['product']['image']) ?>" 
+                            alt="<?= sanitize($item['product']['name']) ?>"
+                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
+                            onmouseover="this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.transform='scale(1)'">
                     </a>
                     
-                    <!-- Product Info -->
-                    <div style="display: flex; flex-direction: column; gap: clamp(0.25rem, 1vw, 0.5rem); grid-column: 1 / -1;">
-                        <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                           style="font-weight: 600; font-size: clamp(0.875rem, 2vw, 1rem); color: var(--text-light);">
-                            <?= sanitize($item['product']['name']) ?>
-                        </a>
-                        <p class="item-price" data-unit-price="<?= $item['price'] ?>" style="color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
-                            <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
-                        </p>
+                    <!-- Product Details -->
+                    <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;">
                         
-                        <!-- Quantity Controls -->
-                        <div style="display: flex; align-items: center; gap: clamp(0.5rem, 2vw, 1rem); margin-top: auto; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem);">
-                                <button type="button" class="qty-decrease" data-product-id="<?= $item['product']['id'] ?>"
-                                    style="padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: none; border: none; cursor: pointer; font-size: clamp(0.875rem, 2vw, 1.2rem); font-weight: 600;">−</button>
-                                <input type="number" min="1" max="<?= $item['product']['stock'] ?>" 
-                                       class="cart-qty-input" 
-                                       data-product-id="<?= $item['product']['id'] ?>" 
-                                       data-stock="<?= $item['product']['stock'] ?>" 
-                                       value="<?= $item['quantity'] ?>" 
-                                       style="width: clamp(40px, 10vw, 60px); text-align: center; border: none; font-size: clamp(0.875rem, 2vw, 1rem);" 
-                                       onkeypress="handleCartEnterKey(event, <?= $item['product']['id'] ?>)" />
-                                <button type="button" class="qty-increase" data-product-id="<?= $item['product']['id'] ?>"
-                                    style="padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: none; border: none; cursor: pointer; font-size: clamp(0.875rem, 2vw, 1.2rem); font-weight: 600;">+</button>
+                        <!-- Header: Name and Remove Button -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div style="flex: 1; min-width: 0;">
+                                <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
+                                style="font-weight: 600; font-size: 1rem; color: var(--text-light); text-decoration: none; display: block; margin-bottom: 0.25rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4;">
+                                    <?= sanitize($item['product']['name']) ?>
+                                </a>
+                                <p class="item-price" data-unit-price="<?= $item['price'] ?>" 
+                                style="color: var(--muted-light); font-size: 0.875rem; margin: 0;">
+                                    <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
+                                </p>
                             </div>
                             
+                            <!-- Remove Button (Desktop) -->
                             <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
-                                    style="color: var(--danger); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
-                                <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete</span>
-                                Xóa
+                                    class="btn-remove-desktop"
+                                    style="color: var(--muted-light); background: none; border: none; cursor: pointer; padding: 0.5rem; margin: -0.5rem -0.5rem -0.5rem 0; border-radius: 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;"
+                                    onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'; this.style.color='var(--danger)'"
+                                    onmouseout="this.style.background='none'; this.style.color='var(--muted-light)'">
+                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">delete</span>
                             </button>
                         </div>
                         
                         <!-- Quantity Error Message -->
-                        <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>" style="display: none; margin-top: clamp(0.25rem, 1vw, 0.5rem); padding: clamp(0.35rem, 1vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 0.25rem; font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--danger);"></div>
-                    </div>
-                    
-                    <!-- Item Total -->
-                    <div class="item-total" style="font-weight: 700; color: var(--primary-dark); font-size: clamp(0.875rem, 2vw, 1rem); grid-column: 2; text-align: right; padding-top: clamp(0.5rem, 1vw, 0.75rem);">
-                        <?= formatPrice($item['total']) ?>
+                        <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>" 
+                            style="display: none; padding: 0.5rem 0.75rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 4px; font-size: 0.8125rem; color: var(--danger); line-height: 1.4;"></div>
+                        
+                        <!-- Footer: Quantity Controls and Price -->
+                        <div class="cart-item-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto;">
+                            
+                            <!-- Quantity Controls -->
+                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 8px; background: white;">
+                                <button type="button" 
+                                        class="qty-decrease" 
+                                        data-product-id="<?= $item['product']['id'] ?>"
+                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 7px 0 0 7px;"
+                                        onmouseover="this.style.background='#f5f5f5'"
+                                        onmouseout="this.style.background='none'">−</button>
+                                
+                                <input type="number" 
+                                    min="1" 
+                                    max="<?= $item['product']['stock'] ?>" 
+                                    class="cart-qty-input" 
+                                    data-product-id="<?= $item['product']['id'] ?>" 
+                                    data-stock="<?= $item['product']['stock'] ?>" 
+                                    data-price="<?= $item['price'] ?>"
+                                    value="<?= $item['quantity'] ?>" 
+                                    style="width: 50px; text-align: center; border: none; font-size: 0.9375rem; font-weight: 500; padding: 0.5rem 0; outline: none;" 
+                                    onkeypress="handleCartEnterKey(event, <?= $item['product']['id'] ?>)" />
+                                
+                                <button type="button" 
+                                        class="qty-increase" 
+                                        data-product-id="<?= $item['product']['id'] ?>"
+                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 0 7px 7px 0;"
+                                        onmouseover="this.style.background='#f5f5f5'"
+                                        onmouseout="this.style.background='none'">+</button>
+                            </div>
+                            
+                            <!-- Item Total Price -->
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.125rem;">
+                                <span style="font-size: 0.75rem; color: var(--muted-light); text-transform: uppercase; letter-spacing: 0.5px;">Thành tiền</span>
+                                <span class="item-total" style="font-weight: 700; color: var(--primary-dark); font-size: 1.125rem;">
+                                    <?= formatPrice($item['total']) ?>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Remove Button (Mobile) -->
+                        <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
+                                class="btn-remove-mobile"
+                                style="display: none; color: var(--danger); background: rgba(220, 38, 38, 0.05); border: 1px solid rgba(220, 38, 38, 0.2); cursor: pointer; padding: 0.625rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease; align-items: center; justify-content: center; gap: 0.375rem; margin-top: 0.5rem;"
+                                onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'"
+                                onmouseout="this.style.background='rgba(220, 38, 38, 0.05)'">
+                            <span class="material-symbols-outlined" style="font-size: 1.125rem;">delete</span>
+                            Xóa sản phẩm
+                        </button>
                     </div>
                 </div>
-                <?php endforeach; ?>
-                
-                <!-- Clear Cart -->
-                <button onclick="clearCart()" 
-                        style="color: var(--muted-light); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); margin-top: clamp(0.75rem, 2vw, 1rem); font-size: clamp(0.875rem, 1.5vw, 1rem);">
-                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete_sweep</span>
-                    Xóa tất cả
-                </button>
             </div>
+            <?php endforeach; ?>
+            
+            <!-- Clear Cart -->
+            <button onclick="clearCart()" 
+                    style="color: var(--muted-light); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); margin-top: clamp(0.75rem, 2vw, 1rem); font-size: clamp(0.875rem, 1.5vw, 1rem);">
+                <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete_sweep</span>
+                Xóa tất cả
+            </button>
+        </div>
             
             <!-- Order Summary -->
             <div class="order-summary-mobile" style="position: sticky; top: clamp(60px, 10vw, 100px); height: fit-content;">

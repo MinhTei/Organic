@@ -241,7 +241,7 @@ include __DIR__ . '/../includes/header.php';
         <?php if ($search): ?>
             <div class="section-header">
                 <h2 class="section-title">Kết quả tìm kiếm cho "<?= htmlspecialchars($search) ?>"</h2>
-                <a href="index.php" style="color: var(--primary-dark); font-weight: 600; font-size: clamp(0.85rem, 2vw, 1rem);">Đặt lại</a>
+                <a href="<?= SITE_URL ?>/admin/" style="color: var(--primary-dark); font-weight: 600; font-size: clamp(0.85rem, 2vw, 1rem);">Đặt lại</a>
             </div>
             <?php if (!empty($searchProducts)): ?>
                 <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(clamp(160px, 40vw, 280px), 1fr));">

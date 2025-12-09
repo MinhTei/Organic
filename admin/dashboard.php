@@ -111,26 +111,26 @@ $pageTitle = 'Dashboard Admin';
     
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -140,7 +140,7 @@ $pageTitle = 'Dashboard Admin';
     <div class="flex">
         <!-- Sidebar -->
         <?php $adminCurrent = basename($_SERVER['PHP_SELF']); ?>
-        <aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
+        <aside class="hidden md:block md:w-64 bg-white border-r border-gray-200 min-h-screen">
             <nav class="p-4 space-y-1">
                 <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'dashboard.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                     <span class="material-symbols-outlined">dashboard</span>
@@ -197,115 +197,115 @@ $pageTitle = 'Dashboard Admin';
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <!-- Page Header -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">Tổng quan</h2>
-                <p class="text-gray-600 mt-1">Xin chào, <?= sanitize($_SESSION['user_name']) ?>! 👋</p>
+            <div class="mb-6 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Tổng quan</h2>
+                <p class="text-sm sm:text-base text-gray-600 mt-1">Xin chào, <?= sanitize($_SESSION['user_name']) ?>! 👋</p>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <!-- Revenue Card -->
-                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-green-100 text-sm font-medium">Doanh thu</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= formatPrice($stats['total_revenue']) ?></h3>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <div class="flex-1">
+                            <p class="text-green-100 text-xs sm:text-sm font-medium">Doanh thu</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= formatPrice($stats['total_revenue']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">payments</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">payments</span>
                         </div>
                     </div>
-                    <p class="text-green-100 text-sm">
+                    <p class="text-green-100 text-xs sm:text-sm">
                         <span class="font-semibold">+12.5%</span> so với tháng trước
                     </p>
                 </div>
 
                 <!-- Orders Card -->
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-blue-100 text-sm font-medium">Đơn hàng</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= $stats['total_orders'] ?></h3>
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <div class="flex-1">
+                            <p class="text-blue-100 text-xs sm:text-sm font-medium">Đơn hàng</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= $stats['total_orders'] ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">shopping_cart</span>
                         </div>
                     </div>
-                    <p class="text-blue-100 text-sm">
+                    <p class="text-blue-100 text-xs sm:text-sm">
                         <span class="font-semibold"><?= $ordersByStatus['pending'] ?? 0 ?></span> đơn chờ xử lý
                     </p>
                 </div>
 
                 <!-- Products Card -->
-                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-orange-100 text-sm font-medium">Sản phẩm</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= $stats['total_products'] ?></h3>
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <div class="flex-1">
+                            <p class="text-orange-100 text-xs sm:text-sm font-medium">Sản phẩm</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= $stats['total_products'] ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">inventory_2</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">inventory_2</span>
                         </div>
                     </div>
-                    <p class="text-orange-100 text-sm">
-                        <a href="products.php" class="font-semibold hover:underline">Quản lý sản phẩm →</a>
+                    <p class="text-orange-100 text-xs sm:text-sm">
+                        <a href="products.php" class="font-semibold hover:underline text-xs sm:text-sm">Quản lý sản phẩm →</a>
                     </p>
                 </div>
 
                 <!-- Customers Card -->
-                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-purple-100 text-sm font-medium">Khách hàng</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= $stats['total_customers'] ?></h3>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <div class="flex-1">
+                            <p class="text-purple-100 text-xs sm:text-sm font-medium">Khách hàng</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= $stats['total_customers'] ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">people</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">people</span>
                         </div>
                     </div>
-                    <p class="text-purple-100 text-sm">
-                        <a href="customers.php" class="font-semibold hover:underline">Xem danh sách →</a>
+                    <p class="text-purple-100 text-xs sm:text-sm">
+                        <a href="customers.php" class="font-semibold hover:underline text-xs sm:text-sm">Xem danh sách →</a>
                     </p>
                 </div>
 
                 <!-- Pending Reviews Card -->
-                <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-red-100 text-sm font-medium">Đánh giá chờ</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= $stats['pending_reviews'] ?></h3>
+                <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <div class="flex-1">
+                            <p class="text-red-100 text-xs sm:text-sm font-medium">Đánh giá chờ</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= $stats['pending_reviews'] ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">rate_review</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">rate_review</span>
                         </div>
                     </div>
-                    <p class="text-red-100 text-sm">
+                    <p class="text-red-100 text-xs sm:text-sm">
                         <a href="reviews.php" class="font-semibold hover:underline">Duyệt ngay →</a>
                     </p>
                 </div>
             </div>
 
             <!-- Content Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Recent Orders -->
-                <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-bold text-gray-900">Đơn hàng gần đây</h3>
-                        <a href="orders.php" class="text-sm text-green-600 font-medium hover:text-green-700">
+                <div class="lg:col-span-2 bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
+                        <h3 class="text-base sm:text-lg font-bold text-gray-900">Đơn hàng gần đây</h3>
+                        <a href="orders.php" class="text-xs sm:text-sm text-green-600 font-medium hover:text-green-700">
                             Xem tất cả →
                         </a>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
+                    <div class="overflow-x-auto -mx-3 sm:mx-0">
+                        <table class="w-full text-xs sm:text-sm">
                             <thead>
                                 <tr class="border-b border-gray-200">
-                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Mã ĐH</th>
-                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Khách hàng</th>
-                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Số tiền</th>
-                                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-600">Trạng thái</th>
+                                    <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Mã ĐH</th>
+                                    <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Khách hàng</th>
+                                    <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Số tiền</th>
+                                    <th class="text-left py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-600">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -326,11 +326,11 @@ $pageTitle = 'Dashboard Admin';
                                     ];
                                 ?>
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-4 px-4 font-medium text-gray-900">#<?= $order['id'] ?></td>
-                                    <td class="py-4 px-4 text-gray-700"><?= sanitize($order['customer_name'] ?? 'Khách') ?></td>
-                                    <td class="py-4 px-4 font-semibold text-green-600"><?= formatPrice($order['total_amount']) ?></td>
-                                    <td class="py-4 px-4">
-                                        <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>">
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium text-gray-900">#<?= $order['id'] ?></td>
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4 text-gray-700 truncate"><?= sanitize($order['customer_name'] ?? 'Khách') ?></td>
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4 font-semibold text-green-600"><?= formatPrice($order['total_amount']) ?></td>
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                        <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>">
                                             <?= $statusLabels[$order['status']] ?>
                                         </span>
                                     </td>
@@ -342,15 +342,15 @@ $pageTitle = 'Dashboard Admin';
                 </div>
 
                 <!-- Top Products -->
-                <div class="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-6">Sản phẩm bán chạy</h3>
-                    <div class="space-y-4">
+                <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4 sm:mb-6">Sản phẩm bán chạy</h3>
+                    <div class="space-y-3 sm:space-y-4">
                         <?php foreach ($topProducts as $product): ?>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2 sm:gap-3">
                             <img src="<?= imageUrl($product['image']) ?>" alt="<?= sanitize($product['name']) ?>"
-                                 class="w-12 h-12 rounded-lg object-cover">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900 text-sm"><?= sanitize($product['name']) ?></p>
+                                 class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 text-xs sm:text-sm truncate"><?= sanitize($product['name']) ?></p>
                                 <p class="text-xs text-gray-500"><?= $product['order_count'] ?> đơn hàng</p>
                             </div>
                         </div>
@@ -363,45 +363,35 @@ $pageTitle = 'Dashboard Admin';
 
     <style>
         /* ===== RESPONSIVE FOR ADMIN DASHBOARD ===== */
-        /* Mobile: < 768px */
-        @media (max-width: 767px) {
-            .grid {
-                grid-template-columns: 1fr !important;
-            }
-            
-            h1 {
-                font-size: 1.25rem !important;
-            }
-            
-            h2 {
-                font-size: 1rem !important;
+        /* Prevent horizontal scroll on mobile */
+        @media (max-width: 640px) {
+            body {
+                overflow-x: hidden;
             }
             
             table {
-                font-size: 0.75rem !important;
+                font-size: 0.75rem;
             }
             
-            th, td {
-                padding: 0.5rem 0.25rem !important;
+            /* Hide sidebar text on very small screens */
+            @media (max-width: 380px) {
+                .flex-col > * {
+                    font-size: 0.8rem;
+                }
             }
         }
 
-        /* Tablet: 768px - 1024px */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-            
-            h1 {
-                font-size: 1.5rem !important;
-            }
-            
+        /* Tablet: 641px - 1024px */
+        @media (min-width: 641px) and (max-width: 1024px) {
             table {
-                font-size: 0.85rem !important;
+                font-size: 0.85rem;
             }
-            
-            th, td {
-                padding: 0.6rem 0.4rem !important;
+        }
+        
+        /* Extra large screens */
+        @media (min-width: 1280px) {
+            main {
+                max-width: 100%;
             }
         }
     </style>

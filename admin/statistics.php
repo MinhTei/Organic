@@ -158,25 +158,25 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
     
     <!-- Header (match admin style) -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -188,11 +188,11 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
         <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <!-- Page Header -->
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Thống kê & Báo cáo</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Thống kê & Báo cáo</h2>
                     <p class="text-gray-600 mt-1">Phân tích dữ liệu kinh doanh</p>
                 </div>
                 
@@ -219,88 +219,88 @@ if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0)
             </div>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
                         <div>
-                            <p class="text-blue-100 text-sm font-medium">Tổng đơn hàng</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= number_format($totals['total_orders']) ?></h3>
+                            <p class="text-blue-100 text-xs sm:text-sm font-medium">Tổng đơn hàng</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= number_format($totals['total_orders']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">shopping_bag</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">shopping_bag</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
                         <div>
-                            <p class="text-green-100 text-sm font-medium">Tổng doanh thu</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= formatPrice($totals['total_revenue']) ?></h3>
+                            <p class="text-green-100 text-xs sm:text-sm font-medium">Tổng doanh thu</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= formatPrice($totals['total_revenue']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">payments</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">payments</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
                         <div>
-                            <p class="text-purple-100 text-sm font-medium">Giá trị TB đơn hàng</p>
-                            <h3 class="text-3xl font-bold mt-1"><?= formatPrice($totals['avg_order_value']) ?></h3>
+                            <p class="text-purple-100 text-xs sm:text-sm font-medium">Giá trị TB đơn hàng</p>
+                            <h3 class="text-xl sm:text-3xl font-bold mt-1"><?= formatPrice($totals['avg_order_value']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-2xl">trending_up</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <span class="material-symbols-outlined text-lg sm:text-2xl">trending_up</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-6">
                 <!-- Revenue Chart -->
-                <div class="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold mb-4">Doanh thu theo ngày</h3>
-                    <div style="height:350px"> <!-- fix: give the chart a fixed height container -->
+                <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold mb-4">Doanh thu theo ngày</h3>
+                    <div style="height:280px"> <!-- fix: give the chart a fixed height container -->
                         <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Order Status Chart -->
-                <div class="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 class="text-lg font-bold mb-4">Trạng thái đơn hàng</h3>
-                    <div style="height:350px"> <!-- fix: give the chart a fixed height container -->
+                <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold mb-4">Trạng thái đơn hàng</h3>
+                    <div style="height:280px"> <!-- fix: give the chart a fixed height container -->
                         <canvas id="statusChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Top Products -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-bold mb-4">Top 10 sản phẩm bán chạy</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
+                <h3 class="text-base sm:text-lg font-bold mb-4">Top 10 sản phẩm bán chạy</h3>
+                <div class="overflow-x-auto -mx-3 sm:mx-0">
+                    <table class="w-full text-xs sm:text-sm">
                         <thead class="bg-gray-50 border-b">
                             <tr>
-                                <th class="text-left py-3 px-4 font-semibold text-sm">STT</th>
-                                <th class="text-left py-3 px-4 font-semibold text-sm">Sản phẩm</th>
-                                <th class="text-right py-3 px-4 font-semibold text-sm">Đã bán</th>
-                                <th class="text-right py-3 px-4 font-semibold text-sm">Doanh thu</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">STT</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Sản phẩm</th>
+                                <th class="text-right py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Đã bán</th>
+                                <th class="text-right py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Doanh thu</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($topProducts as $index => $product): ?>
                             <tr class="border-b hover:bg-gray-50">
-                                <td class="py-4 px-4 font-medium"><?= $index + 1 ?></td>
-                                <td class="py-4 px-4">
-                                    <div class="flex items-center gap-3">
-                                        <img src="<?= imageUrl($product['image']) ?>" alt="" class="w-12 h-12 rounded-lg object-cover">
-                                        <span class="font-medium"><?= sanitize($product['name']) ?></span>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium"><?= $index + 1 ?></td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                    <div class="flex items-center gap-2 sm:gap-3">
+                                        <img src="<?= imageUrl($product['image']) ?>" alt="" class="w-8 h-8 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0">
+                                        <span class="font-medium text-xs sm:text-sm truncate"><?= sanitize($product['name']) ?></span>
                                     </div>
                                 </td>
-                                <td class="py-4 px-4 text-right font-medium"><?= number_format($product['total_sold']) ?></td>
-                                <td class="py-4 px-4 text-right font-bold text-green-600"><?= formatPrice($product['total_revenue']) ?></td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 text-right font-medium text-xs sm:text-sm"><?= number_format($product['total_sold']) ?></td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 text-right font-bold text-green-600 text-xs sm:text-sm"><?= formatPrice($product['total_revenue']) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>

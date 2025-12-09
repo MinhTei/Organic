@@ -797,6 +797,10 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                                 <span class="material-symbols-outlined" style="font-size: 1rem;">receipt_long</span>
                                 <span>Xem đơn hàng</span>
                             </a>
+                            <a href="<?= SITE_URL ?>/user_info.php?tab=addresses" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; color: inherit; text-decoration: none; border-bottom: 1px solid var(--border-light); font-size: 0.9rem;" onclick="closeMobileUserDropdown()">
+                                <span class="material-symbols-outlined" style="font-size: 1rem;">location_on</span>
+                                <span>Địa chỉ đã lưu</span>
+                            </a>
                             <a href="<?= SITE_URL ?>/user_info.php?tab=settings" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; color: inherit; text-decoration: none; border-bottom: 1px solid var(--border-light); font-size: 0.9rem;" onclick="closeMobileUserDropdown()">
                                 <span class="material-symbols-outlined" style="font-size: 1rem;">settings</span>
                                 <span>Cài đặt</span>
@@ -942,6 +946,24 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                 <a href="<?= SITE_URL ?>/products.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Sản phẩm</a>
                 <a href="<?= SITE_URL ?>/about.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'about.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Về chúng tôi</a>
                 <a href="<?= SITE_URL ?>/contact.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">Liên hệ</a>
+                
+                <!-- Lab Thực Hành dropdown -->
+                <div class="dropdown" style="display:inline-block;">
+                    <button class="nav-link" style="display:flex; align-items:center; gap:0.5rem; font-size: 0.9rem; padding: 0.25rem 0;">Lab Thực Hành
+                        <span class="material-symbols-outlined" style="font-size:1rem;">arrow_drop_down</span>
+                    </button>
+                    <div class="dropdown-menu" style="left: 50%; transform: translateX(-50%); min-width: 200px;">
+                        <a href="<?= SITE_URL ?>/LabThucHanh/Hau/lab-hau.php" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; text-decoration:none; color:inherit;">
+                            <span class="material-symbols-outlined" style="font-size:1.25rem;color:var(--primary-dark);">school</span>
+                            <span>LabTH Hậu</span>
+                        </a>
+                        <a href="<?= SITE_URL ?>/LabThucHanh/Tai/lab-tai.php" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; text-decoration:none; color:inherit;">
+                            <span class="material-symbols-outlined" style="font-size:1.25rem;color:var(--primary-dark);">school</span>
+                            <span>LabTH Tài</span>
+                        </a>
+                    </div>
+                </div>
+                
                 <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
                     <a href="<?= defined('ADMIN_URL') ? rtrim(ADMIN_URL, '/') . '/dashboard.php' : SITE_URL . '/admin/dashboard.php' ?>" 
                        class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin') !== false ? 'active' : '' ?>" style="font-size: 0.9rem; padding: 0.25rem 0;">
@@ -979,6 +1001,10 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                         <a href="<?= SITE_URL ?>/user_info.php?tab=orders">
                             <span class="material-symbols-outlined" style="font-size: 1.25rem;">receipt_long</span>
                             <span>Đơn hàng của tôi</span>
+                        </a>
+                        <a href="<?= SITE_URL ?>/user_info.php?tab=addresses">
+                            <span class="material-symbols-outlined" style="font-size: 1.25rem;">location_on</span>
+                            <span>Địa chỉ đã lưu</span>
                         </a>
                         <a href="<?= SITE_URL ?>/user_info.php?tab=settings">
                             <span class="material-symbols-outlined" style="font-size: 1.25rem;">settings</span>

@@ -22,7 +22,7 @@ if (isset($contactMessages) && is_array($contactMessages)) {
 }
 $totalNotifications += $pendingReviews;
 ?>
-<aside class="w-64 bg-white border-r border-gray-200 min-h-screen">
+<aside class="hidden md:block md:w-64 bg-white border-r border-gray-200 min-h-screen">
     <nav class="p-4 space-y-1">
         <!-- Tổng quan -->
         <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'dashboard.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
@@ -101,6 +101,12 @@ $totalNotifications += $pendingReviews;
             <span>Quản lý bài viết</span>
         </a>
 
+        <!-- Cài đặt -->
+        <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'settings.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Cài đặt</span>
+        </a>
+
         <!-- Thống kê -->
         <a href="statistics.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'statistics.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
             <span class="material-symbols-outlined">analytics</span>
@@ -108,12 +114,6 @@ $totalNotifications += $pendingReviews;
         </a>
 
         <hr class="my-4">
-
-        <!-- Cài đặt -->
-        <a href="settings.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'settings.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-            <span class="material-symbols-outlined">settings</span>
-            <span>Cài đặt</span>
-        </a>
     </nav>
 
     <!-- JavaScript cho Dropdown -->

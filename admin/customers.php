@@ -148,25 +148,25 @@ $pageTitle = 'Quản lý Khách hàng';
     
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -178,7 +178,7 @@ $pageTitle = 'Quản lý Khách hàng';
         <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <?php if ($success): ?>
                 <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
                     <?= $success ?>
@@ -193,101 +193,102 @@ $pageTitle = 'Quản lý Khách hàng';
 
             <!-- Page Header -->
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">Quản lý Khách hàng</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Quản lý Khách hàng</h2>
                 <p class="text-gray-600 mt-1">Quản lý thông tin và hạng thành viên</p>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Tổng khách hàng</p>
-                            <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['total']) ?></h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">Tổng khách hàng</p>
+                            <h3 class="text-xl sm:text-2xl font-bold mt-1"><?= number_format($stats['total']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-blue-600">people</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-blue-600 text-lg">people</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Thành viên Đồng</p>
-                            <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['bronze']) ?></h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">Thành viên Đồng</p>
+                            <h3 class="text-xl sm:text-2xl font-bold mt-1"><?= number_format($stats['bronze']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-orange-600">workspace_premium</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-orange-600 text-lg">workspace_premium</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Thành viên Bạc</p>
-                            <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['silver']) ?></h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">Thành viên Bạc</p>
+                            <h3 class="text-xl sm:text-2xl font-bold mt-1"><?= number_format($stats['silver']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-gray-600">workspace_premium</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-gray-600 text-lg">workspace_premium</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm">Thành viên Vàng</p>
-                            <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['gold']) ?></h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">Thành viên Vàng</p>
+                            <h3 class="text-xl sm:text-2xl font-bold mt-1"><?= number_format($stats['gold']) ?></h3>
                         </div>
-                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-yellow-600">workspace_premium</span>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-yellow-600 text-lg">workspace_premium</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-                <form method="GET" class="flex gap-4">
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-4 mb-6">
+                <form method="GET" class="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <input type="text" name="search" value="<?= sanitize($search) ?>" 
                            placeholder="Tìm theo tên, email, số điện thoại..."
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
                     
-                    <select name="membership" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <select name="membership" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
                         <option value="">Tất cả hạng thành viên</option>
                         <option value="bronze" <?= $membership === 'bronze' ? 'selected' : '' ?>>Đồng</option>
                         <option value="silver" <?= $membership === 'silver' ? 'selected' : '' ?>>Bạc</option>
                         <option value="gold" <?= $membership === 'gold' ? 'selected' : '' ?>>Vàng</option>
                     </select>
                     
-                    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <button type="submit" class="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
                         Lọc
                     </button>
                 </form>
             </div>
 
             <!-- Customers Table -->
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Khách hàng</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Liên hệ</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Hạng TV</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Đơn hàng</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Tổng chi</th>
-                            <th class="text-center py-3 px-4 font-semibold text-sm">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($customers as $customer): ?>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-4 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
-                                        <?= strtoupper(substr($customer['name'], 0, 1)) ?>
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto -mx-3 sm:mx-0">
+                    <table class="w-full text-xs sm:text-sm">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Khách hàng</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Liên hệ</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Hạng TV</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Đơn hàng</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Tổng chi</th>
+                                <th class="text-center py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($customers as $customer): ?>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                    <div class="flex items-center gap-2 sm:gap-3">
+                                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
+                                            <?= strtoupper(substr($customer['name'], 0, 1)) ?>
                                     </div>
                                     <div>
                                         <p class="font-medium"><?= sanitize($customer['name']) ?></p>

@@ -184,6 +184,70 @@ include __DIR__ . '/includes/header.php';
             display: none;
         }
     }
+
+    /* Form responsive improvements */
+    @media (max-width: 768px) {
+        .form-grid-2col {
+            grid-template-columns: 1fr !important;
+        }
+
+        .form-container {
+            padding: clamp(0.75rem, 2vw, 1.25rem) !important;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="password"],
+        textarea,
+        select {
+            font-size: 16px !important; /* Prevent zoom on iOS */
+            padding: clamp(0.6rem, 1.5vw, 0.875rem) !important;
+        }
+
+        .form-label {
+            font-size: clamp(0.8rem, 1.5vw, 0.95rem) !important;
+            margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem) !important;
+        }
+
+        .btn {
+            font-size: clamp(0.85rem, 1.8vw, 0.95rem) !important;
+            padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1rem, 2vw, 1.25rem) !important;
+        }
+
+        textarea {
+            min-height: 120px !important;
+        }
+
+        .modal-content {
+            width: 95% !important;
+            max-width: 100% !important;
+            border-radius: clamp(0.5rem, 1.5vw, 1rem) !important;
+            padding: clamp(1rem, 2.5vw, 1.5rem) !important;
+        }
+    }
+
+    @media (max-width: 500px) {
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="password"],
+        textarea,
+        select {
+            font-size: 16px !important;
+            padding: 0.75rem !important;
+        }
+
+        textarea {
+            min-height: 100px !important;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.5rem, 1.5vw, 1rem) !important;
+        }
+    }
 </style>
 
 <main style="background: var(--background-light); min-height: calc(100vh - 400px);">
@@ -280,48 +344,66 @@ include __DIR__ . '/includes/header.php';
                     case 'profile':
                 ?>
                         <!-- Profile Tab -->
-                        <div style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
+                        <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
                             <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem);">Thông tin cá nhân</h2>                  
-                            <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: clamp(1rem, 2vw, 1.5rem);">
-                                <div style="display:flex; gap: clamp(0.75rem, 1.5vw, 1rem); align-items:flex-start; flex-wrap: wrap;">
-                                    <label style="display:block; font-weight:600; font-size: clamp(0.85rem, 1.5vw, 0.95rem);">Ảnh đại diện</label>
-                                    <div>
+                            <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: clamp(1.25rem, 2.5vw, 1.75rem);">
+                                <!-- Avatar Section -->
+                                <div style="display: grid; grid-template-columns: auto 1fr; gap: clamp(1rem, 2vw, 1.5rem); align-items: start;">
+                                    <div style="text-align: center;">
                                         <?php if (!empty($user['avatar'])): ?>
-                                            <img src="<?= sanitize($user['avatar']) ?>" alt="avatar" style="width: clamp(48px, 12vw, 56px); height: clamp(48px, 12vw, 56px); object-fit:cover; border-radius:50%; display:block; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem);">
+                                            <img src="<?= sanitize($user['avatar']) ?>" alt="avatar" style="width: clamp(80px, 20vw, 100px); height: clamp(80px, 20vw, 100px); object-fit: cover; border-radius: 50%; display: block; margin-bottom: clamp(0.5rem, 1vw, 0.75rem); border: 3px solid var(--border-light);">
+                                        <?php else: ?>
+                                            <div style="width: clamp(80px, 20vw, 100px); height: clamp(80px, 20vw, 100px); background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: clamp(2rem, 5vw, 2.5rem); font-weight: 700; margin-bottom: clamp(0.5rem, 1vw, 0.75rem);">
+                                                <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                                            </div>
                                         <?php endif; ?>
-                                        <input type="file" name="avatar" accept="image/*" style="display:block; font-size: clamp(0.8rem, 1.5vw, 0.9rem);">
-                                        <div style="font-size: clamp(0.7rem, 1.2vw, 0.8rem); color:var(--muted-light); margin-top: clamp(0.15rem, 0.3vw, 0.25rem);">Hỗ trợ JPG/PNG/GIF, tối đa 2MB</div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label" style="display: block; font-weight: 600;">Ảnh đại diện</label>
+                                        <input type="file" name="avatar" accept="image/*" style="display: block; width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 2px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.9rem); margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem);">
+                                        <div style="font-size: clamp(0.7rem, 1.3vw, 0.85rem); color: var(--muted-light); line-height: 1.4;">JPG, PNG, GIF • Tối đa 2MB</div>
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1.5rem); @media (max-width: 600px) { grid-template-columns: 1fr; }">
+
+                                <hr style="border: none; border-top: 1px solid var(--border-light); margin: clamp(0.5rem, 1vw, 1rem) 0;">
+
+                                <!-- Name and Birthdate -->
+                                <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">
+                                        <label class="form-label" style="display: block; font-weight: 600;">
                                             Họ và tên <span style="color: var(--danger);">*</span>
                                         </label>
                                         <input type="text" name="name" value="<?= sanitize($user['name']) ?>" required minlength="3" maxlength="100"
-                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                               onblur="this.style.borderColor='var(--border-light)'"
+                                               onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Ngày sinh</label>
+                                        <label class="form-label" style="display: block; font-weight: 600;">Ngày sinh</label>
                                         <input type="date" name="birthdate" value="<?= sanitize($user['birthdate'] ?? '') ?>"
-                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                               onblur="this.style.borderColor='var(--border-light)'"
+                                               onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                 </div>
-                                
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1.5rem); @media (max-width: 600px) { grid-template-columns: 1fr; }">
+
+                                <!-- Email and Phone -->
+                                <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Email</label>
+                                        <label class="form-label" style="display: block; font-weight: 600;">Email</label>
                                         <input type="email" value="<?= sanitize($user['email']) ?>" disabled
-                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); background: var(--background-light); font-size: clamp(0.8rem, 1.5vw, 1rem);">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); background: var(--background-light); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; cursor: not-allowed; color: var(--text-light);">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);">Số điện thoại</label>
+                                        <label class="form-label" style="display: block; font-weight: 600;">Số điện thoại</label>
                                         <input type="text" name="phone" value="<?= sanitize($user['phone']) ?>" minlength="10" maxlength="13"
-                                               placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx"
-                                               style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 1rem);">
-                                        <div id="profile-phone-error" style="color: var(--danger); font-size: clamp(0.7rem, 1.2vw, 0.875rem); margin-top: clamp(0.15rem, 0.3vw, 0.25rem); display: none;"></div>
+                                               placeholder="0xxxxxxxxxx"
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                               onblur="this.style.borderColor='var(--border-light)'"
+                                               onfocus="this.style.borderColor='var(--primary)'">
+                                        <div id="profile-phone-error" style="color: var(--danger); font-size: clamp(0.75rem, 1.3vw, 0.875rem); margin-top: clamp(0.25rem, 0.5vw, 0.35rem); display: none; line-height: 1.3;"></div>
                                     </div>
                                 </div>
                                 
@@ -365,8 +447,9 @@ include __DIR__ . '/includes/header.php';
                                     </div>
                                 <?php endif; ?>
 
-                                <div style="display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-                                    <button type="submit" name="update_profile" class="btn btn-primary">Lưu thay đổi</button>
+                                <div style="display: flex; justify-content: flex-end; gap: clamp(0.75rem, 1.5vw, 1rem); padding-top: clamp(1rem, 2vw, 1.25rem); border-top: 1px solid var(--border-light);">
+                                    <button type="submit" name="update_profile" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.5rem, 3vw, 2rem); background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu thay đổi</button>
                                 </div>
                             </form>
                         </div>
@@ -376,24 +459,26 @@ include __DIR__ . '/includes/header.php';
                     case 'orders':
                 ?>
                         <!-- Orders Tab -->
-                        <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                                <h2 style="font-size: 1.5rem; font-weight: 700;">Lịch sử đơn hàng</h2>
-                                <a href="<?= SITE_URL ?>/order_history.php" class="btn btn-primary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">
+                        <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin: 0;">Lịch sử đơn hàng</h2>
+                                <a href="<?= SITE_URL ?>/order_history.php" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); text-decoration: none; display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                        onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
                                     Xem tất cả
                                 </a>
                             </div>
                             
                             <?php if (empty($orders)): ?>
-                                <div style="text-align: center; padding: 3rem;">
-                                    <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--muted-light);">receipt_long</span>
-                                    <p style="margin-top: 1rem; color: var(--muted-light);">Bạn chưa có đơn hàng nào.</p>
-                                    <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary" style="margin-top: 1rem;">
+                                <div style="text-align: center; padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 2vw, 1.5rem);">
+                                    <span class="material-symbols-outlined" style="font-size: clamp(3rem, 10vw, 4rem); color: var(--muted-light); display: block; margin-bottom: clamp(0.75rem, 1.5vw, 1rem); opacity: 0.5;">receipt_long</span>
+                                    <p style="margin: 0; color: var(--muted-light); font-size: clamp(0.9rem, 1.8vw, 1rem);">Bạn chưa có đơn hàng nào.</p>
+                                    <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary" style="margin-top: clamp(1rem, 2vw, 1.5rem); padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); text-decoration: none; transition: all 0.2s;"
+                                        onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
                                         Mua sắm ngay
                                     </a>
                                 </div>
                             <?php else: ?>
-                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; flex-direction: column; gap: clamp(1rem, 2vw, 1.25rem);">
                                     <?php foreach ($orders as $order): 
                                         $statusColors = [
                                             'pending' => '#f59e0b',
@@ -410,28 +495,29 @@ include __DIR__ . '/includes/header.php';
                                             'cancelled' => 'Đã hủy'
                                         ];
                                     ?>
-                                    <div style="border: 1px solid var(--border-light); border-radius: 0.75rem; padding: 1.5rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                    <div style="border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem); padding: clamp(1rem, 2vw, 1.25rem); display: flex; flex-direction: column; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
                                             <div>
-                                                <p style="font-weight: 700;">Đơn hàng #<?= $order['id'] ?></p>
-                                                <p style="font-size: 0.875rem; color: var(--muted-light); margin-top: 0.25rem;">
+                                                <p style="font-weight: 700; margin: 0; font-size: clamp(0.9rem, 1.8vw, 1rem);">Đơn hàng #<?= $order['id'] ?></p>
+                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-top: clamp(0.2rem, 0.4vw, 0.35rem);">
                                                     <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
                                                 </p>
                                             </div>
-                                            <span style="padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; 
-                                                         background: <?= $statusColors[$order['status']] ?>20; color: <?= $statusColors[$order['status']] ?>;">
+                                            <span style="padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: 9999px; font-size: clamp(0.8rem, 1.5vw, 0.875rem); font-weight: 600; 
+                                                         background: <?= $statusColors[$order['status']] ?>20; color: <?= $statusColors[$order['status']] ?>; white-space: nowrap;">
                                                 <?= $statusLabels[$order['status']] ?>
                                             </span>
                                         </div>
                                         
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: clamp(0.75rem, 1.5vw, 1rem); border-top: 1px solid var(--border-light); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
                                             <div>
-                                                <p style="font-size: 0.875rem; color: var(--muted-light);">Tổng tiền:</p>
-                                                <p style="font-size: 1.125rem; font-weight: 700; color: var(--primary-dark);">
+                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin: 0 0 clamp(0.2rem, 0.4vw, 0.35rem);">Tổng tiền:</p>
+                                                <p style="font-size: clamp(1rem, 2vw, 1.125rem); font-weight: 700; color: var(--primary-dark); margin: 0;">
                                                     <?= formatPrice($order['final_amount']) ?>
                                                 </p>
                                             </div>
-                                            <a href="<?= SITE_URL ?>/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-primary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">
+                                            <a href="<?= SITE_URL ?>/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); text-decoration: none; display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s; white-space: nowrap;"
+                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
                                                 Xem chi tiết
                                             </a>
                                         </div>
@@ -446,105 +532,115 @@ include __DIR__ . '/includes/header.php';
                     case 'addresses':
                 ?>
                         <!-- Addresses Tab -->
-                        <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                                <h2 style="font-size: 1.5rem; font-weight: 700;">Địa chỉ đã lưu</h2>
-                                <button class="btn btn-primary" onclick="showAddressForm()" type="button">
-                                    <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.25rem;">add</span>
-                                    Thêm địa chỉ mới
+                        <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin: 0;">Địa chỉ đã lưu</h2>
+                                <button class="btn btn-primary" onclick="showAddressForm()" type="button" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); display: inline-flex; align-items: center; gap: clamp(0.25rem, 0.5vw, 0.35rem); transition: all 0.2s;"
+                                    onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 1.8vw, 1.25rem);">add</span>
+                                    <span>Thêm địa chỉ mới</span>
                                 </button>
                             </div>
 
                             <!-- Form Add/Edit Address -->
-                            <div id="address-form" style="display:none; background: #f9f9f9; padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem; border: 1px solid var(--border-light);">
-                                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">
+                            <div id="address-form" style="display: none; background: #f9f9f9; padding: clamp(1.25rem, 2.5vw, 2rem); border-radius: clamp(0.5rem, 1.5vw, 1rem); margin-bottom: clamp(1.5rem, 2vw, 2rem); border: 1px solid var(--border-light);">
+                                <h3 style="font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 600; margin-bottom: clamp(1rem, 2vw, 1.5rem);">
                                     <span id="form-title">Thêm địa chỉ mới</span>
                                 </h3>
-                                <form id="address-form-element" style="display: grid; gap: 1rem;">
+                                <form id="address-form-element" style="display: grid; gap: clamp(1.25rem, 2.5vw, 1.75rem);">
                                     <input type="hidden" id="address-id">
                                     
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <!-- Name and Phone Row -->
+                                    <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tên người nhận <span style="color: var(--danger);">*</span></label>
-                                            <input type="text" id="address-name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Tên người nhận <span style="color: var(--danger);">*</span></label>
+                                            <input type="text" id="address-name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                         </div>
 
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Số điện thoại <span style="color: var(--danger);">*</span></label>
-                                            <input type="text" id="address-phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
-                                            <div id="phone-error" style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Số điện thoại <span style="color: var(--danger);">*</span></label>
+                                            <input type="text" id="address-phone" placeholder="0xxxxxxxxxx" required minlength="10" maxlength="13" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            <div id="phone-error" style="color: var(--danger); font-size: clamp(0.75rem, 1.3vw, 0.875rem); margin-top: clamp(0.25rem, 0.5vw, 0.35rem); display: none; line-height: 1.3;"></div>
                                         </div>
                                     </div>
 
+                                    <!-- Address Textarea -->
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Địa chỉ <span style="color: var(--danger);">*</span></label>
-                                        <textarea id="address-address" placeholder="Nhập địa chỉ giao hàng (số nhà, tên đường,...)" required minlength="5" maxlength="255" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem; resize: vertical;"></textarea>
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Địa chỉ <span style="color: var(--danger);">*</span></label>
+                                        <textarea id="address-address" placeholder="Nhập địa chỉ giao hàng (số nhà, tên đường,...)" required minlength="5" maxlength="255" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; resize: vertical; min-height: clamp(100px, 20vw, 140px); transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'"></textarea>
                                     </div>
 
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <!-- Ward and District Row -->
+                                    <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Phường/Xã</label>
-                                            <input type="text" id="address-ward" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Phường/Xã</label>
+                                            <input type="text" id="address-ward" placeholder="Nhập phường/xã" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                         </div>
 
                                         <div>
-                                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quận/Huyện</label>
-                                            <input type="text" id="address-district" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Quận/Huyện</label>
+                                            <input type="text" id="address-district" placeholder="Nhập quận/huyện" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                         </div>
                                     </div>
 
+                                    <!-- City -->
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tỉnh/Thành phố</label>
-                                        <input type="text" id="address-city" value="TP. Hồ Chí Minh" minlength="3" maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Tỉnh/Thành phố</label>
+                                        <input type="text" id="address-city" value="TP. Hồ Chí Minh" minlength="3" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
 
+                                    <!-- Note -->
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Ghi chú (tùy chọn)</label>
-                                        <input type="text" id="address-note" placeholder="VD: Nhà riêng, Công ty, ..." maxlength="100" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem; font-size: 1rem;">
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Ghi chú (tùy chọn)</label>
+                                        <input type="text" id="address-note" placeholder="VD: Nhà riêng, Công ty, ..." maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
 
-                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <input type="checkbox" id="address-default" style="width: 18px; height: 18px; cursor: pointer;">
-                                        <label for="address-default" style="cursor: pointer; margin: 0;">Đặt làm địa chỉ mặc định</label>
+                                    <!-- Default Address Checkbox -->
+                                    <div style="display: flex; align-items: center; gap: clamp(0.6rem, 1.2vw, 0.75rem); padding: clamp(0.75rem, 1.5vw, 1rem); background: white; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); border: 1px solid var(--border-light);">
+                                        <input type="checkbox" id="address-default" style="width: clamp(18px, 4vw, 20px); height: clamp(18px, 4vw, 20px); cursor: pointer; accent-color: var(--primary);">
+                                        <label for="address-default" style="cursor: pointer; margin: 0; font-weight: 500; font-size: clamp(0.85rem, 1.8vw, 0.95rem);">Đặt làm địa chỉ mặc định</label>
                                     </div>
 
-                                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                        <button type="button" onclick="hideAddressForm()" class="btn" style="padding: 0.75rem 1.5rem; border: 1px solid var(--border-light); background: #fff; color: var(--text-light); border-radius: 0.5rem; cursor: pointer; font-weight: 500;">Hủy</button>
-                                        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Lưu địa chỉ</button>
+                                    <!-- Action Buttons -->
+                                    <div class="form-row" style="display: flex; gap: clamp(0.75rem, 1.5vw, 1rem); justify-content: flex-end;">
+                                        <button type="button" onclick="hideAddressForm()" class="btn" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); border: 1px solid var(--border-light); background: #fff; color: var(--text-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 500; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                                onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='#fff'">Hủy</button>
+                                        <button type="submit" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: #fff; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu địa chỉ</button>
                                     </div>
                                 </form>
                             </div>
 
                             <!-- Address List -->
-                            <div id="addresses-list" style="display: grid; gap: 1rem;">
+                            <div id="addresses-list" style="display: grid; gap: clamp(1rem, 2vw, 1.25rem);">
                                 <?php if (empty($addresses)): ?>
-                                    <div style="text-align: center; padding: 3rem 1rem; color: var(--muted-light);">
-                                        <span class="material-symbols-outlined" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.5;">location_off</span>
-                                        <p>Bạn chưa lưu địa chỉ nào. <a href="#" onclick="showAddressForm(); return false;" style="color: var(--primary); font-weight: 600;">Thêm địa chỉ ngay</a></p>
+                                    <div style="text-align: center; padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 2vw, 1.5rem); color: var(--muted-light);">
+                                        <span class="material-symbols-outlined" style="font-size: clamp(2.5rem, 8vw, 3rem); display: block; margin-bottom: clamp(0.75rem, 1.5vw, 1rem); opacity: 0.5;">location_off</span>
+                                        <p style="margin: 0 0 clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(0.9rem, 1.8vw, 1rem);">Bạn chưa lưu địa chỉ nào. <a href="#" onclick="showAddressForm(); return false;" style="color: var(--primary); font-weight: 600; text-decoration: none;">Thêm địa chỉ ngay</a></p>
                                     </div>
                                 <?php else: ?>
                                     <?php foreach ($addresses as $addr): ?>
-                                        <div class="address-card" data-id="<?= $addr['id'] ?>" style="background: #fff; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: flex-start; position: relative;">
+                                        <div class="address-card" data-id="<?= $addr['id'] ?>" style="background: #fff; padding: clamp(1.25rem, 2.5vw, 1.5rem); border-radius: clamp(0.5rem, 1.5vw, 0.75rem); border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: flex-start; position: relative; gap: clamp(1rem, 2vw, 1.5rem); flex-wrap: wrap;">
                                             <?php if ($addr['is_default']): ?>
-                                                <span style="position: absolute; top: 1rem; right: 1rem; background: var(--primary); color: #fff; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Mặc định</span>
+                                                <span style="position: absolute; top: clamp(0.75rem, 1.5vw, 1rem); right: clamp(0.75rem, 1.5vw, 1rem); background: var(--primary); color: #fff; padding: clamp(0.25rem, 0.5vw, 0.35rem) clamp(0.6rem, 1.2vw, 0.75rem); border-radius: 9999px; font-size: clamp(0.7rem, 1.2vw, 0.8rem); font-weight: 600; white-space: nowrap;">Mặc định</span>
                                             <?php endif; ?>
                                             
-                                            <div style="flex: 1;">
-                                                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                            <div style="flex: 1; min-width: 200px;">
+                                                <h3 style="font-size: clamp(1rem, 1.8vw, 1.1rem); font-weight: 600; margin: 0 0 clamp(0.5rem, 1vw, 0.75rem);">
                                                     <?= sanitize($addr['name']) ?>
                                                     <?php if ($addr['note']): ?>
-                                                        <span style="color: var(--muted-light); font-size: 0.9rem; font-weight: 400;">(<?= sanitize($addr['note']) ?>)</span>
+                                                        <span style="color: var(--muted-light); font-size: clamp(0.85rem, 1.5vw, 0.9rem); font-weight: 400;">(<?= sanitize($addr['note']) ?>)</span>
                                                     <?php endif; ?>
                                                 </h3>
-                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem;">
-                                                    <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1rem;">phone</span>
+                                                <p style="color: var(--muted-light); margin: 0 0 clamp(0.35rem, 0.8vw, 0.5rem); display: flex; align-items: center; gap: clamp(0.4rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.5vw, 0.95rem);">
+                                                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 1.8vw, 1.1rem);">phone</span>
                                                     <?= sanitize($addr['phone']) ?>
                                                 </p>
-                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem;">
-                                                    <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1rem;">location_on</span>
-                                                    <?= sanitize($addr['address']) ?>
+                                                <p style="color: var(--muted-light); margin: 0 0 clamp(0.35rem, 0.8vw, 0.5rem); display: flex; align-items: flex-start; gap: clamp(0.4rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.5vw, 0.95rem);">
+                                                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 1.8vw, 1.1rem); flex-shrink: 0;">location_on</span>
+                                                    <span><?= sanitize($addr['address']) ?></span>
                                                 </p>
-                                                <p style="color: var(--muted-light); margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                                <p style="color: var(--muted-light); margin: 0 0 clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.875rem);">
                                                     <?php 
                                                     $location_parts = [];
                                                     if (!empty($addr['ward'])) $location_parts[] = sanitize($addr['ward']);
@@ -555,21 +651,24 @@ include __DIR__ . '/includes/header.php';
                                                     }
                                                     ?>
                                                 </p>
-                                                <p style="color: var(--muted-light); font-size: 0.875rem;">
+                                                <p style="color: var(--muted-light); font-size: clamp(0.8rem, 1.5vw, 0.875rem); margin: 0; margin-top: clamp(0.35rem, 0.8vw, 0.5rem);">
                                                     Thêm <?= date('d/m/Y', strtotime($addr['created_at'])) ?>
                                                 </p>
                                             </div>
 
-                                            <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                                            <div style="display: flex; gap: clamp(0.35rem, 0.8vw, 0.5rem); flex-shrink: 0; margin-top: clamp(1.25rem, 2.5vw, 1.5rem);">
                                                 <?php if (!$addr['is_default']): ?>
-                                                    <button onclick="setDefaultAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Đặt làm mặc định" style="background: none; border: none; cursor: pointer; color: var(--muted-light); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                    <button onclick="setDefaultAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Đặt làm mặc định" style="background: transparent; border: 1px solid var(--border-light); cursor: pointer; color: var(--muted-light); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                                            onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
                                                         <span class="material-symbols-outlined">check_circle</span>
                                                     </button>
                                                 <?php endif; ?>
-                                                <button onclick="editAddress(<?= htmlspecialchars(json_encode($addr)) ?>)" class="btn-icon" title="Chỉnh sửa" style="background: none; border: none; cursor: pointer; color: var(--muted-light); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                <button onclick="editAddress(<?= htmlspecialchars(json_encode($addr)) ?>)" class="btn-icon" title="Chỉnh sửa" style="background: transparent; border: 1px solid var(--border-light); cursor: pointer; color: var(--muted-light); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                                            onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
                                                     <span class="material-symbols-outlined">edit</span>
                                                 </button>
-                                                <button onclick="deleteAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Xóa" style="background: none; border: none; cursor: pointer; color: var(--danger); padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s;">
+                                                <button onclick="deleteAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Xóa" style="background: transparent; border: 1px solid var(--danger-light, rgba(239, 68, 68, 0.2)); cursor: pointer; color: var(--danger); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                                            onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='transparent'">
                                                     <span class="material-symbols-outlined">delete</span>
                                                 </button>
                                             </div>
@@ -584,37 +683,38 @@ include __DIR__ . '/includes/header.php';
                     case 'settings':
                 ?>
                         <!-- Settings Tab -->
-                        <div style="background: white; border-radius: 1rem; padding: 2rem;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Cài đặt tài khoản</h2>
+                        <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
+                            <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem);">Cài đặt tài khoản</h2>
                             
-                            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div style="display: flex; flex-direction: column; gap: clamp(1.25rem, 2vw, 1.5rem);">
                                 <!-- Change Password -->
-                                <div style="padding: 1.5rem; border: 1px solid var(--border-light); border-radius: 0.75rem;">
-                                    <h3 style="font-weight: 700; margin-bottom: 0.5rem;">Đổi mật khẩu</h3>
-                                    <p style="font-size: 0.875rem; color: var(--muted-light); margin-bottom: 1rem;">
+                                <div style="padding: clamp(1.25rem, 2.5vw, 1.5rem); border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem);">
+                                    <h3 style="font-weight: 700; margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.95rem, 1.8vw, 1.1rem);">Đổi mật khẩu</h3>
+                                    <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-bottom: clamp(1rem, 2vw, 1.25rem); line-height: 1.4;">
                                         Cập nhật mật khẩu của bạn để bảo mật tài khoản
                                     </p>
-                                    <button onclick="showPasswordForm()" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Đổi mật khẩu</button>
+                                    <button onclick="showPasswordForm()" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
                                 </div>
                                 
                                 <!-- Notifications -->
-                                <div style="padding: 1.5rem; border: 1px solid var(--border-light); border-radius: 0.75rem;">
-                                    <h3 style="font-weight: 700; margin-bottom: 1rem;">Thông báo</h3>
-                                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="padding: clamp(1.25rem, 2.5vw, 1.5rem); border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem);">
+                                    <h3 style="font-weight: 700; margin-bottom: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(0.95rem, 1.8vw, 1.1rem);">Thông báo</h3>
+                                    <div style="display: flex; flex-direction: column; gap: clamp(1rem, 2vw, 1.25rem);">
+                                        <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s;" onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='transparent'">
                                             <div>
-                                                <p style="font-weight: 600;">Nhận email khuyến mãi</p>
-                                                <p style="font-size: 0.875rem; color: var(--muted-light);">Nhận thông báo về các chương trình ưu đãi</p>
+                                                <p style="font-weight: 600; margin: 0 0 clamp(0.25rem, 0.5vw, 0.35rem); font-size: clamp(0.9rem, 1.8vw, 1rem);">Nhận email khuyến mãi</p>
+                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin: 0; line-height: 1.3;">Nhận thông báo về các chương trình ưu đãi</p>
                                             </div>
-                                            <input type="checkbox" checked style="width: 48px; height: 24px; accent-color: var(--primary);">
+                                            <input type="checkbox" checked style="width: clamp(40px, 8vw, 48px); height: clamp(20px, 4vw, 24px); cursor: pointer; accent-color: var(--primary); flex-shrink: 0; margin-left: 1rem;">
                                         </label>
                                         
-                                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s;" onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='transparent'">
                                             <div>
-                                                <p style="font-weight: 600;">Thông báo đơn hàng</p>
-                                                <p style="font-size: 0.875rem; color: var(--muted-light);">Nhận cập nhật về tình trạng đơn hàng</p>
+                                                <p style="font-weight: 600; margin: 0 0 clamp(0.25rem, 0.5vw, 0.35rem); font-size: clamp(0.9rem, 1.8vw, 1rem);">Thông báo đơn hàng</p>
+                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin: 0; line-height: 1.3;">Nhận cập nhật về tình trạng đơn hàng</p>
                                             </div>
-                                            <input type="checkbox" checked style="width: 48px; height: 24px; accent-color: var(--primary);">
+                                            <input type="checkbox" checked style="width: clamp(40px, 8vw, 48px); height: clamp(20px, 4vw, 24px); cursor: pointer; accent-color: var(--primary); flex-shrink: 0; margin-left: 1rem;">
                                         </label>
                                     </div>
                                 </div>
@@ -622,31 +722,36 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     
                         <!-- Password Modal -->
-                        <div id="password-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                            <div style="background: white; border-radius: 1rem; padding: 2rem; max-width: 400px; width: 90%;">
-                                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Đổi mật khẩu</h3>
-                                <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div id="password-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: clamp(0.75rem, 1.5vw, 1rem);">
+                            <div class="modal-content" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.5rem, 2.5vw, 2rem); max-width: 450px; width: 100%;">
+                                <h3 style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1.25rem, 2vw, 1.5rem);">Đổi mật khẩu</h3>
+                                <form method="POST" style="display: flex; flex-direction: column; gap: clamp(1.25rem, 2vw, 1.5rem);">
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Mật khẩu hiện tại</label>
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Mật khẩu hiện tại</label>
                                         <input type="password" name="current_password" required
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Mật khẩu mới</label>
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Mật khẩu mới</label>
                                         <input type="password" name="new_password" required
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                     
                                     <div>
-                                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Xác nhận mật khẩu</label>
+                                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Xác nhận mật khẩu</label>
                                         <input type="password" name="confirm_password" required
-                                               style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 0.5rem;">
+                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                     
-                                    <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-                                        <button type="button" onclick="hidePasswordForm()" class="btn btn-secondary">Hủy</button>
-                                        <button type="submit" name="change_password" class="btn btn-primary">Đổi mật khẩu</button>
+                                    <div style="display: flex; gap: clamp(0.75rem, 1.5vw, 1rem); justify-content: flex-end; padding-top: clamp(1rem, 2vw, 1.25rem); border-top: 1px solid var(--border-light);">
+                                        <button type="button" onclick="hidePasswordForm()" class="btn" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--background-light); color: var(--text); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                                onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='var(--background-light)'">Hủy</button>
+                                        <button type="submit" name="change_password" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: #fff; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
+                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
                                     </div>
                                 </form>
                             </div>

@@ -342,7 +342,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Categories -->
+<!-- Categories
 <section style="padding: 3rem 1rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
         <h2 class="section-title" style="margin-bottom: 1.5rem;">Khám Phá Danh Mục</h2>
@@ -365,7 +365,7 @@ include __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
         </div>
     </div>
-</section>
+</section> -->
 
 <!-- CTA Banner -->
 <section style="padding: 3rem 1rem;">

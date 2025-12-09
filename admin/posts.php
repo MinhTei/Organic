@@ -114,25 +114,25 @@ $pageTitle = 'Quản lý bài viết';
 
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -144,7 +144,7 @@ $pageTitle = 'Quản lý bài viết';
         <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <div style="max-width:1100px; margin:2rem auto;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <h1 style="margin:0;">Quản lý bài viết / Tin tức</h1>

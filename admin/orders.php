@@ -150,25 +150,25 @@ $pageTitle = 'Quản lý Đơn hàng';
     
     <!-- Header (match admin style) -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-600 text-3xl">admin_panel_settings</span>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+        <div class="px-3 sm:px-4 md:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="material-symbols-outlined text-green-600 text-2xl sm:text-3xl flex-shrink-0">admin_panel_settings</span>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-bold text-gray-900 truncate">Admin Dashboard</h1>
                         <p class="text-xs text-gray-500">Xanh Organic</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="<?= SITE_URL ?>" class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <a href="<?= SITE_URL ?>" class="flex items-center gap-1 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition">
                         <span class="material-symbols-outlined text-lg">storefront</span>
-                        <span>Về trang chủ</span>
+                        <span class="hidden sm:inline">Về trang chủ</span>
                     </a>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                    <div class="flex items-center gap-2 sm:pl-3 sm:border-l sm:border-gray-200">
+                        <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                             <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
                         </div>
-                        <span class="text-sm font-medium text-gray-700"><?= sanitize($_SESSION['user_name']) ?></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-700 hidden sm:inline truncate"><?= sanitize($_SESSION['user_name']) ?></span>
                     </div>
                 </div>
             </div>
@@ -180,20 +180,20 @@ $pageTitle = 'Quản lý Đơn hàng';
         <?php include __DIR__ . '/_sidebar.php'; ?>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-3 sm:p-4 md:p-6">
             <?php if ($success): ?>
                 <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg"><?= $success ?></div>
             <?php endif; ?>
 
             <!-- Header -->
             <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Quản lý Đơn hàng</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Quản lý Đơn hàng</h2>
                 <p class="text-gray-600 mt-1">Tổng cộng <?= $total ?> đơn hàng</p>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-                <form method="GET" class="flex gap-4">
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-4 mb-6">
+                <form method="GET" class="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <input type="text" name="search" value="<?= sanitize($search) ?>" 
                            placeholder="Tìm theo mã đơn, tên, email..."
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
@@ -212,65 +212,67 @@ $pageTitle = 'Quản lý Đơn hàng';
             </div>
 
             <!-- Orders Table -->
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Mã ĐH</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Khách hàng</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Tổng tiền</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Trạng thái</th>
-                            <th class="text-left py-3 px-4 font-semibold text-sm">Ngày đặt</th>
-                            <th class="text-center py-3 px-4 font-semibold text-sm">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($orders as $order): ?>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-4 px-4 font-medium">#<?= $order['id'] ?></td>
-                            <td class="py-4 px-4">
-                                <div>
-                                    <p class="font-medium"><?= sanitize($order['customer_name'] ?? 'Khách') ?></p>
-                                    <p class="text-sm text-gray-500"><?= sanitize($order['customer_email'] ?? '') ?></p>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-semibold text-green-600">
-                                <?= formatPrice($order['total_amount']) ?>
-                            </td>
-                            <td class="py-4 px-4">
-                                <?php if ($order['status'] === 'cancelled'): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>" style="opacity: 0.5; cursor: not-allowed;">
-                                        <?= $statusLabels[$order['status']] ?>
-                                    </span>
-                                <?php else: ?>
-                                    <form method="POST" class="inline">
-                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                        <select name="status" onchange="this.form.submit()"
-                                                class="px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?> border-none cursor-pointer">
-                                            <?php foreach ($statusLabels as $key => $label): ?>
-                                                <option value="<?= $key ?>" <?= $order['status'] == $key ? 'selected' : '' ?>>
-                                                    <?= $label ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <input type="hidden" name="update_status" value="1">
-                                    </form>
-                                <?php endif; ?>
-                            </td>
-                            <td class="py-4 px-4 text-sm text-gray-600">
-                                <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
-                            </td>
-                            <td class="py-4 px-4 text-center">
-                                <a href="order_detail.php?id=<?= $order['id'] ?>" 
-                                   class="inline-flex items-center gap-1 px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg">
-                                    <span class="material-symbols-outlined text-lg">visibility</span>
-                                    <span class="text-sm">Chi tiết</span>
-                                </a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto -mx-3 sm:mx-0">
+                    <table class="w-full text-xs sm:text-sm">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Mã ĐH</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Khách hàng</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Tổng tiền</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Trạng thái</th>
+                                <th class="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Ngày đặt</th>
+                                <th class="text-center py-2 sm:py-3 px-3 sm:px-4 font-semibold text-xs sm:text-sm">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($orders as $order): ?>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium">#<?= $order['id'] ?></td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                    <div>
+                                        <p class="font-medium text-xs sm:text-sm truncate"><?= sanitize($order['customer_name'] ?? 'Khách') ?></p>
+                                        <p class="text-xs text-gray-500 truncate"><?= sanitize($order['customer_email'] ?? '') ?></p>
+                                    </div>
+                                </td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 font-semibold text-green-600 text-xs sm:text-sm">
+                                    <?= formatPrice($order['total_amount']) ?>
+                                </td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                    <?php if ($order['status'] === 'cancelled'): ?>
+                                        <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>" style="opacity: 0.5; cursor: not-allowed;">
+                                            <?= $statusLabels[$order['status']] ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <form method="POST" class="inline">
+                                            <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                            <select name="status" onchange="this.form.submit()"
+                                                    class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?> border-none cursor-pointer">
+                                                <?php foreach ($statusLabels as $key => $label): ?>
+                                                    <option value="<?= $key ?>" <?= $order['status'] == $key ? 'selected' : '' ?>>
+                                                        <?= $label ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <input type="hidden" name="update_status" value="1">
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm text-gray-600">
+                                    <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
+                                </td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 text-center">
+                                    <a href="order_detail.php?id=<?= $order['id'] ?>" 
+                                       class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs sm:text-sm text-blue-600 hover:bg-blue-50 rounded-lg">
+                                        <span class="material-symbols-outlined text-sm sm:text-lg">visibility</span>
+                                        <span class="hidden sm:inline">Chi tiết</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Pagination -->
