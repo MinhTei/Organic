@@ -82,15 +82,20 @@
 
 <body>
 
-    <h1>NGUYỄN TRUNG HẬU - DH52200651 - D22_TH07</h1>
+    <h1>BÙI MINH TÀI</h1>
     <hr>
     <h1>Danh sách bài tập</h1>
 
     <ul>
+        <li><a href="lab01/">Bài tập Lab 01</a></li>
         <li><a href="lab02/">Bài tập Lab 02</a></li>
         <li><a href="lab03/">Bài tập Lab 03</a></li>
         <li><a href="lab04/">Bài tập Lab 04</a></li>
         <li><a href="lab05/">Bài tập Lab 05</a></li>
+        <li><a href="lab06/">Bài tập Lab 06</a></li>
+        <li><a href="lab07/">Bài tập Lab 07</a></li>
+        <li><a href="lab08/">Bài tập Lab 08</a></li>
+        
     </ul>
 
 </body>
