@@ -27,7 +27,7 @@ define('DB_NAME', 'organic_db');
 
 // Site Configuration
 define('SITE_URL', 'http://localhost/organic');
-define('ITEMS_PER_PAGE', 6);
+define('ITEMS_PER_PAGE', 9);
 define('ADMIN_URL', SITE_URL . '/admin');
 
 // Database Connection

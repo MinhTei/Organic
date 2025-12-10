@@ -220,7 +220,7 @@ img {
     flex-direction: column;
     background: var(--card-light);
     border: 1px solid transparent;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -295,7 +295,7 @@ img {
 }
 
 .product-info {
-    padding: 1rem;
+    padding: 0.6rem;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -303,15 +303,15 @@ img {
 
 @media (max-width: 640px) {
     .product-info {
-        padding: 0.75rem;
+        padding: 0.45rem;
     }
 }
 
 .product-name {
-    font-size: 1rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-light);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.1rem;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -321,67 +321,67 @@ img {
 
 @media (max-width: 640px) {
     .product-name {
-        font-size: 0.875rem;
+        font-size: 0.7rem;
         -webkit-line-clamp: 2;
     }
 }
 
 .product-unit {
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     color: var(--muted-light);
-    margin-bottom: 1rem;
+    margin-bottom: 0.4rem;
 }
 
 @media (max-width: 640px) {
     .product-unit {
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
+        font-size: 0.65rem;
+        margin-bottom: 0.2rem;
     }
 }
 
 .product-price {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-top: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
 }
 
 @media (max-width: 640px) {
     .product-price {
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.4rem;
     }
 }
 
 .price-current {
-    font-size: 1.125rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--primary-dark);
 }
 
 @media (max-width: 640px) {
     .price-current {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 }
 
 .price-original {
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     color: var(--muted-light);
     text-decoration: line-through;
 }
 
 @media (max-width: 640px) {
     .price-original {
-        font-size: 0.75rem;
+        font-size: 0.6rem;
     }
 }
 
 .btn-add-cart {
     width: 100%;
-    padding: 0.625rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.4rem;
+    font-size: 0.7rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -390,8 +390,8 @@ img {
 
 @media (max-width: 640px) {
     .btn-add-cart {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8rem;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.65rem;
     }
 }
 
