@@ -104,14 +104,14 @@ include __DIR__ . '/includes/header.php';
                 <!-- Price Range -->
                 <div class="border-b pb-4">
                     <h3 class="font-bold text-sm mb-3 text-gray-900">Khoảng giá</h3>
-                    <div class="flex gap-2 items-center">
+                    <div class="flex gap-1.5 items-center">
                         <input type="number" name="min_price" placeholder="Từ"
                                value="<?= $minPrice ?>"
-                               class="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
-                        <span class="text-gray-500 text-sm">-</span>
+                               class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                        <span class="text-gray-500 text-xs">-</span>
                         <input type="number" name="max_price" placeholder="Đến"
                                value="<?= $maxPrice ?>"
-                               class="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                               class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
                     </div>
                 </div>
 
@@ -209,14 +209,14 @@ include __DIR__ . '/includes/header.php';
                 <!-- Price Range -->
                 <div class="border-b pb-4">
                     <h3 class="font-bold text-sm mb-3 text-gray-900">Khoảng giá</h3>
-                    <div class="flex gap-2 items-center">
+                    <div class="flex gap-1.5 items-center">
                         <input type="number" name="min_price" placeholder="Từ"
                                value="<?= $minPrice ?>"
-                               class="w-20 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
-                        <span class="text-gray-500 text-xs sm:text-sm">-</span>
+                               class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                        <span class="text-gray-500 text-xs">-</span>
                         <input type="number" name="max_price" placeholder="Đến"
                                value="<?= $maxPrice ?>"
-                               class="w-20 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                               class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
                     </div>
                 </div>
 
