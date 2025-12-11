@@ -410,3 +410,12 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
+<style>
+    /* Mobile Product Grid - 2 columns only */
+    @media (max-width: 640px) {
+        .products-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+</style>
