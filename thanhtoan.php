@@ -15,6 +15,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/email_functions.php';
+require_once __DIR__ . '/includes/settings_helper.php';
 
 $success = '';
 $error = '';
@@ -66,8 +67,8 @@ $stmt->execute([$userId]);
 $savedAddresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Shipping fee
-$shippingFee = defined('DEFAULT_SHIPPING_FEE') ? DEFAULT_SHIPPING_FEE : 25000;
-$freeShippingThreshold = defined('FREE_SHIPPING_THRESHOLD') ? FREE_SHIPPING_THRESHOLD : 500000;
+$shippingFee = (int) getSystemSetting('default_shipping_fee', 25000);
+$freeShippingThreshold = (int) getSystemSetting('free_shipping_threshold', 500000);
 $isFreeShipping = $subtotal >= $freeShippingThreshold;
 if ($isFreeShipping) {
     $shippingFee = 0;
@@ -565,9 +566,9 @@ include __DIR__ . '/includes/header.php';
                                 Chuyển khoản trước khi nhận hàng
                             </p>
                             <div style="background: rgba(182, 230, 51, 0.1); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;">
-                                <p><strong>Ngân hàng:</strong> Vietcombank</p>
-                                <p><strong>Số TK:</strong> 1234567890</p>
-                                <p><strong>Chủ TK:</strong> CONG TY XANH ORGANIC</p>
+                                <p><strong>Ngân hàng:</strong> <?= getSystemSetting('bank_name', 'Vietcombank') ?></p>
+                                <p><strong>Số TK:</strong> <?= getSystemSetting('bank_account', '1234567890') ?></p>
+                                <p><strong>Chủ TK:</strong> <?= getSystemSetting('bank_account_name', 'CONG TY XANH ORGANIC') ?></p>
                             </div>
                         </div>
                     </label>
@@ -671,6 +672,9 @@ include __DIR__ . '/includes/header.php';
                 <button type="submit" name="place_order" value="1" style="width: 100%; padding: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(0.875rem, 2vw, 1rem); background: var(--primary); color: var(--text-light); font-weight: 600; border: none; border-radius: clamp(0.35rem, 1vw, 0.5rem); cursor: pointer; pointer-events: auto;">
                     Đặt hàng
                 </button>
+                 <a href="<?= SITE_URL ?>/products.php" style="display: block; text-align: center; margin-top: clamp(0.75rem, 1.5vw, 1rem); color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.875rem); text-decoration: none;">
+                        ← Tiếp tục mua sắm
+                </a>
 
                 <p style="text-align: center; font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-top: clamp(0.75rem, 1.5vw, 1rem);">
                     Bằng việc đặt hàng, bạn đồng ý với 

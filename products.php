@@ -163,7 +163,12 @@ include __DIR__ . '/includes/header.php';
 
             <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <!-- Mobile Filter Button -->
-                <button type="button" onclick="document.getElementById('mobileFilter').classList.toggle('hidden'); document.getElementById('filterToggleIcon').textContent = document.getElementById('mobileFilter').classList.contains('hidden') ? 'expand_more' : 'expand_less';" class="md:hidden px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition whitespace-nowrap">
+                <button type="button" onclick="document.getElementById('mobileFilter').classList.toggle('hidden'); document.getElementById('filterToggleIcon').textContent = document.getElementById('mobileFilter').classList.contains('hidden') ? 'expand_more' : 'expand_less';" class="md:hidden px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition whitespace-nowrap" style="display: none;">
+                    <style>
+                        @media (max-width: 767px) {
+                            button[style*="display: none"] { display: flex !important; }
+                        }
+                    </style>
                     <span class="material-symbols-outlined text-lg">tune</span>
                     <span class="text-xs font-semibold text-gray-900">Lọc</span>
                     <span class="material-symbols-outlined text-lg" id="filterToggleIcon">expand_more</span>

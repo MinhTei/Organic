@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/settings_helper.php';
 
 // Handle cart actions via AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -86,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $subtotal += $itemTotal;
                 }
             }
-            $freeShippingThreshold = 500000;
+            $freeShippingThreshold = (int) getSystemSetting('free_shipping_threshold', 500000);
             $isFreeShipping = $subtotal >= $freeShippingThreshold;
             if ($isFreeShipping) {
                 $shippingFee = 0;
@@ -102,7 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 'subtotal' => $subtotal,
                 'shippingFee' => $shippingFee,
                 'total' => $total,
-                'unitPrice' => $unitPrice
+                'unitPrice' => $unitPrice,
+                'isFreeShipping' => $isFreeShipping,
+                'freeShippingThreshold' => $freeShippingThreshold,
+                'remainingAmount' => max(0, $freeShippingThreshold - $subtotal)
             ]);
             exit;
             
@@ -157,10 +161,13 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
+// Get shipping fee from settings
+$shippingFee = (int) getSystemSetting('default_shipping_fee', 25000);
+
 $total = $subtotal + ($subtotal > 0 ? $shippingFee : 0);
 
 // Free shipping threshold
-$freeShippingThreshold = 500000;
+$freeShippingThreshold = (int) getSystemSetting('free_shipping_threshold', 500000);
 $isFreeShipping = $subtotal >= $freeShippingThreshold;
 if ($isFreeShipping) {
     $shippingFee = 0;
@@ -349,9 +356,9 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     
                     <?php if (!$isFreeShipping): ?>
-                    <div style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 0.5vw, 0.5rem);">
+                    <div id="freeShippingHint" style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 0.5vw, 0.5rem);">
                         <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--text-light);">
-                            Mua thêm <strong><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
+                            Mua thêm <strong id="freeShippingAmount"><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
                         </p>
                     </div>
                     <?php endif; ?>
@@ -423,6 +430,20 @@ function updateCart(productId, quantity) {
             if (data.total !== undefined) {
                 const totalEl = document.querySelector('.cart-grandtotal');
                 if (totalEl) totalEl.textContent = formatPrice(data.total);
+            }
+            
+            // Update free shipping hint
+            if (data.isFreeShipping !== undefined) {
+                const hintEl = document.getElementById('freeShippingHint');
+                const amountEl = document.getElementById('freeShippingAmount');
+                if (hintEl && data.isFreeShipping) {
+                    // Hide hint when free shipping is achieved
+                    hintEl.style.display = 'none';
+                } else if (hintEl && !data.isFreeShipping && data.remainingAmount !== undefined) {
+                    // Show hint and update remaining amount
+                    hintEl.style.display = 'block';
+                    if (amountEl) amountEl.textContent = formatPrice(data.remainingAmount);
+                }
             }
         } else {
             if (typeof showNotification === 'function') showNotification(data.message || 'Kho hiện tại không còn đủ', 'error');
