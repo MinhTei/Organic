@@ -104,13 +104,14 @@ include __DIR__ . '/includes/header.php';
                 <!-- Price Range -->
                 <div class="border-b pb-4">
                     <h3 class="font-bold text-sm mb-3 text-gray-900">Khoảng giá</h3>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 items-center">
                         <input type="number" name="min_price" placeholder="Từ"
                                value="<?= $minPrice ?>"
-                               class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                               class="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                        <span class="text-gray-500 text-sm">-</span>
                         <input type="number" name="max_price" placeholder="Đến"
                                value="<?= $maxPrice ?>"
-                               class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                               class="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
                     </div>
                 </div>
 
@@ -152,15 +153,22 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Section Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-            <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
+            <div class="flex-1">
                 <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900"><?= htmlspecialchars($currentCategoryName) ?></h1>
                 <p class="text-xs sm:text-sm text-gray-600 mt-1">
                     <?= number_format($totalProducts) ?> sản phẩm
                 </p>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Mobile Filter Button -->
+                <button type="button" onclick="document.getElementById('mobileFilter').classList.toggle('hidden'); document.getElementById('filterToggleIcon').textContent = document.getElementById('mobileFilter').classList.contains('hidden') ? 'expand_more' : 'expand_less';" class="md:hidden px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition whitespace-nowrap">
+                    <span class="material-symbols-outlined text-lg">tune</span>
+                    <span class="text-xs font-semibold text-gray-900">Lọc</span>
+                    <span class="material-symbols-outlined text-lg" id="filterToggleIcon">expand_more</span>
+                </button>
+
                 <label class="text-xs sm:text-sm text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
                 <select class="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary/50" onchange="window.location.href=this.value">
                     <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'newest'])) ?>" <?= $sort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
@@ -169,6 +177,70 @@ include __DIR__ . '/includes/header.php';
                     <option value="?<?= http_build_query(array_merge($_GET, ['sort' => 'name_asc'])) ?>" <?= $sort == 'name_asc' ? 'selected' : '' ?>>Tên A-Z</option>
                 </select>
             </div>
+        </div>
+
+        <!-- Mobile Filter - Collapsible -->
+        <div id="mobileFilter" class="hidden mb-6 md:hidden bg-white border border-gray-200 rounded-lg p-4">
+            <form action="" method="GET" class="space-y-4">
+                <?php if ($search): ?>
+                    <input type="hidden" name="search" value="<?= $search ?>">
+                <?php endif; ?>
+
+                <!-- Categories -->
+                <div class="border-b pb-4">
+                    <h3 class="font-bold text-sm mb-3 text-gray-900">Danh mục</h3>
+                    <div class="space-y-2">
+                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])) ?>"
+                           class="block px-3 py-2 rounded text-xs sm:text-sm <?= !$categoryId ? 'bg-primary/20 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-100' ?> transition">
+                            Tất cả
+                        </a>
+                        <?php foreach ($categories as $cat): ?>
+                        <a href="?<?= http_build_query(array_merge($_GET, ['category' => $cat['id'], 'page' => 1])) ?>"
+                           class="flex items-center gap-2 px-3 py-2 rounded text-xs sm:text-sm <?= $categoryId == $cat['id'] ? 'bg-primary/20 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-100' ?> transition">
+                            <?php if (!empty($cat['icon'])): ?>
+                                <img src="<?= imageUrl($cat['icon']) ?>" alt="<?= sanitize($cat['name']) ?>" class="w-4 h-4 rounded object-cover flex-shrink-0">
+                            <?php endif; ?>
+                            <span class="truncate"><?= str_replace('&amp;', '&', sanitize($cat['name'])) ?></span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div class="border-b pb-4">
+                    <h3 class="font-bold text-sm mb-3 text-gray-900">Khoảng giá</h3>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" name="min_price" placeholder="Từ"
+                               value="<?= $minPrice ?>"
+                               class="w-20 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                        <span class="text-gray-500 text-xs sm:text-sm">-</span>
+                        <input type="number" name="max_price" placeholder="Đến"
+                               value="<?= $maxPrice ?>"
+                               class="w-20 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary/50">
+                    </div>
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="space-y-2 pb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="on_sale" value="1" <?= $onSale ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-xs sm:text-sm text-gray-700">Đang giảm giá</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_new" value="1" <?= $isNew ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-xs sm:text-sm text-gray-700">Hàng mới về</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_organic" value="1" <?= $isOrganic ? 'checked' : '' ?> class="w-4 h-4">
+                        <span class="text-xs sm:text-sm text-gray-700">Chứng nhận hữu cơ</span>
+                    </label>
+                </div>
+
+                <!-- Apply Button -->
+                <button type="submit" class="w-full px-4 py-2 bg-primary text-black font-bold rounded-lg hover:bg-primary-dark transition text-xs sm:text-sm">
+                    Áp dụng
+                </button>
+            </form>
         </div>
 
         <!-- Products Grid -->

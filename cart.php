@@ -194,6 +194,24 @@ include __DIR__ . '/includes/header.php';
                     position: static !important;
                     margin-top: clamp(1.5rem, 3vw, 2rem) !important;
                 }
+                .cart-item-inner {
+                    grid-template-columns: 80px 1fr !important;
+                    gap: 0.75rem !important;
+                    padding: 0.75rem !important;
+                }
+                .cart-item-image {
+                    width: 80px !important;
+                    height: 80px !important;
+                }
+                .cart-item-details {
+                    gap: 0.5rem !important;
+                }
+                .cart-item-details p {
+                    font-size: 0.8rem !important;
+                }
+                .cart-item-details a {
+                    font-size: 0.85rem !important;
+                }
             }
         </style>
         <div class="cart-grid" style="display: grid; grid-template-columns: 1fr minmax(300px, 350px); gap: clamp(1.5rem, 3vw, 2rem);">

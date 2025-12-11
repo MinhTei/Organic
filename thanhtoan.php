@@ -332,6 +332,20 @@ include __DIR__ . '/includes/header.php';
         @media (max-width: 768px) {
             .checkout-form { grid-template-columns: 1fr !important; }
             .order-summary-checkout { position: static !important; margin-top: clamp(1.5rem, 3vw, 2rem) !important; }
+            main {
+                padding: 1rem !important;
+            }
+            .checkout-form > div {
+                padding: 1rem !important;
+            }
+            h2 {
+                font-size: 1rem !important;
+            }
+            .checkout-form input,
+            .checkout-form select,
+            .checkout-form textarea {
+                font-size: 0.9rem !important;
+            }
         }
     </style>
     <form method="POST" class="checkout-form" style="display: grid; grid-template-columns: 1fr minmax(280px, 400px); gap: clamp(1.5rem, 3vw, 2rem);">
