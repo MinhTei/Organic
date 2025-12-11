@@ -25,6 +25,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="site-url" content="<?= SITE_URL ?>"/>
+    <link rel="icon" href="/images/logo/logo_thanh_trang.png" type="image/x-icon"/>
     <title><?= isset($pageTitle) ? $pageTitle . ' - ' : '' ?><?= SITE_NAME ?></title>
     
     <!-- Tailwind CSS -->
