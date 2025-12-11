@@ -171,7 +171,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             /* Row 2: Search Bar */
             .header-row-2 {
                 display: flex !important;
-                padding: 0.5rem 1rem !important;
+                padding: 0.35rem 0.75rem !important;
                 width: 100%;
                 background: white;
                 border-top: 1px solid #e0e0e0;
@@ -192,9 +192,9 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             
             .mobile-search-form input {
                 flex: 1;
-                padding: 0.5rem 0.75rem;
+                padding: 0.4rem 0.6rem;
                 border: none;
-                font-size: 0.85rem;
+                font-size: 0.8rem;
                 outline: none;
                 background: transparent;
                 color: #666;
