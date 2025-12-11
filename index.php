@@ -235,11 +235,19 @@ include __DIR__ . '/includes/header.php';
                 <a href="index.php" style="color: var(--primary-dark); font-weight: 600;">Đặt lại</a>
             </div>
             <?php if (!empty($searchProducts)): ?>
-                <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
                     <?php foreach ($searchProducts as $product): ?>
                         <?= renderProductCard($product) ?>
                     <?php endforeach; ?>
                 </div>
+                <style>
+                    @media (max-width: 767px) {
+                        .products-grid {
+                            grid-template-columns: repeat(2, 1fr) !important;
+                            gap: 0.75rem !important;
+                        }
+                    }
+                </style>
             <?php else: ?>
                 <div style="text-align:center; color:var(--muted-light); padding:3rem 0; font-size:1.2rem;">
                     <span class="material-symbols-outlined" style="font-size:3rem; color:var(--primary-dark);">search_off</span><br>
@@ -253,11 +261,19 @@ include __DIR__ . '/includes/header.php';
                     Xem tất cả →
                 </a>
             </div>
-            <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
                 <?php foreach ($featuredProducts as $product): ?>
                     <?= renderProductCard($product) ?>
                 <?php endforeach; ?>
             </div>
+            <style>
+                @media (max-width: 767px) {
+                    .products-grid {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                        gap: 0.75rem !important;
+                    }
+                }
+            </style>
         <?php endif; ?>
     </div>
 </section>
@@ -271,11 +287,19 @@ include __DIR__ . '/includes/header.php';
             <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
             <a href="<?= SITE_URL ?>/products.php?filter=featured" style="color: var(--primary-dark); font-weight: 600;">Xem thêm →</a>
         </div>
-        <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+        <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
             <?php foreach ($adminFeatured as $p): ?>
                 <?= renderProductCard($p) ?>
             <?php endforeach; ?>
         </div>
+        <style>
+            @media (max-width: 767px) {
+                .products-grid {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 0.75rem !important;
+                }
+            }
+        </style>
     </div>
 </section>
 <?php endif; ?>
@@ -386,3 +410,12 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
+<style>
+    /* Mobile Product Grid - 2 columns only */
+    @media (max-width: 640px) {
+        .products-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+</style>

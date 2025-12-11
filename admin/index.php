@@ -37,8 +37,6 @@ $pageTitle = 'STU';
 include __DIR__ . '/../includes/header.php';
 ?>
 
-
-
 <!-- Hero Slideshow Section -->
 <section class="px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
     <div class="mx-auto max-w-6xl">
@@ -370,3 +368,4 @@ include __DIR__ . '/../includes/header.php';
 </section>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
+

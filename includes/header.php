@@ -28,36 +28,16 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
     <link rel="icon" href="/images/logo/logo_thanh_trang.png" type="image/x-icon"/>
     <title><?= isset($pageTitle) ? $pageTitle . ' - ' : '' ?><?= SITE_NAME ?></title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     
+    <!-- Tailwind CSS (Built) -->
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
+    
     <!-- Custom CSS -->
     <link href="<?= SITE_URL ?>/css/styles.css" rel="stylesheet"/>
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#b6e633",
-                        "primary-dark": "#9acc2a",
-                        "background-light": "#f7f8f6",
-                        "text-light": "#161811",
-                        "card-light": "#ffffff",
-                        "border-light": "#e3e5dc",
-                        "muted-light": "#7e8863",
-                    },
-                    fontFamily: {
-                        "display": ["Be Vietnam Pro", "sans-serif"]
-                    },
-                }
-            }
-        }
-    </script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -142,6 +122,12 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                 min-height: 70px;
             }
             
+            @media (max-width: 767px) {
+                .header-row-1 {
+                    min-height: 85px;
+                }
+            }
+            
             .header-row-1 .left-icons {
                 display: flex;
                 align-items: center;
@@ -162,6 +148,14 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                 object-fit: contain;
             }
             
+            @media (max-width: 767px) {
+                .header-row-1 .logo img,
+                .header-row-1 .logo svg {
+                    max-height: 65px !important;
+                    max-width: 150px;
+                }
+            }
+            
             .header-row-1 .right-icons {
                 display: flex;
                 align-items: center;
@@ -178,9 +172,8 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             /* Row 2: Search Bar */
             .header-row-2 {
                 display: flex !important;
-                padding: 0.75rem 0 !important;
-                width: 100vw;
-                margin-left: calc(-50vw + 50%);
+                padding: 0.35rem 0.75rem !important;
+                width: 100%;
                 background: white;
                 border-top: 1px solid #e0e0e0;
                 border-bottom: 1px solid #e0e0e0;
@@ -191,19 +184,18 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                 gap: 0;
                 align-items: center;
                 background: #f9f9f9;
-                border-radius: 0.5rem;
+                border-radius: 0.4rem;
                 overflow: hidden;
                 width: 100%;
-                max-width: calc(100% - 2rem);
-                margin: 0 1rem;
+                margin: 0;
                 border: 1px solid #e0e0e0;
             }
             
             .mobile-search-form input {
                 flex: 1;
-                padding: 0.7rem 1rem;
+                padding: 0.4rem 0.6rem;
                 border: none;
-                font-size: 0.9rem;
+                font-size: 0.8rem;
                 outline: none;
                 background: transparent;
                 color: #666;
@@ -214,7 +206,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             }
             
             .mobile-search-form button {
-                padding: 0.7rem 1rem;
+                padding: 0.5rem 0.75rem;
                 background: transparent;
                 border: none;
                 cursor: pointer;
@@ -229,7 +221,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
 
             /* Add top margin to page content on mobile to avoid search bar overlap */
             body > *:not(.header):not(.mobile-menu-overlay):not(.mobile-menu-sidebar):not(script):not(style):not(noscript) {
-                margin-top: 0.5rem;
+                margin-top: 1rem;
             }
 
             .container {

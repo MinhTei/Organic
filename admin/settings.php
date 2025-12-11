@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/settings_helper.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     redirect(SITE_URL . '/auth.php');
@@ -49,24 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     try {
         foreach ($settings as $key => $value) {
             // Sử dụng helper để cập nhật và refresh cache
-            if (!function_exists('updateSystemSetting')) {
-                // fallback: direct query
-                $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:key, :value) ON DUPLICATE KEY UPDATE setting_value = :value2");
-                $stmt->execute([':key' => $key, ':value' => $value, ':value2' => $value]);
-            } else {
-                updateSystemSetting($key, $value);
-            }
-        }
-
-        // reload local copy
-        if (function_exists('loadSystemSettings')) {
-            $currentSettings = loadSystemSettings(true);
-        } else {
-            $stmt = $conn->query("SELECT setting_key, setting_value FROM settings");
-            $currentSettings = [];
-            while ($row = $stmt->fetch()) {
-                $currentSettings[$row['setting_key']] = $row['setting_value'];
-            }
+            updateSystemSetting($key, $value);
         }
 
         // Use flash + redirect to force a fresh request so constants/settings reload
@@ -126,7 +110,7 @@ $pageTitle = 'Cài đặt hệ thống';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <style>
@@ -587,3 +571,4 @@ $pageTitle = 'Cài đặt hệ thống';
 
 </body>
 </html>
+

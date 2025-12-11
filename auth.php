@@ -92,7 +92,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title><?= $pageTitle ?> - Xanh Organic</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <style>
@@ -173,6 +173,22 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                         <span class="material-symbols-outlined">error</span>
                         <span><?= $error ?></span>
                     </div>
+                <?php endif; ?>
+
+                <?php if ($mode === 'login'): ?>
+                <!-- Demo Account Hint -->
+                <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start gap-2">
+                        <span class="material-symbols-outlined text-blue-600 flex-shrink-0 text-sm" style="font-size: 18px;">info</span>
+                        <div class="text-xs text-blue-900">
+                            <p class="font-semibold mb-1">Tài khoản demo:</p>
+                            <div class="space-y-1 bg-white/60 p-1.5 rounded border border-blue-100 text-xs">
+                                <p><strong>User:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">user@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                                <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <?php endif; ?>
 
                 <?php if ($mode === 'login'): ?>

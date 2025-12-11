@@ -14,12 +14,8 @@ if (!function_exists('getConnection')) {
     }
 }
 
-// Cache settings trong session để giảm query DB
+// Load settings từ database - không cache để settings update real-time
 function loadSystemSettings($forceReload = false) {
-    if (!$forceReload && isset($_SESSION['_system_settings'])) {
-        return $_SESSION['_system_settings'];
-    }
-    
     $conn = getConnection();
     $stmt = $conn->query("SELECT setting_key, setting_value FROM settings");
     
@@ -28,7 +24,6 @@ function loadSystemSettings($forceReload = false) {
         $settings[$row['setting_key']] = $row['setting_value'];
     }
     
-    $_SESSION['_system_settings'] = $settings;
     return $settings;
 }
 
