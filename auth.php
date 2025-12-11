@@ -176,6 +176,22 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                 <?php endif; ?>
 
                 <?php if ($mode === 'login'): ?>
+                <!-- Demo Account Hint -->
+                <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start gap-2">
+                        <span class="material-symbols-outlined text-blue-600 flex-shrink-0 text-sm" style="font-size: 18px;">info</span>
+                        <div class="text-xs text-blue-900">
+                            <p class="font-semibold mb-1">Tài khoản demo:</p>
+                            <div class="space-y-1 bg-white/60 p-1.5 rounded border border-blue-100 text-xs">
+                                <p><strong>User:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">user@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                                <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($mode === 'login'): ?>
                     <!-- Login Form -->
                     <form method="POST" class="flex flex-col gap-4">
                         <label class="flex flex-col w-full">
