@@ -184,7 +184,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                             <p class="font-semibold mb-1">Tài khoản demo:</p>
                             <div class="space-y-1 bg-white/60 p-1.5 rounded border border-blue-100 text-xs">
                                 <p><strong>User:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">user@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
-                                <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                                <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">admin123</code></p>
                             </div>
                         </div>
                     </div>
