@@ -1,7 +1,10 @@
 <?php
+
 /**
  * api/wishlist.php - API xử lý wishlist
  */
+
+session_start();
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -24,7 +27,7 @@ $userId = $_SESSION['user_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
-    
+
     if (!$productId) {
         echo json_encode([
             'success' => false,
@@ -32,41 +35,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         exit;
     }
-    
-    switch ($action) {
-        case 'toggle':
-            $result = toggleWishlist($userId, $productId);
-            
-            if ($result === 'added') {
+
+    try {
+        switch ($action) {
+            case 'toggle':
+                $result = toggleWishlist($userId, $productId);
+
+                if ($result === 'added') {
+                    echo json_encode([
+                        'success' => true,
+                        'action' => 'added',
+                        'message' => 'Đã thêm vào yêu thích.',
+                        'count' => getWishlistCount($userId)
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => true,
+                        'action' => 'removed',
+                        'message' => 'Đã xóa khỏi yêu thích.',
+                        'count' => getWishlistCount($userId)
+                    ]);
+                }
+                break;
+
+            case 'check':
+                $isInWishlist = isInWishlist($userId, $productId);
                 echo json_encode([
                     'success' => true,
-                    'action' => 'added',
-                    'message' => 'Đã thêm vào yêu thích.',
-                    'count' => getWishlistCount($userId)
+                    'in_wishlist' => $isInWishlist
                 ]);
-            } else {
+                break;
+
+            default:
                 echo json_encode([
-                    'success' => true,
-                    'action' => 'removed',
-                    'message' => 'Đã xóa khỏi yêu thích.',
-                    'count' => getWishlistCount($userId)
+                    'success' => false,
+                    'message' => 'Hành động không hợp lệ.'
                 ]);
-            }
-            break;
-            
-        case 'check':
-            $isInWishlist = isInWishlist($userId, $productId);
-            echo json_encode([
-                'success' => true,
-                'in_wishlist' => $isInWishlist
-            ]);
-            break;
-            
-        default:
-            echo json_encode([
-                'success' => false,
-                'message' => 'Hành động không hợp lệ.'
-            ]);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Lỗi: ' . $e->getMessage()
+        ]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Get wishlist count

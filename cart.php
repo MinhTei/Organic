@@ -1,4 +1,5 @@
 <?php
+
 /**
  * giohang.php - Trang giỏ hàng
  */
@@ -12,31 +13,77 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/settings_helper.php';
 
+/**
+ * Load user's cart from database into session
+ */
+function loadCartFromDatabase($userId)
+{
+    if (!$userId) return;
+
+    $conn = getConnection();
+    $stmt = $conn->prepare("SELECT product_id, quantity FROM carts WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $_SESSION['cart'] = [];
+    foreach ($cartItems as $item) {
+        $_SESSION['cart'][$item['product_id']] = $item['quantity'];
+    }
+}
+
+/**
+ * Save cart to database
+ */
+function saveCartToDatabase($userId)
+{
+    if (!$userId || empty($_SESSION['cart'])) return;
+
+    $conn = getConnection();
+
+    // Clear existing cart
+    $conn->prepare("DELETE FROM carts WHERE user_id = ?")->execute([$userId]);
+
+    // Insert new cart items
+    $stmt = $conn->prepare("INSERT INTO carts (user_id, product_id, quantity) VALUES (?, ?, ?)");
+    foreach ($_SESSION['cart'] as $productId => $quantity) {
+        $stmt->execute([$userId, $productId, $quantity]);
+    }
+}
+
+// Load cart from database if user is logged in
+if (isset($_SESSION['user_id'])) {
+    loadCartFromDatabase($_SESSION['user_id']);
+}
+
 // Handle cart actions via AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
-    
+
     $action = $_POST['action'];
     $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
     $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
-    
+
     error_log('Cart action: ' . $action . ', productId: ' . $productId . ', quantity: ' . $quantity);
-    
+
     if (!isset($_SESSION['cart'])) {
         $_SESSION['cart'] = [];
     }
-    
+
     switch ($action) {
         case 'add':
             if (!isset($_SESSION['cart'][$productId])) {
                 $_SESSION['cart'][$productId] = 0;
             }
             $_SESSION['cart'][$productId] += $quantity;
+            // Save to database if user is logged in
+            if (isset($_SESSION['user_id'])) {
+                saveCartToDatabase($_SESSION['user_id']);
+            }
             echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng', 'cart_count' => array_sum($_SESSION['cart'])]);
             exit;
             break;
-            
+
         case 'update':
             // Kiểm tra stock từ database trước khi update
             if ($quantity > 0) {
@@ -44,12 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
                 $stmt->execute([$productId]);
                 $product = $stmt->fetch(PDO::FETCH_ASSOC);
-                
+
                 if (!$product) {
                     echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại.']);
                     exit;
                 }
-                
+
                 // Kiểm tra nếu vượt quá stock
                 if ($quantity > $product['stock']) {
                     echo json_encode([
@@ -59,10 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     ]);
                     exit;
                 }
-                
+
                 $_SESSION['cart'][$productId] = $quantity;
             } else {
                 unset($_SESSION['cart'][$productId]);
+            }
+            // Save to database if user is logged in
+            if (isset($_SESSION['user_id'])) {
+                saveCartToDatabase($_SESSION['user_id']);
             }
             // Tính lại giá trị giỏ hàng sau cập nhật
             $cartCount = array_sum($_SESSION['cart']);
@@ -109,17 +160,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 'remainingAmount' => max(0, $freeShippingThreshold - $subtotal)
             ]);
             exit;
-            
+
         case 'remove':
             unset($_SESSION['cart'][$productId]);
+            // Save to database if user is logged in
+            if (isset($_SESSION['user_id'])) {
+                saveCartToDatabase($_SESSION['user_id']);
+            }
             echo json_encode(['success' => true, 'message' => 'Đã xóa khỏi giỏ hàng']);
             exit;
-            
+
         case 'clear':
             $_SESSION['cart'] = [];
+            // Clear from database if user is logged in
+            if (isset($_SESSION['user_id'])) {
+                $conn = getConnection();
+                $conn->prepare("DELETE FROM carts WHERE user_id = ?")->execute([$_SESSION['user_id']]);
+            }
             echo json_encode(['success' => true, 'message' => 'Đã xóa giỏ hàng']);
             exit;
-            
+
         default:
             echo json_encode(['success' => false, 'message' => 'Action không hợp lệ']);
             exit;
@@ -141,17 +201,17 @@ if (!empty($_SESSION['cart'])) {
     $conn = getConnection();
     $ids = array_keys($_SESSION['cart']);
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    
+
     $stmt = $conn->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
     $stmt->execute($ids);
     $products = $stmt->fetchAll();
-    
+
     foreach ($products as $product) {
         $qty = $_SESSION['cart'][$product['id']];
         $price = $product['sale_price'] ?? $product['price'];
         $itemTotal = $price * $qty;
         $subtotal += $itemTotal;
-        
+
         $cartItems[] = [
             'product' => $product,
             'quantity' => $qty,
@@ -180,7 +240,7 @@ include __DIR__ . '/includes/header.php';
 
 <main style="padding: clamp(1rem, 3vw, 2rem); max-width: 1200px; margin: 0 auto;">
     <h1 style="font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 700; margin-bottom: clamp(1rem, 3vw, 2rem); color: var(--text-light);">Giỏ hàng của bạn</h1>
-    
+
     <?php if (empty($cartItems)): ?>
         <!-- Empty Cart -->
         <div style="text-align: center; padding: clamp(2rem, 5vw, 4rem); background: var(--card-light); border-radius: clamp(0.5rem, 2vw, 1rem); border: 1px solid var(--border-light);">
@@ -197,147 +257,153 @@ include __DIR__ . '/includes/header.php';
                 .cart-grid {
                     grid-template-columns: 1fr !important;
                 }
+
                 .order-summary-mobile {
                     position: static !important;
                     margin-top: clamp(1.5rem, 3vw, 2rem) !important;
                 }
+
                 .cart-item-inner {
                     grid-template-columns: 80px 1fr !important;
                     gap: 0.75rem !important;
                     padding: 0.75rem !important;
                 }
+
                 .cart-item-image {
                     width: 80px !important;
                     height: 80px !important;
                 }
+
                 .cart-item-details {
                     gap: 0.5rem !important;
                 }
+
                 .cart-item-details p {
                     font-size: 0.8rem !important;
                 }
+
                 .cart-item-details a {
                     font-size: 0.85rem !important;
                 }
             }
         </style>
         <div class="cart-grid" style="display: grid; grid-template-columns: 1fr minmax(300px, 350px); gap: clamp(1.5rem, 3vw, 2rem);">
-                    <!-- Cart Items -->
-        <div>
-            <?php foreach ($cartItems as $item): ?>
-            <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
-                style="background: var(--card-light); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-light); overflow: hidden; transition: box-shadow 0.3s ease;">
-                
-                <div class="cart-item-inner" style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; padding: 1.25rem;">
-                    
-                    <!-- Product Image -->
-                    <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                    class="cart-item-image"
-                    style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #f5f5f5;">
-                        <img src="<?= imageUrl($item['product']['image']) ?>" 
-                            alt="<?= sanitize($item['product']['name']) ?>"
-                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
-                            onmouseover="this.style.transform='scale(1.05)'"
-                            onmouseout="this.style.transform='scale(1)'">
-                    </a>
-                    
-                    <!-- Product Details -->
-                    <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;">
-                        
-                        <!-- Header: Name and Remove Button -->
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
-                            <div style="flex: 1; min-width: 0;">
-                                <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
-                                style="font-weight: 600; font-size: 1rem; color: var(--text-light); text-decoration: none; display: block; margin-bottom: 0.25rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4;">
-                                    <?= sanitize($item['product']['name']) ?>
-                                </a>
-                                <p class="item-price" data-unit-price="<?= $item['price'] ?>" 
-                                style="color: var(--muted-light); font-size: 0.875rem; margin: 0;">
-                                    <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
-                                </p>
+            <!-- Cart Items -->
+            <div>
+                <?php foreach ($cartItems as $item): ?>
+                    <div class="cart-item" data-product-id="<?= $item['product']['id'] ?>"
+                        style="background: var(--card-light); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-light); overflow: hidden; transition: box-shadow 0.3s ease;">
+
+                        <div class="cart-item-inner" style="display: grid; grid-template-columns: 100px 1fr; gap: 1rem; padding: 1.25rem;">
+
+                            <!-- Product Image -->
+                            <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
+                                class="cart-item-image"
+                                style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #f5f5f5;">
+                                <img src="<?= imageUrl($item['product']['image']) ?>"
+                                    alt="<?= sanitize($item['product']['name']) ?>"
+                                    style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
+                                    onmouseover="this.style.transform='scale(1.05)'"
+                                    onmouseout="this.style.transform='scale(1)'">
+                            </a>
+
+                            <!-- Product Details -->
+                            <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;">
+
+                                <!-- Header: Name and Remove Button -->
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $item['product']['slug'] ?>"
+                                            style="font-weight: 600; font-size: 1rem; color: var(--text-light); text-decoration: none; display: block; margin-bottom: 0.25rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4;">
+                                            <?= sanitize($item['product']['name']) ?>
+                                        </a>
+                                        <p class="item-price" data-unit-price="<?= $item['price'] ?>"
+                                            style="color: var(--muted-light); font-size: 0.875rem; margin: 0;">
+                                            <?= formatPrice($item['price']) ?> / <?= $item['product']['unit'] ?>
+                                        </p>
+                                    </div>
+
+                                    <!-- Remove Button (Desktop) -->
+                                    <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
+                                        class="btn-remove-desktop"
+                                        style="color: var(--muted-light); background: none; border: none; cursor: pointer; padding: 0.5rem; margin: -0.5rem -0.5rem -0.5rem 0; border-radius: 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;"
+                                        onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'; this.style.color='var(--danger)'"
+                                        onmouseout="this.style.background='none'; this.style.color='var(--muted-light)'">
+                                        <span class="material-symbols-outlined" style="font-size: 1.25rem;">delete</span>
+                                    </button>
+                                </div>
+
+                                <!-- Quantity Error Message -->
+                                <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>"
+                                    style="display: none; padding: 0.5rem 0.75rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 4px; font-size: 0.8125rem; color: var(--danger); line-height: 1.4;"></div>
+
+                                <!-- Footer: Quantity Controls and Price -->
+                                <div class="cart-item-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto;">
+
+                                    <!-- Quantity Controls -->
+                                    <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 8px; background: white;">
+                                        <button type="button"
+                                            class="qty-decrease"
+                                            data-product-id="<?= $item['product']['id'] ?>"
+                                            style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 7px 0 0 7px;"
+                                            onmouseover="this.style.background='#f5f5f5'"
+                                            onmouseout="this.style.background='none'">−</button>
+
+                                        <input type="number"
+                                            min="1"
+                                            max="<?= $item['product']['stock'] ?>"
+                                            class="cart-qty-input"
+                                            data-product-id="<?= $item['product']['id'] ?>"
+                                            data-stock="<?= $item['product']['stock'] ?>"
+                                            data-price="<?= $item['price'] ?>"
+                                            value="<?= $item['quantity'] ?>"
+                                            style="width: 50px; text-align: center; border: none; font-size: 0.9375rem; font-weight: 500; padding: 0.5rem 0; outline: none;"
+                                            onkeypress="handleCartEnterKey(event, <?= $item['product']['id'] ?>)" />
+
+                                        <button type="button"
+                                            class="qty-increase"
+                                            data-product-id="<?= $item['product']['id'] ?>"
+                                            style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 0 7px 7px 0;"
+                                            onmouseover="this.style.background='#f5f5f5'"
+                                            onmouseout="this.style.background='none'">+</button>
+                                    </div>
+
+                                    <!-- Item Total Price -->
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.125rem;">
+                                        <span style="font-size: 0.75rem; color: var(--muted-light); text-transform: uppercase; letter-spacing: 0.5px;">Thành tiền</span>
+                                        <span class="item-total" style="font-weight: 700; color: var(--primary-dark); font-size: 1.125rem;">
+                                            <?= formatPrice($item['total']) ?>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Remove Button (Mobile) -->
+                                <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
+                                    class="btn-remove-mobile"
+                                    style="display: none; color: var(--danger); background: rgba(220, 38, 38, 0.05); border: 1px solid rgba(220, 38, 38, 0.2); cursor: pointer; padding: 0.625rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease; align-items: center; justify-content: center; gap: 0.375rem; margin-top: 0.5rem;"
+                                    onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'"
+                                    onmouseout="this.style.background='rgba(220, 38, 38, 0.05)'">
+                                    <span class="material-symbols-outlined" style="font-size: 1.125rem;">delete</span>
+                                    Xóa sản phẩm
+                                </button>
                             </div>
-                            
-                            <!-- Remove Button (Desktop) -->
-                            <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
-                                    class="btn-remove-desktop"
-                                    style="color: var(--muted-light); background: none; border: none; cursor: pointer; padding: 0.5rem; margin: -0.5rem -0.5rem -0.5rem 0; border-radius: 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;"
-                                    onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'; this.style.color='var(--danger)'"
-                                    onmouseout="this.style.background='none'; this.style.color='var(--muted-light)'">
-                                <span class="material-symbols-outlined" style="font-size: 1.25rem;">delete</span>
-                            </button>
                         </div>
-                        
-                        <!-- Quantity Error Message -->
-                        <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>" 
-                            style="display: none; padding: 0.5rem 0.75rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 4px; font-size: 0.8125rem; color: var(--danger); line-height: 1.4;"></div>
-                        
-                        <!-- Footer: Quantity Controls and Price -->
-                        <div class="cart-item-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto;">
-                            
-                            <!-- Quantity Controls -->
-                            <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 8px; background: white;">
-                                <button type="button" 
-                                        class="qty-decrease" 
-                                        data-product-id="<?= $item['product']['id'] ?>"
-                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 7px 0 0 7px;"
-                                        onmouseover="this.style.background='#f5f5f5'"
-                                        onmouseout="this.style.background='none'">−</button>
-                                
-                                <input type="number" 
-                                    min="1" 
-                                    max="<?= $item['product']['stock'] ?>" 
-                                    class="cart-qty-input" 
-                                    data-product-id="<?= $item['product']['id'] ?>" 
-                                    data-stock="<?= $item['product']['stock'] ?>" 
-                                    data-price="<?= $item['price'] ?>"
-                                    value="<?= $item['quantity'] ?>" 
-                                    style="width: 50px; text-align: center; border: none; font-size: 0.9375rem; font-weight: 500; padding: 0.5rem 0; outline: none;" 
-                                    onkeypress="handleCartEnterKey(event, <?= $item['product']['id'] ?>)" />
-                                
-                                <button type="button" 
-                                        class="qty-increase" 
-                                        data-product-id="<?= $item['product']['id'] ?>"
-                                        style="padding: 0.5rem 0.75rem; background: none; border: none; cursor: pointer; font-size: 1.125rem; font-weight: 600; color: var(--text-light); transition: background 0.2s ease; border-radius: 0 7px 7px 0;"
-                                        onmouseover="this.style.background='#f5f5f5'"
-                                        onmouseout="this.style.background='none'">+</button>
-                            </div>
-                            
-                            <!-- Item Total Price -->
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.125rem;">
-                                <span style="font-size: 0.75rem; color: var(--muted-light); text-transform: uppercase; letter-spacing: 0.5px;">Thành tiền</span>
-                                <span class="item-total" style="font-weight: 700; color: var(--primary-dark); font-size: 1.125rem;">
-                                    <?= formatPrice($item['total']) ?>
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- Remove Button (Mobile) -->
-                        <button onclick="removeFromCart(<?= $item['product']['id'] ?>)"
-                                class="btn-remove-mobile"
-                                style="display: none; color: var(--danger); background: rgba(220, 38, 38, 0.05); border: 1px solid rgba(220, 38, 38, 0.2); cursor: pointer; padding: 0.625rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease; align-items: center; justify-content: center; gap: 0.375rem; margin-top: 0.5rem;"
-                                onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'"
-                                onmouseout="this.style.background='rgba(220, 38, 38, 0.05)'">
-                            <span class="material-symbols-outlined" style="font-size: 1.125rem;">delete</span>
-                            Xóa sản phẩm
-                        </button>
                     </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-            
-            <!-- Clear Cart -->
-            <button onclick="clearCart()" 
+                <?php endforeach; ?>
+
+                <!-- Clear Cart -->
+                <button onclick="clearCart()"
                     style="color: var(--muted-light); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: clamp(0.15rem, 1vw, 0.25rem); margin-top: clamp(0.75rem, 2vw, 1rem); font-size: clamp(0.875rem, 1.5vw, 1rem);">
-                <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete_sweep</span>
-                Xóa tất cả
-            </button>
-        </div>
-            
+                    <span class="material-symbols-outlined" style="font-size: clamp(1rem, 2vw, 1.25rem);">delete_sweep</span>
+                    Xóa tất cả
+                </button>
+            </div>
+
             <!-- Order Summary -->
             <div class="order-summary-mobile" style="position: sticky; top: clamp(60px, 10vw, 100px); height: fit-content;">
                 <div style="background: var(--card-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--border-light);">
                     <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem); color: var(--text-light);">Tóm tắt đơn hàng</h3>
-                    
+
                     <div style="display: flex; flex-direction: column; gap: clamp(0.5rem, 1vw, 0.75rem); padding-bottom: clamp(0.75rem, 1vw, 1rem); border-bottom: 1px solid var(--border-light);">
                         <div style="display: flex; justify-content: space-between; font-size: clamp(0.875rem, 2vw, 1rem);">
                             <span style="color: var(--muted-light);">Tạm tính</span>
@@ -354,24 +420,24 @@ include __DIR__ . '/includes/header.php';
                             </span>
                         </div>
                     </div>
-                    
+
                     <?php if (!$isFreeShipping): ?>
-                    <div id="freeShippingHint" style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 0.5vw, 0.5rem);">
-                        <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--text-light);">
-                            Mua thêm <strong id="freeShippingAmount"><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
-                        </p>
-                    </div>
+                        <div id="freeShippingHint" style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; padding: clamp(0.5rem, 1vw, 0.75rem); background: rgba(182, 230, 51, 0.1); border-radius: clamp(0.35rem, 0.5vw, 0.5rem);">
+                            <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--text-light);">
+                                Mua thêm <strong id="freeShippingAmount"><?= formatPrice($freeShippingThreshold - $subtotal) ?></strong> để được miễn phí vận chuyển!
+                            </p>
+                        </div>
                     <?php endif; ?>
-                    
+
                     <div style="display: flex; justify-content: space-between; margin-top: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700;">
                         <span style="color: var(--text-light);">Tổng cộng</span>
                         <span class="cart-grandtotal" style="color: var(--primary-dark);"><?= formatPrice($total) ?></span>
                     </div>
-                    
+
                     <a href="<?= SITE_URL ?>/thanhtoan.php" style="display: block; text-align: center; margin-top: clamp(1rem, 2vw, 1.5rem); padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.5rem); background: var(--primary); color: var(--text-light); font-weight: 600; border-radius: clamp(0.35rem, 1vw, 0.5rem); text-decoration: none; font-size: clamp(0.875rem, 2vw, 1rem); border: none; cursor: pointer;">
                         Tiến hành thanh toán
                     </a>
-                    
+
                     <a href="<?= SITE_URL ?>/products.php" style="display: block; text-align: center; margin-top: clamp(0.75rem, 1.5vw, 1rem); color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.875rem); text-decoration: none;">
                         ← Tiếp tục mua sắm
                     </a>
@@ -382,163 +448,170 @@ include __DIR__ . '/includes/header.php';
 </main>
 
 <style>
-/* Ẩn nút tăng giảm mặc định của input number */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-input[type="number"] {
-    appearance: textfield;
-}
+    /* Ẩn nút tăng giảm mặc định của input number */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        appearance: textfield;
+    }
 </style>
 
 <script>
-function updateCart(productId, quantity) {
-    fetch('<?= SITE_URL ?>/cart.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=update&product_id=${productId}&quantity=${quantity}`
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            if (typeof showNotification === 'function') showNotification('Đã cập nhật số lượng', 'success');
-            if (typeof updateCartCount === 'function' && data.cart_count !== undefined) updateCartCount(data.cart_count);
-            // Update input value in UI for better UX
-            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
-            if (input) input.value = quantity;
-
-            // Update item total price
-            const itemRow = input.closest('.cart-item');
-            if (itemRow && data.unitPrice !== undefined) {
-                const totalText = itemRow.querySelector('.item-total');
-                if (totalText) {
-                    totalText.textContent = formatPrice(data.unitPrice * quantity);
-                }
-            }
-
-            // Update subtotal, shipping, grand total
-            if (data.subtotal !== undefined) {
-                const subtotalEl = document.querySelector('.cart-subtotal');
-                if (subtotalEl) subtotalEl.textContent = formatPrice(data.subtotal);
-            }
-            if (data.shippingFee !== undefined) {
-                const shippingEl = document.querySelector('.cart-shipping');
-                if (shippingEl) shippingEl.textContent = data.shippingFee === 0 ? 'Miễn phí' : formatPrice(data.shippingFee);
-            }
-            if (data.total !== undefined) {
-                const totalEl = document.querySelector('.cart-grandtotal');
-                if (totalEl) totalEl.textContent = formatPrice(data.total);
-            }
-            
-            // Update free shipping hint
-            if (data.isFreeShipping !== undefined) {
-                const hintEl = document.getElementById('freeShippingHint');
-                const amountEl = document.getElementById('freeShippingAmount');
-                if (hintEl && data.isFreeShipping) {
-                    // Hide hint when free shipping is achieved
-                    hintEl.style.display = 'none';
-                } else if (hintEl && !data.isFreeShipping && data.remainingAmount !== undefined) {
-                    // Show hint and update remaining amount
-                    hintEl.style.display = 'block';
-                    if (amountEl) amountEl.textContent = formatPrice(data.remainingAmount);
-                }
-            }
-        } else {
-            if (typeof showNotification === 'function') showNotification(data.message || 'Kho hiện tại không còn đủ', 'error');
-            // Update max stock if provided
-            if (data.max_stock !== undefined) {
-                const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
-                if (input) input.dataset.stock = data.max_stock;
-            }
-        }
-    });
-}
-
-// Sự kiện tăng/giảm số lượng
-document.addEventListener('DOMContentLoaded', function() {
-    document.body.addEventListener('click', function(e) {
-        if (e.target.classList.contains('qty-increase')) {
-            const productId = e.target.dataset.productId;
-            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
-            let qty = parseInt(input.value) || 1;
-            updateCart(productId, qty + 1);
-        }
-        if (e.target.classList.contains('qty-decrease')) {
-            const productId = e.target.dataset.productId;
-            const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
-            let qty = parseInt(input.value) || 1;
-            updateCart(productId, qty > 1 ? qty - 1 : 1);
-        }
-    });
-});
-
-function removeFromCart(productId) {
-    if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+    function updateCart(productId, quantity) {
         fetch('<?= SITE_URL ?>/cart.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `action=remove&product_id=${productId}`
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (typeof showNotification === 'function') showNotification('Đã xóa sản phẩm', 'success');
-                if (typeof updateCartCount === 'function') updateCartCount(0);
-                
-                // Remove item from DOM
-                const cartItem = document.querySelector(`.cart-item[data-product-id='${productId}']`);
-                if (cartItem) {
-                    cartItem.style.transition = 'opacity 0.3s ease';
-                    cartItem.style.opacity = '0';
-                    setTimeout(() => cartItem.remove(), 300);
-                }
-                
-                // Reload page to recalculate totals
-                setTimeout(() => location.reload(), 500);
-            } else {
-                if (typeof showNotification === 'function') showNotification('Có lỗi khi xóa', 'error');
-            }
-        });
-    }
-}
-
-function clearCart() {
-    if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')) {
-        // Fade out all cart items first
-        const cartItems = document.querySelectorAll('.cart-item');
-        cartItems.forEach((item, index) => {
-            item.style.transition = `opacity 0.3s ease ${index * 50}ms`;
-            item.style.opacity = '0';
-        });
-        
-        // Wait for animation to complete, then make request
-        setTimeout(() => {
-            fetch('<?= SITE_URL ?>/cart.php', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'action=clear'
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `action=update&product_id=${productId}&quantity=${quantity}`
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    if (typeof showNotification === 'function') showNotification('Đã xóa tất cả sản phẩm', 'success');
-                    if (typeof updateCartCount === 'function') updateCartCount(0);
-                    
-                    // Reload page after a short delay
-                    setTimeout(() => location.reload(), 300);
+                    if (typeof showNotification === 'function') showNotification('Đã cập nhật số lượng', 'success');
+                    if (typeof updateCartCount === 'function' && data.cart_count !== undefined) updateCartCount(data.cart_count);
+                    // Update input value in UI for better UX
+                    const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+                    if (input) input.value = quantity;
+
+                    // Update item total price
+                    const itemRow = input.closest('.cart-item');
+                    if (itemRow && data.unitPrice !== undefined) {
+                        const totalText = itemRow.querySelector('.item-total');
+                        if (totalText) {
+                            totalText.textContent = formatPrice(data.unitPrice * quantity);
+                        }
+                    }
+
+                    // Update subtotal, shipping, grand total
+                    if (data.subtotal !== undefined) {
+                        const subtotalEl = document.querySelector('.cart-subtotal');
+                        if (subtotalEl) subtotalEl.textContent = formatPrice(data.subtotal);
+                    }
+                    if (data.shippingFee !== undefined) {
+                        const shippingEl = document.querySelector('.cart-shipping');
+                        if (shippingEl) shippingEl.textContent = data.shippingFee === 0 ? 'Miễn phí' : formatPrice(data.shippingFee);
+                    }
+                    if (data.total !== undefined) {
+                        const totalEl = document.querySelector('.cart-grandtotal');
+                        if (totalEl) totalEl.textContent = formatPrice(data.total);
+                    }
+
+                    // Update free shipping hint
+                    if (data.isFreeShipping !== undefined) {
+                        const hintEl = document.getElementById('freeShippingHint');
+                        const amountEl = document.getElementById('freeShippingAmount');
+                        if (hintEl && data.isFreeShipping) {
+                            // Hide hint when free shipping is achieved
+                            hintEl.style.display = 'none';
+                        } else if (hintEl && !data.isFreeShipping && data.remainingAmount !== undefined) {
+                            // Show hint and update remaining amount
+                            hintEl.style.display = 'block';
+                            if (amountEl) amountEl.textContent = formatPrice(data.remainingAmount);
+                        }
+                    }
                 } else {
-                    if (typeof showNotification === 'function') showNotification('Có lỗi khi xóa', 'error');
-                    // Reset opacity on error
-                    cartItems.forEach(item => {
-                        item.style.opacity = '1';
-                    });
+                    if (typeof showNotification === 'function') showNotification(data.message || 'Kho hiện tại không còn đủ', 'error');
+                    // Update max stock if provided
+                    if (data.max_stock !== undefined) {
+                        const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+                        if (input) input.dataset.stock = data.max_stock;
+                    }
                 }
             });
-        }, 400);
     }
-}
+
+    // Sự kiện tăng/giảm số lượng
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.addEventListener('click', function(e) {
+            if (e.target.classList.contains('qty-increase')) {
+                const productId = e.target.dataset.productId;
+                const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+                let qty = parseInt(input.value) || 1;
+                updateCart(productId, qty + 1);
+            }
+            if (e.target.classList.contains('qty-decrease')) {
+                const productId = e.target.dataset.productId;
+                const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
+                let qty = parseInt(input.value) || 1;
+                updateCart(productId, qty > 1 ? qty - 1 : 1);
+            }
+        });
+    });
+
+    function removeFromCart(productId) {
+        if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+            fetch('<?= SITE_URL ?>/cart.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `action=remove&product_id=${productId}`
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (typeof showNotification === 'function') showNotification('Đã xóa sản phẩm', 'success');
+                        if (typeof updateCartCount === 'function') updateCartCount(0);
+
+                        // Remove item from DOM
+                        const cartItem = document.querySelector(`.cart-item[data-product-id='${productId}']`);
+                        if (cartItem) {
+                            cartItem.style.transition = 'opacity 0.3s ease';
+                            cartItem.style.opacity = '0';
+                            setTimeout(() => cartItem.remove(), 300);
+                        }
+
+                        // Reload page to recalculate totals
+                        setTimeout(() => location.reload(), 500);
+                    } else {
+                        if (typeof showNotification === 'function') showNotification('Có lỗi khi xóa', 'error');
+                    }
+                });
+        }
+    }
+
+    function clearCart() {
+        if (confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')) {
+            // Fade out all cart items first
+            const cartItems = document.querySelectorAll('.cart-item');
+            cartItems.forEach((item, index) => {
+                item.style.transition = `opacity 0.3s ease ${index * 50}ms`;
+                item.style.opacity = '0';
+            });
+
+            // Wait for animation to complete, then make request
+            setTimeout(() => {
+                fetch('<?= SITE_URL ?>/cart.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'action=clear'
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (typeof showNotification === 'function') showNotification('Đã xóa tất cả sản phẩm', 'success');
+                            if (typeof updateCartCount === 'function') updateCartCount(0);
+
+                            // Reload page after a short delay
+                            setTimeout(() => location.reload(), 300);
+                        } else {
+                            if (typeof showNotification === 'function') showNotification('Có lỗi khi xóa', 'error');
+                            // Reset opacity on error
+                            cartItems.forEach(item => {
+                                item.style.opacity = '1';
+                            });
+                        }
+                    });
+            }, 400);
+        }
+    }
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

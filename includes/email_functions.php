@@ -1,4 +1,5 @@
 <?php
+
 /**
  * email_functions.php - Các hàm gửi email
  * 
@@ -17,9 +18,10 @@
  * @param float $orderTotal Tổng tiền
  * @return bool
  */
-function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
+function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal)
+{
     $subject = "Xác nhận đơn hàng #$orderId - " . SITE_NAME;
-    
+
     $message = '
     <!DOCTYPE html>
     <html>
@@ -128,7 +130,7 @@ function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
     </body>
     </html>
     ';
-    
+
     return sendEmail($email, $subject, $message);
 }
 
@@ -140,9 +142,10 @@ function sendOrderConfirmationEmail($email, $name, $orderId, $orderTotal) {
  * @param string $resetLink Link đặt lại mật khẩu
  * @return bool
  */
-function sendPasswordResetEmail($email, $name, $resetLink) {
+function sendPasswordResetEmail($email, $name, $resetLink)
+{
     $subject = "Đặt lại mật khẩu - " . SITE_NAME;
-    
+
     $message = '
     <!DOCTYPE html>
     <html>
@@ -189,7 +192,7 @@ function sendPasswordResetEmail($email, $name, $resetLink) {
     </body>
     </html>
     ';
-    
+
     return sendEmail($email, $subject, $message);
 }
 
@@ -203,32 +206,50 @@ function sendPasswordResetEmail($email, $name, $resetLink) {
  * @param string $message Nội dung HTML
  * @return bool
  */
-function sendEmail($to, $subject, $message) {
+function sendEmail($to, $subject, $message)
+{
     // Thử sử dụng PHPMailer nếu được cài đặt
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         try {
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-            
-            // SMTP configuration
+
+            // SMTP configuration from .env or config constants
             $mail->isSMTP();
-            $mail->Host = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+            $mail->Host = getenv('SMTP_HOST') ?: (defined('MAIL_HOST') ? MAIL_HOST : 'smtp.gmail.com');
             $mail->SMTPAuth = true;
-            $mail->Username = getenv('SMTP_USERNAME') ?: SITE_EMAIL;
-            $mail->Password = getenv('SMTP_PASSWORD');
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = getenv('SMTP_PORT') ?: 587;
-            
-            $mail->setFrom(SITE_EMAIL, SITE_NAME);
+            $mail->Username = getenv('SMTP_USERNAME') ?: (defined('MAIL_USERNAME') ? MAIL_USERNAME : '');
+            $mail->Password = getenv('SMTP_PASSWORD') ?: (defined('MAIL_PASSWORD') ? MAIL_PASSWORD : '');
+
+            // Use encryption from .env or default to STARTTLS
+            $encryption = getenv('SMTP_ENCRYPTION') ?: 'tls';
+            if ($encryption === 'tls') {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            } elseif ($encryption === 'ssl') {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            }
+
+            $mail->SMTPAutoTLS = true;
+            $mail->Port = (int)(getenv('SMTP_PORT') ?: (defined('MAIL_PORT') ? MAIL_PORT : 587));
+
+            // Use SMTP username as From address (Gmail requirement)
+            $fromAddress = getenv('SMTP_USERNAME') ?: (defined('MAIL_FROM_ADDRESS') ? MAIL_FROM_ADDRESS : SITE_EMAIL);
+            $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : SITE_NAME;
+            $mail->setFrom($fromAddress, $fromName);
+            $mail->addReplyTo(SITE_EMAIL, SITE_NAME);
+
             $mail->addAddress($to);
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body = $message;
             $mail->CharSet = 'UTF-8';
-            
-            return $mail->send();
+
+            $result = $mail->send();
+            error_log("Email sent successfully to {$to}");
+            return $result;
         } catch (\Exception $e) {
-            // Nếu PHPMailer lỗi, log error và dùng fallback
+            // Nếu PHPMailer lỗi, log error đầy đủ và dùng fallback
             error_log('PHPMailer Error: ' . $e->getMessage());
+            error_log('PHPMailer Error Code: ' . $e->getCode());
             return sendEmailWithPHPMail($to, $subject, $message);
         }
     } else {
@@ -245,19 +266,20 @@ function sendEmail($to, $subject, $message) {
  * @param string $message Nội dung HTML
  * @return bool
  */
-function sendEmailWithPHPMail($to, $subject, $message) {
+function sendEmailWithPHPMail($to, $subject, $message)
+{
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8\r\n";
     $headers .= "From: " . SITE_EMAIL . "\r\n";
-    
+
     // Thử gửi email thông qua mail() function
     $result = @mail($to, $subject, $message, $headers);
-    
+
     // Nếu mail() thất bại hoặc không được cấu hình, lưu email vào file để testing
     if (!$result) {
         return logEmailToFile($to, $subject, $message, $headers);
     }
-    
+
     return $result;
 }
 
@@ -273,16 +295,17 @@ function sendEmailWithPHPMail($to, $subject, $message) {
  * @param string $headers Headers
  * @return bool
  */
-function logEmailToFile($to, $subject, $message, $headers = '') {
+function logEmailToFile($to, $subject, $message, $headers = '')
+{
     $emailDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'emails';
-    
+
     // Tạo thư mục nếu chưa tồn tại
     if (!is_dir($emailDir)) {
         @mkdir($emailDir, 0755, true);
     }
-    
+
     $filename = $emailDir . DIRECTORY_SEPARATOR . 'email_' . date('Y-m-d_H-i-s_') . md5($to) . '.html';
-    
+
     $content = '<!DOCTYPE html>
 <html>
 <head>
@@ -319,8 +342,8 @@ function logEmailToFile($to, $subject, $message, $headers = '') {
     </div>
 </body>
 </html>';
-    
+
     file_put_contents($filename, $content);
-    
+
     return true;
 }

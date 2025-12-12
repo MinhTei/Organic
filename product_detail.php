@@ -1,4 +1,5 @@
 <?php
+
 /**
  * product_detail.php - Trang chi tiết sản phẩm
  */
@@ -80,17 +81,17 @@ include __DIR__ . '/includes/header.php';
         <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
         <span class="current"><?= sanitize($product['name']) ?></span>
     </div>
-    
+
     <!-- Product Detail -->
     <div style="display: grid; grid-template-columns: 1fr; gap: 3rem; margin-top: 2rem;">
-        
+
         <!-- Product Images -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <div>
                 <div style="position: relative; aspect-ratio: 1; border-radius: 1rem; overflow: hidden;">
-                    <img src="<?= $product['image'] ?>" alt="<?= sanitize($product['name']) ?>" 
-                         style="width: 100%; height: 100%; object-fit: cover;">
-                    
+                    <img src="<?= $product['image'] ?>" alt="<?= sanitize($product['name']) ?>"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+
                     <?php if ($hasDiscount): ?>
                         <span class="product-badge badge-sale" style="position: absolute; top: 1rem; left: 1rem;">
                             -<?= $discountPercent ?>%
@@ -102,7 +103,7 @@ include __DIR__ . '/includes/header.php';
                     <?php endif; ?>
                 </div>
             </div>
-            
+
             <!-- Product Info -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                 <div>
@@ -113,7 +114,7 @@ include __DIR__ . '/includes/header.php';
                         <?= sanitize($product['category_name']) ?>
                     </p>
                 </div>
-                
+
                 <!-- Price -->
                 <div style="font-size: 1.75rem; font-weight: 700;">
                     <span style="color: var(--primary-dark);"><?= formatPrice($currentPrice) ?></span>
@@ -126,7 +127,7 @@ include __DIR__ . '/includes/header.php';
                         / <?= sanitize($product['unit']) ?>
                     </span>
                 </div>
-                
+
                 <!-- Stock Status -->
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <?php if ($product['stock'] > 0): ?>
@@ -137,30 +138,36 @@ include __DIR__ . '/includes/header.php';
                         <span style="color: var(--danger);">Hết hàng</span>
                     <?php endif; ?>
                 </div>
-                
+
                 <!-- Quantity & Add to Cart -->
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div style="display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 0.5rem;">
                             <button onclick="changeQty(-1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">−</button>
-                            <input type="number" id="quantity" value="1" min="1" max="<?= $product['stock'] ?>" 
-                                   style="width: 60px; text-align: center; border: none; font-size: 1rem;" 
-                                   onkeypress="handleEnterKey(event, <?= $product['id'] ?>)">
+                            <input type="number" id="quantity" value="1" min="1" max="<?= $product['stock'] ?>"
+                                style="width: 60px; text-align: center; border: none; font-size: 1rem;"
+                                onkeypress="handleEnterKey(event, <?= $product['id'] ?>)">
                             <button onclick="changeQty(1)" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; font-weight: 600;">+</button>
                         </div>
-                        
-                        <button onclick="addToCartWithQty(<?= $product['id'] ?>)" 
-                                class="btn btn-primary" style="flex: 1; min-width: 200px;"
-                                <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
+
+                        <button onclick="addToCartWithQty(<?= $product['id'] ?>)"
+                            class="btn btn-primary" style="flex: 1; min-width: 200px;"
+                            <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
                             <span class="material-symbols-outlined" style="margin-right: 0.5rem;">add_shopping_cart</span>
                             Thêm vào giỏ hàng
                         </button>
+
+                        <!-- Wishlist Button -->
+                        <button class="product-favorite-btn" onclick="toggleFavorite(<?= $product['id'] ?>, event)"
+                            style="padding: 0.75rem 1.25rem; border: 2px solid var(--border-light); border-radius: 0.5rem; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
+                            <span class="material-symbols-outlined" style="font-size: 1.5rem;">favorite</span>
+                        </button>
                     </div>
-                    
+
                     <!-- Quantity Error Message -->
                     <div id="quantity-error" style="color: var(--danger); font-size: 0.875rem; display: none; padding: 0.5rem; background: #fee2e2; border-radius: 0.5rem; border-left: 3px solid var(--danger);"></div>
                 </div>
-                
+
                 <!-- Description -->
                 <div style="border-top: 1px solid var(--border-light); padding-top: 1.5rem; margin-top: 1rem;">
                     <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.75rem;">Mô tả sản phẩm</h3>
@@ -168,7 +175,7 @@ include __DIR__ . '/includes/header.php';
                         <?= nl2br(sanitize($product['description'])) ?>
                     </p>
                 </div>
-                
+
                 <!-- Badges -->
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                     <?php if ($product['is_organic']): ?>
@@ -177,12 +184,12 @@ include __DIR__ . '/includes/header.php';
                             Hữu cơ
                         </span>
                     <?php endif; ?>
-                    
+
                     <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(59, 130, 246, 0.1); color: #1e40af; border-radius: 9999px; font-size: 0.875rem;">
                         <span class="material-symbols-outlined" style="font-size: 1rem;">local_shipping</span>
                         Giao hàng nhanh
                     </span>
-                    
+
                     <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.1); color: #92400e; border-radius: 9999px; font-size: 0.875rem;">
                         <span class="material-symbols-outlined" style="font-size: 1rem;">verified</span>
                         Chất lượng đảm bảo
@@ -191,7 +198,7 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
     </div>
-    
+
     <!-- Đánh giá sản phẩm -->
     <section style="margin-top: 4rem; display: flex; gap: 2rem; align-items: flex-start;">
         <div style="flex: 1; min-width: 320px;">
@@ -210,7 +217,7 @@ include __DIR__ . '/includes/header.php';
                 <div style="margin-bottom:1rem;">
                     <label for="rating" style="font-weight:600;">Đánh giá của bạn:</label><br>
                     <div id="star-rating" style="display:flex; gap:0.5rem; margin-top:0.5rem; cursor:pointer;">
-                        <?php for ($i=1; $i<=5; $i++): ?>
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
                             <span class="star" data-value="<?= $i ?>" style="font-size:2rem; color:#d1d5db;">★</span>
                         <?php endfor; ?>
                     </div>
@@ -223,36 +230,37 @@ include __DIR__ . '/includes/header.php';
                 <button type="submit" name="submit_review" class="btn btn-primary">Gửi đánh giá</button>
             </form>
             <script>
-            // Xử lý chọn sao
-            document.addEventListener('DOMContentLoaded', function() {
-                const stars = document.querySelectorAll('#star-rating .star');
-                const ratingInput = document.getElementById('review_rating');
-                let currentRating = 5;
-                function setStars(rating) {
-                    stars.forEach((star, idx) => {
-                        if (idx < rating) {
-                            star.style.color = '#fbbf24';
-                        } else {
-                            star.style.color = '#d1d5db';
-                        }
-                    });
-                }
-                setStars(currentRating);
-                stars.forEach(star => {
-                    star.addEventListener('click', function() {
-                        const rating = parseInt(this.getAttribute('data-value'));
-                        currentRating = rating;
-                        ratingInput.value = rating;
-                        setStars(rating);
-                    });
-                    star.addEventListener('mouseover', function() {
-                        setStars(parseInt(this.getAttribute('data-value')));
-                    });
-                    star.addEventListener('mouseout', function() {
-                        setStars(currentRating);
+                // Xử lý chọn sao
+                document.addEventListener('DOMContentLoaded', function() {
+                    const stars = document.querySelectorAll('#star-rating .star');
+                    const ratingInput = document.getElementById('review_rating');
+                    let currentRating = 5;
+
+                    function setStars(rating) {
+                        stars.forEach((star, idx) => {
+                            if (idx < rating) {
+                                star.style.color = '#fbbf24';
+                            } else {
+                                star.style.color = '#d1d5db';
+                            }
+                        });
+                    }
+                    setStars(currentRating);
+                    stars.forEach(star => {
+                        star.addEventListener('click', function() {
+                            const rating = parseInt(this.getAttribute('data-value'));
+                            currentRating = rating;
+                            ratingInput.value = rating;
+                            setStars(rating);
+                        });
+                        star.addEventListener('mouseover', function() {
+                            setStars(parseInt(this.getAttribute('data-value')));
+                        });
+                        star.addEventListener('mouseout', function() {
+                            setStars(currentRating);
+                        });
                     });
                 });
-            });
             </script>
         </div>
         <div style="flex: 1; min-width: 320px;">
@@ -268,7 +276,7 @@ include __DIR__ . '/includes/header.php';
                                     <?= htmlspecialchars($review['user_name']) ?>
                                 </span>
                                 <span style="color:#fbbf24; font-size:1.2rem;">
-                                    <?php for ($i=1; $i<=5; $i++): ?>
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
                                         <?= $i <= $review['rating'] ? '★' : '☆' ?>
                                     <?php endfor; ?>
                                 </span>
@@ -286,113 +294,114 @@ include __DIR__ . '/includes/header.php';
 
     <!-- Related Products -->
     <?php if (!empty($relatedProducts)): ?>
-    <section style="margin-top: 4rem;">
-        <h2 class="section-title">Sản phẩm tương tự</h2>
-        <div class="products-grid" style="margin-top: 1.5rem;">
-            <?php foreach ($relatedProducts as $related): ?>
-                <?= renderProductCard($related) ?>
-            <?php endforeach; ?>
-        </div>
-    </section>
+        <section style="margin-top: 4rem;">
+            <h2 class="section-title">Sản phẩm tương tự</h2>
+            <div class="products-grid" style="margin-top: 1.5rem;">
+                <?php foreach ($relatedProducts as $related): ?>
+                    <?= renderProductCard($related) ?>
+                <?php endforeach; ?>
+            </div>
+        </section>
     <?php endif; ?>
 </main>
 
 <style>
-/* Ẩn nút tăng giảm mặc định của input number */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-input[type="number"] {
-    appearance: textfield;
-}
+    /* Ẩn nút tăng giảm mặc định của input number */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        appearance: textfield;
+    }
 </style>
 
 <script>
-const maxStock = <?= $product['stock'] ?>;
+    const maxStock = <?= $product['stock'] ?>;
 
-function changeQty(delta) {
-    const input = document.getElementById('quantity');
-    let val = parseInt(input.value) || 0;
-    
-    // Nếu để trống, mặc định là 1
-    if (isNaN(val) || val < 0) {
-        val = 1;
-    }
-    
-    val += delta;
-    
-    if (val < 1) {
-        val = 1;
-    }
-    if (val > maxStock) {
-        val = maxStock;
-    }
-    
-    input.value = val;
-    hideError();
-}
+    function changeQty(delta) {
+        const input = document.getElementById('quantity');
+        let val = parseInt(input.value) || 0;
 
-function validateQuantity() {
-    const input = document.getElementById('quantity');
-    const val = input.value.trim();
-    
-    // Kiểm tra nếu để trống
-    if (val === '' || val === '0') {
-        showError('Vui lòng chọn ít nhất 1 sản phẩm.');
-        return false;
-    }
-    
-    const qty = parseInt(val);
-    
-    // Kiểm tra nếu không phải số hoặc nhỏ hơn 1
-    if (isNaN(qty) || qty < 1) {
-        showError('Số lượng phải lớn hơn 0.');
-        return false;
-    }
-    
-    // Kiểm tra nếu vượt quá stock
-    if (qty > maxStock) {
-        showError(`Chỉ còn ${maxStock} sản phẩm trong kho. Vui lòng chọn số lượng nhỏ hơn.`);
-        return false;
-    }
-    
-    hideError();
-    return true;
-}
+        // Nếu để trống, mặc định là 1
+        if (isNaN(val) || val < 0) {
+            val = 1;
+        }
 
-function showError(message) {
-    const errorEl = document.getElementById('quantity-error');
-    errorEl.textContent = message;
-    errorEl.style.display = 'block';
-}
+        val += delta;
 
-function hideError() {
-    const errorEl = document.getElementById('quantity-error');
-    errorEl.style.display = 'none';
-}
+        if (val < 1) {
+            val = 1;
+        }
+        if (val > maxStock) {
+            val = maxStock;
+        }
 
-function handleEnterKey(event, productId) {
-    if (event.key === 'Enter' || event.keyCode === 13) {
-        event.preventDefault();
-        addToCartWithQty(productId);
+        input.value = val;
+        hideError();
     }
-}
 
-function addToCartWithQty(productId) {
-    const input = document.getElementById('quantity');
-    
-    // Validate khi nhấn nút hoặc Enter
-    if (!validateQuantity()) {
-        return;
+    function validateQuantity() {
+        const input = document.getElementById('quantity');
+        const val = input.value.trim();
+
+        // Kiểm tra nếu để trống
+        if (val === '' || val === '0') {
+            showError('Vui lòng chọn ít nhất 1 sản phẩm.');
+            return false;
+        }
+
+        const qty = parseInt(val);
+
+        // Kiểm tra nếu không phải số hoặc nhỏ hơn 1
+        if (isNaN(qty) || qty < 1) {
+            showError('Số lượng phải lớn hơn 0.');
+            return false;
+        }
+
+        // Kiểm tra nếu vượt quá stock
+        if (qty > maxStock) {
+            showError(`Chỉ còn ${maxStock} sản phẩm trong kho. Vui lòng chọn số lượng nhỏ hơn.`);
+            return false;
+        }
+
+        hideError();
+        return true;
     }
-    
-    const qty = parseInt(input.value);
-    
-    // Nếu validate thành công, thêm vào giỏ hàng
-    addToCart(productId, qty);
-}
+
+    function showError(message) {
+        const errorEl = document.getElementById('quantity-error');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+    }
+
+    function hideError() {
+        const errorEl = document.getElementById('quantity-error');
+        errorEl.style.display = 'none';
+    }
+
+    function handleEnterKey(event, productId) {
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            event.preventDefault();
+            addToCartWithQty(productId);
+        }
+    }
+
+    function addToCartWithQty(productId) {
+        const input = document.getElementById('quantity');
+
+        // Validate khi nhấn nút hoặc Enter
+        if (!validateQuantity()) {
+            return;
+        }
+
+        const qty = parseInt(input.value);
+
+        // Nếu validate thành công, thêm vào giỏ hàng
+        addToCart(productId, qty);
+    }
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

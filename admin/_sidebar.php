@@ -1,4 +1,5 @@
 <?php
+
 /**
  * admin/_sidebar.php - Sidebar cải tiến với menu Quản lý tài khoản
  * 
@@ -53,46 +54,52 @@ $totalNotifications += $pendingReviews;
 
         <!-- QUẢN LÝ TÀI KHOẢN (Admin: Dropdown, Others: Single Link) -->
         <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-        <!-- Admin: Dropdown Menu -->
-        <div class="relative dropdown-container">
-            <button onclick="toggleDropdown(event)" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 <?= in_array($adminCurrent, ['role_manager.php', 'customers.php']) ? 'bg-green-50 text-green-700 font-medium' : '' ?>">
-                <span class="material-symbols-outlined">manage_accounts</span>
-                <span class="flex-1 text-left">Quản lý tài khoản</span>
-                <span class="material-symbols-outlined text-sm transition-transform dropdown-icon">expand_more</span>
-            </button>
-            <div class="dropdown-menu hidden pl-4 mt-1 space-y-1">
-                <a href="role_manager.php" class="flex items-center gap-3 px-4 py-2 rounded-lg <?= $adminCurrent === 'role_manager.php' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700' ?>">
-                    <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium">Quản lý Role</p>
-                        <p class="text-xs opacity-75">Phân quyền & bảo mật</p>
-                    </div>
-                    <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">ADMIN</span>
-                </a>
-                <a href="customers.php" class="flex items-center gap-3 px-4 py-2 rounded-lg <?= $adminCurrent === 'customers.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' ?>">
-                    <span class="material-symbols-outlined text-lg">people</span>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium">Khách hàng</p>
-                        <p class="text-xs opacity-75">Danh sách & membership</p>
-                    </div>
-                </a>
+            <!-- Admin: Dropdown Menu -->
+            <div class="relative dropdown-container">
+                <button onclick="toggleDropdown(event)" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 <?= in_array($adminCurrent, ['role_manager.php', 'customers.php']) ? 'bg-green-50 text-green-700 font-medium' : '' ?>">
+                    <span class="material-symbols-outlined">manage_accounts</span>
+                    <span class="flex-1 text-left">Quản lý tài khoản</span>
+                    <span class="material-symbols-outlined text-sm transition-transform dropdown-icon">expand_more</span>
+                </button>
+                <div class="dropdown-menu hidden pl-4 mt-1 space-y-1">
+                    <a href="role_manager.php" class="flex items-center gap-3 px-4 py-2 rounded-lg <?= $adminCurrent === 'role_manager.php' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700' ?>">
+                        <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">Quản lý Role</p>
+                            <p class="text-xs opacity-75">Phân quyền & bảo mật</p>
+                        </div>
+                        <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">ADMIN</span>
+                    </a>
+                    <a href="customers.php" class="flex items-center gap-3 px-4 py-2 rounded-lg <?= $adminCurrent === 'customers.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-green-50 hover:text-green-700' ?>">
+                        <span class="material-symbols-outlined text-lg">people</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">Khách hàng</p>
+                            <p class="text-xs opacity-75">Danh sách & membership</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-        </div>
         <?php else: ?>
-        <!-- Staff/User_MA: Single Link -->
-        <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'customers.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-            <span class="material-symbols-outlined">people</span>
-            <span>Khách hàng</span>
-        </a>
+            <!-- Staff/User_MA: Single Link -->
+            <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'customers.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                <span class="material-symbols-outlined">people</span>
+                <span>Khách hàng</span>
+            </a>
         <?php endif; ?>
 
         <!-- Đánh giá -->
         <a href="reviews.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'reviews.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
             <span class="material-symbols-outlined">star</span>
             <span>Đánh giá</span>
-            <?php if ($totalNotifications > 0): ?>
-                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?= $totalNotifications ?></span>
+            <?php if ($pendingReviews > 0): ?>
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?= $pendingReviews ?></span>
             <?php endif; ?>
+        </a>
+
+        <!-- Mã giảm giá -->
+        <a href="coupons.php" class="flex items-center gap-3 px-4 py-3 rounded-lg <?= $adminCurrent === 'coupons.php' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+            <span class="material-symbols-outlined">local_offer</span>
+            <span>Mã giảm giá</span>
         </a>
 
         <!-- Bài viết / Tin tức -->
@@ -118,71 +125,74 @@ $totalNotifications += $pendingReviews;
 
     <!-- JavaScript cho Dropdown -->
     <script>
-    function toggleDropdown(event) {
-        event.preventDefault();
-        const container = event.currentTarget.closest('.dropdown-container');
-        const menu = container.querySelector('.dropdown-menu');
-        const icon = container.querySelector('.dropdown-icon');
-        
-        // Toggle menu
-        menu.classList.toggle('hidden');
-        
-        // Rotate icon
-        if (menu.classList.contains('hidden')) {
-            icon.style.transform = 'rotate(0deg)';
-        } else {
-            icon.style.transform = 'rotate(180deg)';
-        }
-    }
+        function toggleDropdown(event) {
+            event.preventDefault();
+            const container = event.currentTarget.closest('.dropdown-container');
+            const menu = container.querySelector('.dropdown-menu');
+            const icon = container.querySelector('.dropdown-icon');
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const dropdowns = document.querySelectorAll('.dropdown-container');
-        dropdowns.forEach(container => {
-            if (!container.contains(event.target)) {
-                const menu = container.querySelector('.dropdown-menu');
-                const icon = container.querySelector('.dropdown-icon');
-                if (menu && !menu.classList.contains('hidden')) {
-                    menu.classList.add('hidden');
-                    if (icon) icon.style.transform = 'rotate(0deg)';
+            // Toggle menu
+            menu.classList.toggle('hidden');
+
+            // Rotate icon
+            if (menu.classList.contains('hidden')) {
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdowns = document.querySelectorAll('.dropdown-container');
+            dropdowns.forEach(container => {
+                if (!container.contains(event.target)) {
+                    const menu = container.querySelector('.dropdown-menu');
+                    const icon = container.querySelector('.dropdown-icon');
+                    if (menu && !menu.classList.contains('hidden')) {
+                        menu.classList.add('hidden');
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                    }
+                }
+            });
+        });
+
+        // Auto-expand dropdown if on child page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = '<?= $adminCurrent ?>';
+            if (currentPage === 'role_manager.php' || currentPage === 'customers.php') {
+                const container = document.querySelector('.dropdown-container');
+                if (container) {
+                    const menu = container.querySelector('.dropdown-menu');
+                    const icon = container.querySelector('.dropdown-icon');
+                    if (menu) {
+                        menu.classList.remove('hidden');
+                        if (icon) icon.style.transform = 'rotate(180deg)';
+                    }
                 }
             }
         });
-    });
-
-    // Auto-expand dropdown if on child page
-    document.addEventListener('DOMContentLoaded', function() {
-        const currentPage = '<?= $adminCurrent ?>';
-        if (currentPage === 'role_manager.php' || currentPage === 'customers.php') {
-            const container = document.querySelector('.dropdown-container');
-            if (container) {
-                const menu = container.querySelector('.dropdown-menu');
-                const icon = container.querySelector('.dropdown-icon');
-                if (menu) {
-                    menu.classList.remove('hidden');
-                    if (icon) icon.style.transform = 'rotate(180deg)';
-                }
-            }
-        }
-    });
     </script>
 
     <style>
-    .dropdown-icon {
-        transition: transform 0.2s ease;
-    }
-    .dropdown-menu {
-        animation: slideDown 0.2s ease;
-    }
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
+        .dropdown-icon {
+            transition: transform 0.2s ease;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+
+        .dropdown-menu {
+            animation: slideDown 0.2s ease;
         }
-    }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </aside>

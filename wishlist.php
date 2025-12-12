@@ -1,4 +1,5 @@
 <?php
+
 /**
  * wishlist.php - Trang danh sách yêu thích
  */
@@ -32,13 +33,13 @@ include __DIR__ . '/includes/header.php';
         <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
         <span class="current">Yêu thích</span>
     </div>
-    
+
     <!-- Page Header -->
     <div style="margin-top: 2rem; margin-bottom: 2rem;">
         <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Sản phẩm yêu thích</h1>
         <p style="color: var(--muted-light);"><?= $totalProducts ?> sản phẩm</p>
     </div>
-    
+
     <?php if (empty($products)): ?>
         <!-- Empty Wishlist -->
         <div style="text-align: center; padding: 4rem 2rem; background: var(--card-light); border-radius: 1rem;">
@@ -58,21 +59,21 @@ include __DIR__ . '/includes/header.php';
                         <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $product['slug'] ?>">
                             <img src="<?= imageUrl($product['image']) ?>" alt="<?= sanitize($product['name']) ?>">
                         </a>
-                        
+
                         <?php if (!empty($product['sale_price'])): ?>
                             <?php $discount = round((1 - $product['sale_price'] / $product['price']) * 100); ?>
                             <span class="product-badge badge-sale">-<?= $discount ?>%</span>
                         <?php elseif ($product['is_new']): ?>
                             <span class="product-badge badge-new">Mới</span>
                         <?php endif; ?>
-                        
+
                         <!-- Remove from wishlist button -->
-                        <button class="product-favorite" onclick="removeFromWishlist(<?= $product['id'] ?>)" 
-                                style="background: rgba(239, 68, 68, 0.1);">
+                        <button class="product-favorite" onclick="removeFromWishlist(<?= $product['id'] ?>)"
+                            style="background: rgba(239, 68, 68, 0.1);">
                             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; color: #ef4444;">favorite</span>
                         </button>
                     </div>
-                    
+
                     <div class="product-info">
                         <h3 class="product-name">
                             <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $product['slug'] ?>">
@@ -80,7 +81,7 @@ include __DIR__ . '/includes/header.php';
                             </a>
                         </h3>
                         <p class="product-unit">/<?= sanitize($product['unit']) ?></p>
-                        
+
                         <div class="product-price">
                             <?php $currentPrice = $product['sale_price'] ?? $product['price']; ?>
                             <span class="price-current"><?= formatPrice($currentPrice) ?></span>
@@ -88,11 +89,11 @@ include __DIR__ . '/includes/header.php';
                                 <span class="price-original"><?= formatPrice($product['price']) ?></span>
                             <?php endif; ?>
                         </div>
-                        
+
                         <button class="btn-add-cart primary" onclick="addToCart(<?= $product['id'] ?>)">
                             Thêm vào giỏ hàng
                         </button>
-                        
+
                         <p style="font-size: 0.75rem; color: var(--muted-light); margin-top: 0.5rem; text-align: center;">
                             Đã thêm <?= date('d/m/Y', strtotime($product['added_at'])) ?>
                         </p>
@@ -100,12 +101,12 @@ include __DIR__ . '/includes/header.php';
                 </div>
             <?php endforeach; ?>
         </div>
-        
+
         <!-- Pagination -->
         <?php if ($totalPages > 1): ?>
             <?= renderPagination($page, $totalPages, $_GET) ?>
         <?php endif; ?>
-        
+
         <!-- Quick Actions -->
         <div style="margin-top: 3rem; padding: 2rem; background: rgba(182, 230, 51, 0.1); border-radius: 1rem; text-align: center;">
             <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Bạn thích tất cả sản phẩm?</h3>
@@ -117,50 +118,83 @@ include __DIR__ . '/includes/header.php';
 </main>
 
 <script>
-// Remove from wishlist
-function removeFromWishlist(productId) {
-    if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi danh sách yêu thích?')) {
-        return;
-    }
-    
-    fetch('<?= SITE_URL ?>/api/wishlist.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=toggle&product_id=${productId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            location.reload();
-        } else {
-            showNotification(data.message, 'error');
+    // Remove from wishlist
+    function removeFromWishlist(productId) {
+        if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi danh sách yêu thích?')) {
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Có lỗi xảy ra', 'error');
-    });
-}
 
-// Add all to cart
-function addAllToCart() {
-    const productCards = document.querySelectorAll('.product-card');
-    let count = 0;
-    
-    productCards.forEach(card => {
-        const productId = card.dataset.productId;
-        addToCart(productId);
-        count++;
-    });
-    
-    if (count > 0) {
-        showNotification(`Đã thêm ${count} sản phẩm vào giỏ hàng`, 'success');
-        setTimeout(() => {
-            window.location.href = '<?= SITE_URL ?>/cart.php';
-        }, 1500);
+        fetch('api/wishlist.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                credentials: 'include',
+                body: `action=toggle&product_id=${productId}`
+            })
+            .then(response =>
+                response.text().then(text => ({
+                    ok: response.ok,
+                    status: response.status,
+                    text
+                }))
+            )
+            .then(res => {
+                const {
+                    ok,
+                    status,
+                    text
+                } = res;
+                let data = null;
+                try {
+                    data = text ? JSON.parse(text) : null;
+                } catch (e) {
+                    // not JSON
+                }
+
+                if (!ok) {
+                    const msg = (data && data.message) ? data.message : `Lỗi máy chủ (status ${status}): ${text || 'Không có nội dung'}`;
+                    console.error('Wishlist API error:', status, text);
+                    showNotification(msg, 'error');
+                    if (msg.includes('đăng nhập')) {
+                        setTimeout(() => {
+                            window.location.href = '<?= SITE_URL ?>/auth.php';
+                        }, 1500);
+                    }
+                    return;
+                }
+
+                if (data && data.success) {
+                    showNotification(data.message || 'Cập nhật yêu thích thành công', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification((data && data.message) || 'Có lỗi xảy ra', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra: ' + error.message, 'error');
+            });
     }
-}
+
+    // Add all to cart
+    function addAllToCart() {
+        const productCards = document.querySelectorAll('.product-card');
+        let count = 0;
+
+        productCards.forEach(card => {
+            const productId = card.dataset.productId;
+            addToCart(productId);
+            count++;
+        });
+
+        if (count > 0) {
+            showNotification(`Đã thêm ${count} sản phẩm vào giỏ hàng`, 'success');
+            setTimeout(() => {
+                window.location.href = '<?= SITE_URL ?>/cart.php';
+            }, 1500);
+        }
+    }
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

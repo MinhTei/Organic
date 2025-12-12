@@ -31,7 +31,8 @@ define('ITEMS_PER_PAGE', 9);
 define('ADMIN_URL', SITE_URL . '/admin');
 
 // Database Connection
-function getConnection() {
+function getConnection()
+{
     static $conn = null;
     if ($conn === null) {
         try {
@@ -53,7 +54,8 @@ function getConnection() {
 }
 
 // Helper Functions
-function formatPrice($price) {
+function formatPrice($price)
+{
     if ($price === null || $price === '') {
         return '0₫';
     }
@@ -63,13 +65,15 @@ function formatPrice($price) {
     return number_format((float)$price, 0, ',', '.') . '₫';
 }
 
-function sanitize($data) {
+function sanitize($data)
+{
     if ($data === null) return '';
     if (!is_string($data)) $data = (string)$data;
     return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
 }
 
-function redirect($url) {
+function redirect($url)
+{
     header("Location: $url");
     exit;
 }
@@ -85,17 +89,17 @@ if (session_status() === PHP_SESSION_NONE) {
 // Load settings helper (sau khi có connection)
 if (file_exists(__DIR__ . '/settings_helper.php')) {
     require_once __DIR__ . '/settings_helper.php';
-    
+
     // Override SITE_NAME từ database nếu có
     if (!defined('SITE_NAME')) {
         define('SITE_NAME', getSystemSetting('site_name', 'Xanh Organic'));
     }
-    
+
     // Định nghĩa các constants từ settings
     if (!defined('SITE_EMAIL')) {
         define('SITE_EMAIL', getSystemSetting('site_email', 'info@xanhorganic.vn'));
     }
-    
+
     if (!defined('SITE_PHONE')) {
         define('SITE_PHONE', getSystemSetting('site_phone', '1900123456'));
     }
@@ -104,11 +108,11 @@ if (file_exists(__DIR__ . '/settings_helper.php')) {
         // site_logo is stored as a relative path like 'images/logo.png'
         define('SITE_LOGO', getSystemSetting('site_logo', ''));
     }
-    
+
     if (!defined('FREE_SHIPPING_THRESHOLD')) {
         define('FREE_SHIPPING_THRESHOLD', getSettingAmount('free_shipping_threshold', 500000));
     }
-    
+
     if (!defined('DEFAULT_SHIPPING_FEE')) {
         define('DEFAULT_SHIPPING_FEE', getSettingAmount('default_shipping_fee', 25000));
     }
