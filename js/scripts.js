@@ -396,7 +396,6 @@ function toggleWishlist(productId, btn = null) {
       showNotification("Có lỗi xảy ra: " + error.message, "error");
     });
 }
-
 /**
  * Update wishlist count in header
  */
