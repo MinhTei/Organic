@@ -282,7 +282,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             top: 100%;
             right: 0;
             margin-top: 0.5rem;
-            min-width: 200px;
+            min-width: 250px;
             background: white;
             border: 1px solid var(--border-light);
             border-radius: 0.75rem;

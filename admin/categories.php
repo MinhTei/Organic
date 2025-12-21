@@ -45,13 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
             mkdir($uploadDir, 0755, true);
         }
 
-        $origName = basename($_FILES['icon']['name']);
-        $safeName = time() . '_' . preg_replace('/[^a-z0-9_\-\.]/i', '_', $origName);
-        $targetPath = $uploadDir . $safeName;
+        $origName = basename($_FILES['icon']['name']); // Lấy tên gốc của tệp
+        $safeName = time() . '_' . preg_replace('/[^a-z0-9_\-\.]/i', '_', $origName); // Tạo tên tệp an toàn
+        $targetPath = $uploadDir . $safeName; // Đường dẫn đầy đủ đến tệp đích
 
-        if (move_uploaded_file($_FILES['icon']['tmp_name'], $targetPath)) {
+        if (move_uploaded_file($_FILES['icon']['tmp_name'], $targetPath)) { // Di chuyển tệp đã upload đến thư mục đích
             // Lưu đường dẫn tương đối vào DB cho dễ di chuyển
-            $iconPath = 'images/categories/' . $safeName;
+            $iconPath = 'images/categories/' . $safeName; // Lưu đường dẫn tương đối
         }
     }
 
@@ -121,7 +121,7 @@ $pageTitle = 'Quản lý Danh mục';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
@@ -204,12 +204,12 @@ $pageTitle = 'Quản lý Danh mục';
 
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        Slug <span class="text-red-500">*</span>
+                                        Slug <span class="text-red-500"></span>
                                     </label>
-                                    <input type="text" name="slug" id="slugInput" required
+                                    <input type="text" name="slug" id="slugInput"
                                         value="<?= $editCategory ? sanitize($editCategory['slug']) : '' ?>"
                                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                    <p class="text-xs text-gray-500 mt-1">VD: rau-cu, trai-cay — will be auto-filled from name</p>
+                                    <p class="text-xs text-gray-500 mt-1">VD: rau-cu, trai-cay.</p>
                                 </div>
 
                                 <div>
@@ -329,18 +329,18 @@ $pageTitle = 'Quản lý Danh mục';
     <script>
         // Auto-generate slug from name for convenience
         function slugify(text) {
-            return text.toString().toLowerCase()
-                .normalize('NFKD')
-                .replace(/[\u0300-\u036f]/g, '') // remove diacritics
-                .replace(/[^az0--9]+/g, '-')
-                .replace(/^-+|-+$/g, '');
+            return text.toString().toLowerCase() // Chuyển thành chữ thường
+                .normalize('NFKD') // 
+                .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
+                .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
+                .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối
         }
 
-        const nameInput = document.querySelector('input[name="name"]');
-        const slugInput = document.getElementById('slugInput');
+        const nameInput = document.querySelector('input[name="name"]'); // Lấy input tên danh mục
+        const slugInput = document.getElementById('slugInput'); // Lấy input slug
         if (nameInput && slugInput) {
             nameInput.addEventListener('input', function() {
-                // Only auto-fill when slug is empty or matches previous auto slug
+                //Lấy giá trị hiện tại của ô tên, đi qua bộ lọc slugify, rồi gán kết quả vào ô slug.
                 slugInput.value = slugify(this.value);
             });
         }
@@ -353,11 +353,12 @@ $pageTitle = 'Quản lý Danh mục';
             table {
                 font-size: 0.75rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.5rem 0.25rem !important;
             }
-            
+
             .btn {
                 padding: 0.25rem 0.5rem !important;
                 font-size: 0.7rem !important;
@@ -369,8 +370,9 @@ $pageTitle = 'Quản lý Danh mục';
             table {
                 font-size: 0.85rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.6rem 0.4rem !important;
             }
         }
@@ -379,4 +381,3 @@ $pageTitle = 'Quản lý Danh mục';
 </body>
 
 </html>
-

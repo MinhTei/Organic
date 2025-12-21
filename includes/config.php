@@ -65,11 +65,11 @@ function formatPrice($price)
     return number_format((float)$price, 0, ',', '.') . '₫';
 }
 
-function sanitize($data)
+function sanitize($data)// Xử lý dữ liệu đầu vào tránh các lỗ hổng bảo mật
 {
-    if ($data === null) return '';
-    if (!is_string($data)) $data = (string)$data;
-    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+    if ($data === null) return '';// Trả về chuỗi rỗng nếu dữ liệu là null
+    if (!is_string($data)) $data = (string)$data;// Chuyển đổi dữ liệu không phải chuỗi thành chuỗi
+    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');// Loại bỏ thẻ HTML và ký tự đặc biệt
 }
 
 function redirect($url)

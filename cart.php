@@ -55,7 +55,7 @@ if (isset($_SESSION['user_id'])) {
     loadCartFromDatabase($_SESSION['user_id']);
 }
 
-// Handle cart actions via AJAX
+// Gui xử lý AJAX cho các hành động giỏ hàng
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
@@ -474,7 +474,7 @@ include __DIR__ . '/includes/header.php';
                 if (data.success) {
                     if (typeof showNotification === 'function') showNotification('Đã cập nhật số lượng', 'success');
                     if (typeof updateCartCount === 'function' && data.cart_count !== undefined) updateCartCount(data.cart_count);
-                    // Update input value in UI for better UX
+                    // Cập nhật lại giá trị input
                     const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
                     if (input) input.value = quantity;
 
