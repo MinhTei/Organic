@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if (isset($_SESSION['user_id'])) {
                 saveCartToDatabase($_SESSION['user_id']);
             }
-            echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng', 'cart_count' => array_sum($_SESSION['cart'])]);
+            echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng', 'cart_count' => count($_SESSION['cart'])]);
             exit;
             break;
 
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 saveCartToDatabase($_SESSION['user_id']);
             }
             // Tính lại giá trị giỏ hàng sau cập nhật
-            $cartCount = array_sum($_SESSION['cart']);
+            $cartCount = count($_SESSION['cart']);
             $subtotal = 0;
             $shippingFee = 25000;
             $total = 0;

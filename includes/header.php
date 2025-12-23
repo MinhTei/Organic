@@ -10,7 +10,7 @@ if (!function_exists('getSystemSetting')) {
 }
 
 // Get cart count
-$cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
+$cartCount = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 
 // Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -1032,7 +1032,6 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
                     </a>
                 <?php endif; ?>
 
-                <!-- Cart -->
                 <!-- Wishlist (desktop) -->
                 <?php if ($isLoggedIn): ?>
                     <a href="<?= SITE_URL ?>/wishlist.php" class="icon-btn wishlist-btn" id="wishlistHeaderBtnDesktop" style="position: relative;">
