@@ -1,4 +1,5 @@
 <?php
+
 /**
  * user_info.php - Trang quản lý thông tin và địa chỉ khách hàng
  */
@@ -31,6 +32,34 @@ $stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE user_id = ? ORDER
 $stmt->execute([$userId]);
 $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Handle avatar delete (separate from profile update)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_avatar'])) {
+    try {
+        $conn->beginTransaction();
+
+        // Delete old avatar file if exists and is a local file
+        if (!empty($user['avatar']) && strpos($user['avatar'], 'images/avatars/') === 0) {
+            $oldFile = __DIR__ . '/' . $user['avatar'];
+            if (is_file($oldFile)) {
+                @unlink($oldFile);
+            }
+        }
+
+        // Clear avatar column in DB
+        $stmt = $conn->prepare("UPDATE users SET avatar = NULL WHERE id = :id");
+        $stmt->execute([':id' => $userId]);
+
+        $conn->commit();
+
+        // Update local $user for immediate display
+        $user['avatar'] = null;
+        $success = 'Đã xóa ảnh đại diện.';
+    } catch (Exception $ex) {
+        $conn->rollBack();
+        $error = $ex->getMessage();
+    }
+}
+
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $name = sanitize($_POST['name']);
@@ -55,7 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                 $maxSize = 2 * 1024 * 1024; // 2MB
 
                 if ($file['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception('Lỗi khi tải lên ảnh.');
+                    // Ghi lỗi chi tiết vào log để chẩn đoán (mã lỗi upload)
+                    error_log("Avatar upload error for user {$userId}: upload error code=" . intval($file['error']));
+                    throw new Exception('Lỗi khi tải lên ảnh. Mã lỗi: ' . intval($file['error']));
                 }
 
                 if ($file['size'] > $maxSize) {
@@ -80,7 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                 $targetPath = $uploadDir . '/' . $filename;
 
                 if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    throw new Exception('Không thể lưu ảnh tải lên.');
+                    // Ghi thêm thông tin để debug: xem tmp file có tồn tại và thư mục đích có thể ghi
+                    $tmpExists = is_file($file['tmp_name']) ? 'yes' : 'no';
+                    $dirWritable = is_writable($uploadDir) ? 'yes' : 'no';
+                    error_log("move_uploaded_file failed for user {$userId}: tmpExists={$tmpExists}, uploadDir={$uploadDir}, dirWritable={$dirWritable}, tmpName={$file['tmp_name']}");
+                    throw new Exception('Không thể lưu ảnh tải lên. Vui lòng kiểm tra quyền ghi của thư mục hoặc cấu hình PHP.');
                 }
 
                 // Build relative path to store in DB (web-accessible)
@@ -167,18 +202,18 @@ include __DIR__ . '/includes/header.php';
         .user-info-container {
             grid-template-columns: 1fr !important;
         }
-        
+
         aside {
             position: relative !important;
             top: 0 !important;
             display: none;
         }
-        
+
         .sidebar-mobile-toggle {
             display: flex;
         }
     }
-    
+
     @media (min-width: 769px) {
         .sidebar-mobile-toggle {
             display: none;
@@ -201,7 +236,8 @@ include __DIR__ . '/includes/header.php';
         input[type="password"],
         textarea,
         select {
-            font-size: 16px !important; /* Prevent zoom on iOS */
+            font-size: 16px !important;
+            /* Prevent zoom on iOS */
             padding: clamp(0.6rem, 1.5vw, 0.875rem) !important;
         }
 
@@ -228,6 +264,7 @@ include __DIR__ . '/includes/header.php';
     }
 
     @media (max-width: 500px) {
+
         input[type="text"],
         input[type="email"],
         input[type="date"],
@@ -254,7 +291,7 @@ include __DIR__ . '/includes/header.php';
     <div style="max-width: 1400px; margin: 0 auto; padding: clamp(1rem, 3vw, 2rem);">
         <div class="user-info-container" style="display: grid; grid-template-columns: clamp(250px, 25vw, 280px) 1fr; gap: clamp(1rem, 2vw, 2rem);">
 
-            
+
             <!-- Sidebar -->
             <aside style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem); height: fit-content; position: sticky; top: clamp(60px, 10vw, 100px);">
                 <!-- User Avatar -->
@@ -270,82 +307,82 @@ include __DIR__ . '/includes/header.php';
                     <?php endif; ?>
                     <h3 style="font-size: clamp(1rem, 2vw, 1.125rem); font-weight: 700; margin-bottom: clamp(0.25rem, 0.5vw, 0.25rem);"><?= sanitize($user['name']) ?></h3>
                     <p style="font-size: clamp(0.75rem, 1.5vw, 0.875rem); color: var(--muted-light);">
-                        Thành viên 
-                        <?php 
+                        Thành viên
+                        <?php
                         $membership = ['bronze' => 'Đồng', 'silver' => 'Bạc', 'gold' => 'Vàng'];
                         echo $membership[$user['membership']];
                         ?>
                     </p>
                 </div>
-                
+
                 <!-- Menu -->
                 <nav style="display: flex; flex-direction: column; gap: clamp(0.3rem, 0.8vw, 0.5rem);">
-                    <a href="?tab=profile" 
-                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+                    <a href="?tab=profile"
+                        style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= !isset($_GET['tab']) || $_GET['tab'] === 'profile' ? '700' : '500' ?>;">
                         <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">person</span>
                         <span>Thông tin cá nhân</span>
                     </a>
-                    
-                    <a href="?tab=orders" 
-                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+
+                    <a href="?tab=orders"
+                        style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'orders' ? '700' : '500' ?>;">
                         <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">receipt_long</span>
                         <span>Lịch sử đơn hàng</span>
                     </a>
-                    
-                    <a href="?tab=addresses" 
-                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+
+                    <a href="?tab=addresses"
+                        style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'addresses' ? '700' : '500' ?>;">
                         <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">home_pin</span>
                         <span>Địa chỉ đã lưu</span>
                     </a>
-                    
-                    <a href="?tab=settings" 
-                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+
+                    <a href="?tab=settings"
+                        style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               background: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? 'rgba(182, 230, 51, 0.15)' : 'transparent' ?>; 
                               color: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? 'var(--primary-dark)' : 'var(--text-light)' ?>; 
                               font-weight: <?= isset($_GET['tab']) && $_GET['tab'] === 'settings' ? '700' : '500' ?>;">
                         <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">settings</span>
                         <span>Cài đặt</span>
                     </a>
-                    
+
                     <hr style="margin: clamp(0.75rem, 1.5vw, 1rem) 0; border: none; border-top: 1px solid var(--border-light);">
-                    
-                    <a href="?logout=1" 
-                       style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+
+                    <a href="?logout=1"
+                        style="display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(0.6rem, 1.2vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.3s; font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                               color: var(--danger); font-weight: 500;">
                         <span class="material-symbols-outlined" style="font-size: clamp(1.2rem, 2vw, 1.5rem);">logout</span>
                         <span>Đăng xuất</span>
                     </a>
                 </nav>
             </aside>
-            
+
             <!-- Main Content -->
             <div>
                 <?php if ($success): ?>
                     <div class="alert alert-success" style="margin-bottom: 1.5rem;"><?= $success ?></div>
                 <?php endif; ?>
-                
+
                 <?php if ($error): ?>
                     <div class="alert alert-error" style="margin-bottom: 1.5rem;"><?= $error ?></div>
                 <?php endif; ?>
-                
+
                 <?php
                 $tab = $_GET['tab'] ?? 'profile';
-                
+
                 switch ($tab) {
                     case 'profile':
                 ?>
                         <!-- Profile Tab -->
                         <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
-                            <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem);">Thông tin cá nhân</h2>                  
+                            <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem);">Thông tin cá nhân</h2>
                             <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: clamp(1.25rem, 2.5vw, 1.75rem);">
                                 <!-- Avatar Section -->
                                 <div style="display: grid; grid-template-columns: auto 1fr; gap: clamp(1rem, 2vw, 1.5rem); align-items: start;">
@@ -363,6 +400,8 @@ include __DIR__ . '/includes/header.php';
                                         <input type="file" name="avatar" accept="image/*" style="display: block; width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 2px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.9rem); margin-bottom: clamp(0.35rem, 0.8vw, 0.5rem);">
                                         <div style="font-size: clamp(0.7rem, 1.3vw, 0.85rem); color: var(--muted-light); line-height: 1.4;">JPG, PNG, GIF • Tối đa 2MB</div>
                                     </div>
+                                    <!-- Delete avatar button - part of main profile form (avoid nested forms) -->
+                                    <button type="submit" name="delete_avatar" value="1" class="btn" style="margin-top:0.5rem; background: transparent; border: 1px solid var(--border-light); color: var(--danger); padding: 0.35rem 0.6rem; border-radius: 0.35rem; font-size: 0.85rem;" onclick="return confirm('Bạn có chắc muốn xóa ảnh đại diện?');">Xóa ảnh</button>
                                 </div>
 
                                 <hr style="border: none; border-top: 1px solid var(--border-light); margin: clamp(0.5rem, 1vw, 1rem) 0;">
@@ -374,17 +413,17 @@ include __DIR__ . '/includes/header.php';
                                             Họ và tên <span style="color: var(--danger);">*</span>
                                         </label>
                                         <input type="text" name="name" value="<?= sanitize($user['name']) ?>" required minlength="3" maxlength="100"
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
-                                               onblur="this.style.borderColor='var(--border-light)'"
-                                               onfocus="this.style.borderColor='var(--primary)'">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                            onblur="this.style.borderColor='var(--border-light)'"
+                                            onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
-                                    
+
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600;">Ngày sinh</label>
                                         <input type="date" name="birthdate" value="<?= sanitize($user['birthdate'] ?? '') ?>"
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
-                                               onblur="this.style.borderColor='var(--border-light)'"
-                                               onfocus="this.style.borderColor='var(--primary)'">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                            onblur="this.style.borderColor='var(--border-light)'"
+                                            onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
                                 </div>
 
@@ -393,21 +432,21 @@ include __DIR__ . '/includes/header.php';
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600;">Email</label>
                                         <input type="email" value="<?= sanitize($user['email']) ?>" disabled
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); background: var(--background-light); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; cursor: not-allowed; color: var(--text-light);">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); background: var(--background-light); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; cursor: not-allowed; color: var(--text-light);">
                                     </div>
-                                    
+
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600;">Số điện thoại</label>
                                         <input type="text" name="phone" value="<?= sanitize($user['phone']) ?>" minlength="10" maxlength="13"
-                                               placeholder="0xxxxxxxxxx"
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
-                                               onblur="this.style.borderColor='var(--border-light)'"
-                                               onfocus="this.style.borderColor='var(--primary)'">
+                                            placeholder="0xxxxxxxxxx"
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); transition: all 0.2s; box-sizing: border-box;"
+                                            onblur="this.style.borderColor='var(--border-light)'"
+                                            onfocus="this.style.borderColor='var(--primary)'">
                                         <div id="profile-phone-error" style="color: var(--danger); font-size: clamp(0.75rem, 1.3vw, 0.875rem); margin-top: clamp(0.25rem, 0.5vw, 0.35rem); display: none; line-height: 1.3;"></div>
                                     </div>
                                 </div>
-                                
-                                   <!-- Địa chỉ mặc định hiện tại -->
+
+                                <!-- Địa chỉ mặc định hiện tại -->
                                 <?php
                                 $defaultAddr = null;
                                 foreach ($addresses as $addr) {
@@ -423,7 +462,7 @@ include __DIR__ . '/includes/header.php';
                                             <div style="font-weight:600; color:#222; margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.8rem, 1.5vw, 0.95rem);"><?= sanitize($defaultAddr['name']) ?> - <?= sanitize($defaultAddr['phone']) ?></div>
                                             <div style="color:var(--text-light); margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.75rem, 1.3vw, 0.9rem);"><?= sanitize($defaultAddr['address']) ?></div>
                                             <div style="color:var(--text-light); margin-bottom: clamp(0.15rem, 0.3vw, 0.25rem); font-size: clamp(0.75rem, 1.3vw, 0.9rem);">
-                                                <?php 
+                                                <?php
                                                 $location_parts = [];
                                                 if (!empty($defaultAddr['ward'])) $location_parts[] = sanitize($defaultAddr['ward']);
                                                 if (!empty($defaultAddr['district'])) $location_parts[] = sanitize($defaultAddr['district']);
@@ -449,25 +488,25 @@ include __DIR__ . '/includes/header.php';
 
                                 <div style="display: flex; justify-content: flex-end; gap: clamp(0.75rem, 1.5vw, 1rem); padding-top: clamp(1rem, 2vw, 1.25rem); border-top: 1px solid var(--border-light);">
                                     <button type="submit" name="update_profile" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.5rem, 3vw, 2rem); background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu thay đổi</button>
+                                        onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu thay đổi</button>
                                 </div>
                             </form>
                         </div>
-                <?php
+                    <?php
                         break;
-                    
+
                     case 'orders':
-                ?>
+                    ?>
                         <!-- Orders Tab -->
                         <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
                                 <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin: 0;">Lịch sử đơn hàng</h2>
                                 <a href="<?= SITE_URL ?>/order_history.php" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); text-decoration: none; display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                        onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                                    onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
                                     Xem tất cả
                                 </a>
                             </div>
-                            
+
                             <?php if (empty($orders)): ?>
                                 <div style="text-align: center; padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 2vw, 1.5rem);">
                                     <span class="material-symbols-outlined" style="font-size: clamp(3rem, 10vw, 4rem); color: var(--muted-light); display: block; margin-bottom: clamp(0.75rem, 1.5vw, 1rem); opacity: 0.5;">receipt_long</span>
@@ -479,7 +518,7 @@ include __DIR__ . '/includes/header.php';
                                 </div>
                             <?php else: ?>
                                 <div style="display: flex; flex-direction: column; gap: clamp(1rem, 2vw, 1.25rem);">
-                                    <?php foreach ($orders as $order): 
+                                    <?php foreach ($orders as $order):
                                         $statusColors = [
                                             'pending' => '#f59e0b',
                                             'confirmed' => '#3b82f6',
@@ -495,42 +534,42 @@ include __DIR__ . '/includes/header.php';
                                             'cancelled' => 'Đã hủy'
                                         ];
                                     ?>
-                                    <div style="border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem); padding: clamp(1rem, 2vw, 1.25rem); display: flex; flex-direction: column; gap: clamp(0.75rem, 1.5vw, 1rem);">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
-                                            <div>
-                                                <p style="font-weight: 700; margin: 0; font-size: clamp(0.9rem, 1.8vw, 1rem);">Đơn hàng #<?= $order['id'] ?></p>
-                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-top: clamp(0.2rem, 0.4vw, 0.35rem);">
-                                                    <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
-                                                </p>
-                                            </div>
-                                            <span style="padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: 9999px; font-size: clamp(0.8rem, 1.5vw, 0.875rem); font-weight: 600; 
+                                        <div style="border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem); padding: clamp(1rem, 2vw, 1.25rem); display: flex; flex-direction: column; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                                <div>
+                                                    <p style="font-weight: 700; margin: 0; font-size: clamp(0.9rem, 1.8vw, 1rem);">Đơn hàng #<?= $order['id'] ?></p>
+                                                    <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin-top: clamp(0.2rem, 0.4vw, 0.35rem);">
+                                                        <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
+                                                    </p>
+                                                </div>
+                                                <span style="padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem); border-radius: 9999px; font-size: clamp(0.8rem, 1.5vw, 0.875rem); font-weight: 600; 
                                                          background: <?= $statusColors[$order['status']] ?>20; color: <?= $statusColors[$order['status']] ?>; white-space: nowrap;">
-                                                <?= $statusLabels[$order['status']] ?>
-                                            </span>
-                                        </div>
-                                        
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: clamp(0.75rem, 1.5vw, 1rem); border-top: 1px solid var(--border-light); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
-                                            <div>
-                                                <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin: 0 0 clamp(0.2rem, 0.4vw, 0.35rem);">Tổng tiền:</p>
-                                                <p style="font-size: clamp(1rem, 2vw, 1.125rem); font-weight: 700; color: var(--primary-dark); margin: 0;">
-                                                    <?= formatPrice($order['final_amount']) ?>
-                                                </p>
+                                                    <?= $statusLabels[$order['status']] ?>
+                                                </span>
                                             </div>
-                                            <a href="<?= SITE_URL ?>/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); text-decoration: none; display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s; white-space: nowrap;"
-                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
-                                                Xem chi tiết
-                                            </a>
+
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: clamp(0.75rem, 1.5vw, 1rem); border-top: 1px solid var(--border-light); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
+                                                <div>
+                                                    <p style="font-size: clamp(0.8rem, 1.5vw, 0.875rem); color: var(--muted-light); margin: 0 0 clamp(0.2rem, 0.4vw, 0.35rem);">Tổng tiền:</p>
+                                                    <p style="font-size: clamp(1rem, 2vw, 1.125rem); font-weight: 700; color: var(--primary-dark); margin: 0;">
+                                                        <?= formatPrice($order['final_amount']) ?>
+                                                    </p>
+                                                </div>
+                                                <a href="<?= SITE_URL ?>/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); text-decoration: none; display: inline-block; background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s; white-space: nowrap;"
+                                                    onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                                                    Xem chi tiết
+                                                </a>
+                                            </div>
                                         </div>
-                                    </div>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
-                <?php
+                    <?php
                         break;
-                    
+
                     case 'addresses':
-                ?>
+                    ?>
                         <!-- Addresses Tab -->
                         <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem); flex-wrap: wrap; gap: clamp(0.75rem, 1.5vw, 1rem);">
@@ -549,7 +588,7 @@ include __DIR__ . '/includes/header.php';
                                 </h3>
                                 <form id="address-form-element" style="display: grid; gap: clamp(1.25rem, 2.5vw, 1.75rem);">
                                     <input type="hidden" id="address-id">
-                                    
+
                                     <!-- Name and Phone Row -->
                                     <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                         <div>
@@ -604,9 +643,9 @@ include __DIR__ . '/includes/header.php';
                                     <!-- Action Buttons -->
                                     <div class="form-row" style="display: flex; gap: clamp(0.75rem, 1.5vw, 1rem); justify-content: flex-end;">
                                         <button type="button" onclick="hideAddressForm()" class="btn" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); border: 1px solid var(--border-light); background: #fff; color: var(--text-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 500; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                                onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='#fff'">Hủy</button>
+                                            onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='#fff'">Hủy</button>
                                         <button type="submit" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: #fff; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu địa chỉ</button>
+                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Lưu địa chỉ</button>
                                     </div>
                                 </form>
                             </div>
@@ -624,7 +663,7 @@ include __DIR__ . '/includes/header.php';
                                             <?php if ($addr['is_default']): ?>
                                                 <span style="position: absolute; top: clamp(0.75rem, 1.5vw, 1rem); right: clamp(0.75rem, 1.5vw, 1rem); background: var(--primary); color: #fff; padding: clamp(0.25rem, 0.5vw, 0.35rem) clamp(0.6rem, 1.2vw, 0.75rem); border-radius: 9999px; font-size: clamp(0.7rem, 1.2vw, 0.8rem); font-weight: 600; white-space: nowrap;">Mặc định</span>
                                             <?php endif; ?>
-                                            
+
                                             <div style="flex: 1; min-width: 200px;">
                                                 <h3 style="font-size: clamp(1rem, 1.8vw, 1.1rem); font-weight: 600; margin: 0 0 clamp(0.5rem, 1vw, 0.75rem);">
                                                     <?= sanitize($addr['name']) ?>
@@ -641,7 +680,7 @@ include __DIR__ . '/includes/header.php';
                                                     <span><?= sanitize($addr['address']) ?></span>
                                                 </p>
                                                 <p style="color: var(--muted-light); margin: 0 0 clamp(0.35rem, 0.8vw, 0.5rem); font-size: clamp(0.8rem, 1.5vw, 0.875rem);">
-                                                    <?php 
+                                                    <?php
                                                     $location_parts = [];
                                                     if (!empty($addr['ward'])) $location_parts[] = sanitize($addr['ward']);
                                                     if (!empty($addr['district'])) $location_parts[] = sanitize($addr['district']);
@@ -659,16 +698,16 @@ include __DIR__ . '/includes/header.php';
                                             <div style="display: flex; gap: clamp(0.35rem, 0.8vw, 0.5rem); flex-shrink: 0; margin-top: clamp(1.25rem, 2.5vw, 1.5rem);">
                                                 <?php if (!$addr['is_default']): ?>
                                                     <button onclick="setDefaultAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Đặt làm mặc định" style="background: transparent; border: 1px solid var(--border-light); cursor: pointer; color: var(--muted-light); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
-                                            onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
+                                                        onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
                                                         <span class="material-symbols-outlined">check_circle</span>
                                                     </button>
                                                 <?php endif; ?>
                                                 <button onclick="editAddress(<?= htmlspecialchars(json_encode($addr)) ?>)" class="btn-icon" title="Chỉnh sửa" style="background: transparent; border: 1px solid var(--border-light); cursor: pointer; color: var(--muted-light); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
-                                            onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
+                                                    onmouseover="this.style.background='var(--background-light)'; this.style.color='var(--primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted-light)'">
                                                     <span class="material-symbols-outlined">edit</span>
                                                 </button>
                                                 <button onclick="deleteAddress(<?= $addr['id'] ?>)" class="btn-icon" title="Xóa" style="background: transparent; border: 1px solid var(--danger-light, rgba(239, 68, 68, 0.2)); cursor: pointer; color: var(--danger); padding: clamp(0.4rem, 0.8vw, 0.5rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
-                                            onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='transparent'">
+                                                    onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='transparent'">
                                                     <span class="material-symbols-outlined">delete</span>
                                                 </button>
                                             </div>
@@ -677,15 +716,15 @@ include __DIR__ . '/includes/header.php';
                                 <?php endif; ?>
                             </div>
                         </div>
-                <?php
+                    <?php
                         break;
-                    
+
                     case 'settings':
-                ?>
+                    ?>
                         <!-- Settings Tab -->
                         <div class="form-container" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.25rem, 2vw, 2rem);">
                             <h2 style="font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 700; margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem);">Cài đặt tài khoản</h2>
-                            
+
                             <div style="display: flex; flex-direction: column; gap: clamp(1.25rem, 2vw, 1.5rem);">
                                 <!-- Change Password -->
                                 <div style="padding: clamp(1.25rem, 2.5vw, 1.5rem); border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem);">
@@ -694,9 +733,9 @@ include __DIR__ . '/includes/header.php';
                                         Cập nhật mật khẩu của bạn để bảo mật tài khoản
                                     </p>
                                     <button onclick="showPasswordForm()" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: white; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
+                                        onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
                                 </div>
-                                
+
                                 <!-- Notifications -->
                                 <div style="padding: clamp(1.25rem, 2.5vw, 1.5rem); border: 1px solid var(--border-light); border-radius: clamp(0.5rem, 1.5vw, 0.75rem);">
                                     <h3 style="font-weight: 700; margin-bottom: clamp(0.75rem, 1.5vw, 1rem); font-size: clamp(0.95rem, 1.8vw, 1.1rem);">Thông báo</h3>
@@ -708,7 +747,7 @@ include __DIR__ . '/includes/header.php';
                                             </div>
                                             <input type="checkbox" checked style="width: clamp(40px, 8vw, 48px); height: clamp(20px, 4vw, 24px); cursor: pointer; accent-color: var(--primary); flex-shrink: 0; margin-left: 1rem;">
                                         </label>
-                                        
+
                                         <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); transition: all 0.2s;" onmouseover="this.style.background='var(--background-light)'" onmouseout="this.style.background='transparent'">
                                             <div>
                                                 <p style="font-weight: 600; margin: 0 0 clamp(0.25rem, 0.5vw, 0.35rem); font-size: clamp(0.9rem, 1.8vw, 1rem);">Thông báo đơn hàng</p>
@@ -720,7 +759,7 @@ include __DIR__ . '/includes/header.php';
                                 </div>
                             </div>
                         </div>
-                    
+
                         <!-- Password Modal -->
                         <div id="password-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: clamp(0.75rem, 1.5vw, 1rem);">
                             <div class="modal-content" style="background: white; border-radius: clamp(0.5rem, 1.5vw, 1rem); padding: clamp(1.5rem, 2.5vw, 2rem); max-width: 450px; width: 100%;">
@@ -729,29 +768,29 @@ include __DIR__ . '/includes/header.php';
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Mật khẩu hiện tại</label>
                                         <input type="password" name="current_password" required
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
-                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                            onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
-                                    
+
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Mật khẩu mới</label>
                                         <input type="password" name="new_password" required
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
-                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                            onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
-                                    
+
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Xác nhận mật khẩu</label>
                                         <input type="password" name="confirm_password" required
-                                               style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
-                                               onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;"
+                                            onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
                                     </div>
-                                    
+
                                     <div style="display: flex; gap: clamp(0.75rem, 1.5vw, 1rem); justify-content: flex-end; padding-top: clamp(1rem, 2vw, 1.25rem); border-top: 1px solid var(--border-light);">
                                         <button type="button" onclick="hidePasswordForm()" class="btn" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--background-light); color: var(--text); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                                onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='var(--background-light)'">Hủy</button>
+                                            onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='var(--background-light)'">Hủy</button>
                                         <button type="submit" name="change_password" class="btn btn-primary" style="padding: clamp(0.65rem, 1.2vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.75rem); background: var(--primary); color: #fff; border: none; border-radius: clamp(0.3rem, 0.8vw, 0.5rem); cursor: pointer; font-weight: 600; font-size: clamp(0.85rem, 1.8vw, 0.95rem); transition: all 0.2s;"
-                                                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
+                                            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Đổi mật khẩu</button>
                                     </div>
                                 </form>
                             </div>
@@ -766,231 +805,243 @@ include __DIR__ . '/includes/header.php';
 </main>
 
 <script>
-// Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
-function validateVietnamPhoneNumber(phone) {
-    return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
-}
+    // Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+    function validateVietnamPhoneNumber(phone) {
+        return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
+    }
 
-// Show phone error message
-function showPhoneError(phoneInput, errorEl, message) {
-    if (message) {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-        phoneInput.style.borderColor = 'var(--danger)';
-        phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
-    } else {
-        errorEl.style.display = 'none';
+    // Show phone error message
+    function showPhoneError(phoneInput, errorEl, message) {
+        if (message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            phoneInput.style.borderColor = 'var(--danger)';
+            phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+        } else {
+            errorEl.style.display = 'none';
+            phoneInput.style.borderColor = 'var(--border-light)';
+            phoneInput.style.backgroundColor = 'transparent';
+        }
+    }
+
+    function showPasswordForm() {
+        document.getElementById('password-modal').style.display = 'flex';
+    }
+
+    function hidePasswordForm() {
+        document.getElementById('password-modal').style.display = 'none';
+    }
+
+    function showAddressForm() {
+        document.getElementById('address-form').style.display = 'block';
+        document.getElementById('form-title').textContent = 'Thêm địa chỉ mới';
+        document.getElementById('address-id').value = '';
+        document.getElementById('address-form-element').reset();
+    }
+
+    function hideAddressForm() {
+        document.getElementById('address-form').style.display = 'none';
+    }
+
+    function editAddress(address) {
+        document.getElementById('address-id').value = address.id;
+        document.getElementById('address-name').value = address.name;
+        document.getElementById('address-phone').value = address.phone;
+        document.getElementById('address-address').value = address.address;
+        document.getElementById('address-ward').value = address.ward || '';
+        document.getElementById('address-district').value = address.district || '';
+        document.getElementById('address-city').value = address.city || 'TP. Hồ Chí Minh';
+        document.getElementById('address-note').value = address.note || '';
+        document.getElementById('address-default').checked = address.is_default;
+
+        document.getElementById('address-form').style.display = 'block';
+        document.getElementById('form-title').textContent = 'Chỉnh sửa địa chỉ';
+        document.getElementById('address-form-element').scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+
+    function setDefaultAddress(id) {
+        // Use relative path based on current location
+        const apiPath = './api/customer_addresses.php';
+
+        fetch(apiPath + '?action=set_default', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id
+                })
+            })
+            .then(res => res.text())
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra');
+                    }
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    alert('Lỗi: ' + text);
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                alert('Lỗi: ' + err.message);
+            });
+    }
+
+    function deleteAddress(id) {
+        if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
+
+        const apiPath = './api/customer_addresses.php';
+
+        fetch(apiPath + '?action=delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id
+                })
+            })
+            .then(res => res.text())
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra');
+                    }
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    alert('Lỗi: ' + text);
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                alert('Lỗi: ' + err.message);
+            });
+    }
+
+    // Handle form submit
+    document.getElementById('address-form-element').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const phoneInput = document.getElementById('address-phone');
+        const phone = phoneInput.value.trim();
+
+        // Validate phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+        if (!validateVietnamPhoneNumber(phone)) {
+            document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
+            document.getElementById('phone-error').style.display = 'block';
+            phoneInput.style.borderColor = 'var(--danger)';
+            phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+            return false;
+        }
+
+        // Clear error
+        document.getElementById('phone-error').style.display = 'none';
         phoneInput.style.borderColor = 'var(--border-light)';
         phoneInput.style.backgroundColor = 'transparent';
+
+        const id = document.getElementById('address-id').value;
+        const action = id ? 'update' : 'add';
+        const apiPath = './api/customer_addresses.php';
+
+        const data = {
+            name: document.getElementById('address-name').value,
+            phone: phone,
+            address: document.getElementById('address-address').value,
+            ward: document.getElementById('address-ward').value,
+            district: document.getElementById('address-district').value,
+            city: document.getElementById('address-city').value,
+            note: document.getElementById('address-note').value,
+            is_default: document.getElementById('address-default').checked ? 1 : 0
+        };
+
+        if (id) data.id = id;
+
+        fetch(apiPath + '?action=' + action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => {
+                return res.text();
+            })
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        alert(data.message || 'Thành công');
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra');
+                    }
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    alert('Lỗi: ' + text);
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                alert('Lỗi: ' + err.message);
+            });
+    });
+
+    // Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+    function validateVietnamPhoneNumber(phone) {
+        return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
     }
-}
 
-function showPasswordForm() {
-    document.getElementById('password-modal').style.display = 'flex';
-}
-
-function hidePasswordForm() {
-    document.getElementById('password-modal').style.display = 'none';
-}
-
-function showAddressForm() {
-    document.getElementById('address-form').style.display = 'block';
-    document.getElementById('form-title').textContent = 'Thêm địa chỉ mới';
-    document.getElementById('address-id').value = '';
-    document.getElementById('address-form-element').reset();
-}
-
-function hideAddressForm() {
-    document.getElementById('address-form').style.display = 'none';
-}
-
-function editAddress(address) {
-    document.getElementById('address-id').value = address.id;
-    document.getElementById('address-name').value = address.name;
-    document.getElementById('address-phone').value = address.phone;
-    document.getElementById('address-address').value = address.address;
-    document.getElementById('address-ward').value = address.ward || '';
-    document.getElementById('address-district').value = address.district || '';
-    document.getElementById('address-city').value = address.city || 'TP. Hồ Chí Minh';
-    document.getElementById('address-note').value = address.note || '';
-    document.getElementById('address-default').checked = address.is_default;
-    
-    document.getElementById('address-form').style.display = 'block';
-    document.getElementById('form-title').textContent = 'Chỉnh sửa địa chỉ';
-    document.getElementById('address-form-element').scrollIntoView({ behavior: 'smooth' });
-}
-
-function setDefaultAddress(id) {
-    // Use relative path based on current location
-    const apiPath = './api/customer_addresses.php';
-    
-    fetch(apiPath + '?action=set_default', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id })
-    })
-    .then(res => res.text())
-    .then(text => {
-        try {
-            const data = JSON.parse(text);
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Có lỗi xảy ra');
-            }
-        } catch (e) {
-            console.error('JSON parse error:', e);
-            alert('Lỗi: ' + text);
+    // Add real-time phone validation
+    document.getElementById('address-phone').addEventListener('input', function() {
+        const phone = this.value.trim();
+        if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
+            document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
+            document.getElementById('phone-error').style.display = 'block';
+            this.style.borderColor = 'var(--danger)';
+            this.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+        } else {
+            document.getElementById('phone-error').style.display = 'none';
+            this.style.borderColor = 'var(--border-light)';
+            this.style.backgroundColor = 'transparent';
         }
-    })
-    .catch(err => {
-        console.error('Fetch error:', err);
-        alert('Lỗi: ' + err.message);
     });
-}
 
-function deleteAddress(id) {
-    if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return;
-    
-    const apiPath = './api/customer_addresses.php';
-    
-    fetch(apiPath + '?action=delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id })
-    })
-    .then(res => res.text())
-    .then(text => {
-        try {
-            const data = JSON.parse(text);
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Có lỗi xảy ra');
-            }
-        } catch (e) {
-            console.error('JSON parse error:', e);
-            alert('Lỗi: ' + text);
-        }
-    })
-    .catch(err => {
-        console.error('Fetch error:', err);
-        alert('Lỗi: ' + err.message);
-    });
-}
-
-// Handle form submit
-document.getElementById('address-form-element').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const phoneInput = document.getElementById('address-phone');
-    const phone = phoneInput.value.trim();
-    
-    // Validate phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
-    if (!validateVietnamPhoneNumber(phone)) {
-        document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
-        document.getElementById('phone-error').style.display = 'block';
-        phoneInput.style.borderColor = 'var(--danger)';
-        phoneInput.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
-        return false;
-    }
-    
-    // Clear error
-    document.getElementById('phone-error').style.display = 'none';
-    phoneInput.style.borderColor = 'var(--border-light)';
-    phoneInput.style.backgroundColor = 'transparent';
-    
-    const id = document.getElementById('address-id').value;
-    const action = id ? 'update' : 'add';
-    const apiPath = './api/customer_addresses.php';
-    
-    const data = {
-        name: document.getElementById('address-name').value,
-        phone: phone,
-        address: document.getElementById('address-address').value,
-        ward: document.getElementById('address-ward').value,
-        district: document.getElementById('address-district').value,
-        city: document.getElementById('address-city').value,
-        note: document.getElementById('address-note').value,
-        is_default: document.getElementById('address-default').checked ? 1 : 0
-    };
-    
-    if (id) data.id = id;
-    
-    fetch(apiPath + '?action=' + action, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(res => {
-        return res.text();
-    })
-    .then(text => {
-        try {
-            const data = JSON.parse(text);
-            if (data.success) {
-                alert(data.message || 'Thành công');
-                location.reload();
-            } else {
-                alert(data.message || 'Có lỗi xảy ra');
-            }
-        } catch (e) {
-            console.error('JSON parse error:', e);
-            alert('Lỗi: ' + text);
-        }
-    })
-    .catch(err => {
-        console.error('Fetch error:', err);
-        alert('Lỗi: ' + err.message);
-    });
-});
-
-// Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
-function validateVietnamPhoneNumber(phone) {
-    return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
-}
-
-// Add real-time phone validation
-document.getElementById('address-phone').addEventListener('input', function() {
-    const phone = this.value.trim();
-    if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
-        document.getElementById('phone-error').textContent = 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)';
-        document.getElementById('phone-error').style.display = 'block';
-        this.style.borderColor = 'var(--danger)';
-        this.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
-    } else {
+    document.getElementById('address-phone').addEventListener('focus', function() {
         document.getElementById('phone-error').style.display = 'none';
         this.style.borderColor = 'var(--border-light)';
         this.style.backgroundColor = 'transparent';
+    });
+
+    // Profile phone validation
+    const profilePhoneInput = document.querySelector('input[name="phone"]');
+    if (profilePhoneInput) {
+        profilePhoneInput.addEventListener('input', function() {
+            const phone = this.value.trim();
+            const errorEl = document.getElementById('profile-phone-error');
+
+            if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
+                showPhoneError(this, errorEl, 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)');
+            } else {
+                showPhoneError(this, errorEl, '');
+            }
+        });
+
+        profilePhoneInput.addEventListener('focus', function() {
+            document.getElementById('profile-phone-error').style.display = 'none';
+            this.style.borderColor = 'var(--border-light)';
+            this.style.backgroundColor = 'transparent';
+        });
     }
-});
-
-document.getElementById('address-phone').addEventListener('focus', function() {
-    document.getElementById('phone-error').style.display = 'none';
-    this.style.borderColor = 'var(--border-light)';
-    this.style.backgroundColor = 'transparent';
-});
-
-// Profile phone validation
-const profilePhoneInput = document.querySelector('input[name="phone"]');
-if (profilePhoneInput) {
-    profilePhoneInput.addEventListener('input', function() {
-        const phone = this.value.trim();
-        const errorEl = document.getElementById('profile-phone-error');
-        
-        if (phone.length > 0 && !validateVietnamPhoneNumber(phone)) {
-            showPhoneError(this, errorEl, 'Định dạng: 0XXXXXXXXXX (10 số) hoặc +84XXXXXXXXX (11 ký tự)');
-        } else {
-            showPhoneError(this, errorEl, '');
-        }
-    });
-    
-    profilePhoneInput.addEventListener('focus', function() {
-        document.getElementById('profile-phone-error').style.display = 'none';
-        this.style.borderColor = 'var(--border-light)';
-        this.style.backgroundColor = 'transparent';
-    });
-}
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
