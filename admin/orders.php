@@ -91,7 +91,8 @@ if ($status) {
 }
 
 if ($search) {
-    $where[] = "(o.id = ? OR u.name LIKE ? OR u.email LIKE ?)";
+    $where[] = "(o.order_code LIKE ? OR o.id = ? OR u.name LIKE ? OR u.email LIKE ?)";
+    $params[] = "%$search%";
     $params[] = $search;
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -228,7 +229,7 @@ $pageTitle = 'Quản lý Đơn hàng';
                         <tbody>
                             <?php foreach ($orders as $order): ?>
                             <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium">#<?= $order['id'] ?></td>
+                                <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium text-blue-600"><?= $order['order_code'] ?></td>
                                 <td class="py-2 sm:py-4 px-3 sm:px-4">
                                     <div>
                                         <p class="font-medium text-xs sm:text-sm truncate"><?= sanitize($order['customer_name'] ?? 'Khách') ?></p>

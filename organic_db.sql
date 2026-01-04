@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th12 13, 2025 lúc 04:30 AM
+-- Thời gian đã tạo: Th12 13, 2025 lúc 11:34 AM
 -- Phiên bản máy phục vụ: 9.1.0
 -- Phiên bản PHP: 8.3.14
 
@@ -97,18 +97,7 @@ CREATE TABLE IF NOT EXISTS `carts` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_cart_item` (`user_id`,`product_id`),
   KEY `product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=643 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Đang đổ dữ liệu cho bảng `carts`
---
-
-INSERT INTO `carts` (`id`, `user_id`, `product_id`, `quantity`, `created_at`, `updated_at`) VALUES
-(638, 14, 15, 8, '2025-12-13 03:42:55', '2025-12-13 03:42:55'),
-(639, 14, 60, 6, '2025-12-13 03:42:55', '2025-12-13 03:42:55'),
-(640, 14, 65, 6, '2025-12-13 03:42:55', '2025-12-13 03:42:55'),
-(641, 14, 103, 7, '2025-12-13 03:42:55', '2025-12-13 03:42:55'),
-(642, 14, 105, 7, '2025-12-13 03:42:55', '2025-12-13 03:42:55');
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -204,8 +193,8 @@ CREATE TABLE IF NOT EXISTS `coupons` (
 --
 
 INSERT INTO `coupons` (`id`, `code`, `description`, `discount_type`, `discount_value`, `min_order_value`, `max_discount`, `usage_limit`, `used_count`, `start_date`, `end_date`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'WELCOME10', 'Giảm 10% cho đơn hàng đầu tiên', 'percentage', 10, 200000, 50000, 100, 3, '2025-11-24 08:14:00', '2025-12-24 08:14:00', 1, '2025-11-24 08:14:59', '2025-12-12 18:40:37'),
-(2, 'FREESHIP', 'Miễn phí vận chuyển cho đơn từ 500k', 'fixed', 25000, 200000, NULL, 10, 1, '2025-11-24 08:14:00', '2026-01-23 08:14:00', 1, '2025-11-24 08:14:59', '2025-12-12 18:36:03'),
+(1, 'WELCOME10', 'Giảm 10% cho đơn hàng đầu tiên', 'percentage', 10, 200000, 50000, 100, 1, '2025-11-24 08:14:00', '2025-12-24 08:14:00', 1, '2025-11-24 08:14:59', '2025-12-12 17:01:42'),
+(2, 'FREESHIP', 'Miễn phí vận chuyển cho đơn từ 500k', 'fixed', 25000, 200000, NULL, 10, 0, '2025-11-24 08:14:00', '2026-01-23 08:14:00', 1, '2025-11-24 08:14:59', '2025-12-12 16:48:57'),
 (3, 'ABC123', 'Mã giảm đặc biệt', 'percentage', 10, 100000, 50000, 5, 0, '2025-12-11 22:24:00', '2025-12-12 17:00:00', 1, '2025-12-12 16:23:34', '2025-12-12 16:27:31');
 
 -- --------------------------------------------------------
@@ -231,7 +220,7 @@ CREATE TABLE IF NOT EXISTS `customer_addresses` (
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_is_default` (`is_default`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `customer_addresses`
@@ -243,7 +232,6 @@ INSERT INTO `customer_addresses` (`id`, `user_id`, `name`, `phone`, `address`, `
 (18, 7, 'Minh Nhật', '0966340635', '65 Tình Nghĩa', 'Xã Xuân Tình', 'Huyện Tình Bạn', 'TP. Hồ Chí Minh', '', 1, '2025-12-07 11:30:52', '2025-12-07 11:30:52'),
 (19, 8, 'Toàn', '0927832131', 'Hêjjdndnd', '', 'Hóc mno', 'TP. Hồ Chí Minh', '', 1, '2025-12-07 11:56:10', '2025-12-07 11:56:16'),
 (20, 3, 'Minh Tài', '0966330634', '65 An Xương', 'Tân Thới Nhì', 'Huyện Hóc Môn', 'TP. Hồ Chí Minh', '', 0, '2025-12-07 16:30:43', '2025-12-07 17:40:46'),
-(21, 6, 'Bui Minh Tai', '0528837261', 'lô o16 khu dân cư thới an', 'thới an', '12', 'TP. Hồ Chí Minh', '', 0, '2025-12-07 17:09:27', '2025-12-07 17:09:27'),
 (22, 3, 'Thảo Vi', '0967890199', 'Tân An', 'Xã Đông Thạnh', 'Huyện Cái bè', 'TP. Hồ Chí Minh', '', 1, '2025-12-07 17:40:46', '2025-12-07 17:40:46'),
 (26, 12, 'Nguyễn Trung Hậu', '0931878932', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', 1, '2025-12-12 17:00:51', '2025-12-12 17:00:55');
 
@@ -327,7 +315,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   KEY `idx_user` (`user_id`),
   KEY `idx_status` (`status`),
   KEY `idx_order_code` (`order_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `orders`
@@ -361,7 +349,7 @@ INSERT INTO `orders` (`id`, `user_id`, `order_code`, `total_amount`, `discount_a
 (28, 3, 'ORD202511305288', 148000, 0, 25000, 0, 173000, 'pending', 'cod', 'pending', 'Bùi Minh Tài', '0966330655', NULL, 'TTN', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-11-29 18:45:37', '2025-11-29 18:45:37'),
 (29, 3, 'ORD202511304194', 63000, 0, 25000, 0, 88000, 'pending', 'cod', 'pending', 'Bùi Minh Tài', '0966330655', NULL, 'TTN', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-11-30 05:17:08', '2025-11-30 05:17:08'),
 (30, 3, 'ORD202511308036', 63000, 0, 25000, 0, 88000, 'pending', 'cod', 'pending', 'Minh Tài', '0966330643', NULL, 'nhà bồn ha', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-11-30 05:28:45', '2025-11-30 05:28:45'),
-(31, 6, 'ORD202512063434', 228000, 0, 25000, 0, 253000, 'cancelled', 'cod', 'pending', 'Thảo Vi', '+84528837261', NULL, 'lô O16A khu dân cư Thới An phường Thới An Quận 12', 'Thới An', '12', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-05 18:27:03', '2025-12-05 18:30:02'),
+(31, NULL, 'ORD202512063434', 228000, 0, 25000, 0, 253000, 'cancelled', 'cod', 'pending', 'Thảo Vi', '+84528837261', NULL, 'lô O16A khu dân cư Thới An phường Thới An Quận 12', 'Thới An', '12', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-05 18:27:03', '2025-12-05 18:30:02'),
 (32, 3, 'ORD202512064346', 117000, 0, 25000, 0, 142000, 'pending', 'cod', 'pending', 'Minh Tài', '0966330634', NULL, '1TPHCM', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-06 07:35:10', '2025-12-06 07:35:10'),
 (33, 3, 'ORD202512066089', 28000, 0, 25000, 0, 53000, 'pending', 'cod', 'pending', 'Minh Tài', '0966330634', NULL, '1TPHCM', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-06 11:25:44', '2025-12-06 11:25:44'),
 (34, 3, 'ORD202512067850', 117000, 0, 25000, 0, 142000, 'pending', 'cod', 'pending', 'Minh Tài', '0966330634', NULL, '1TPHCM', '', '', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-06 11:27:25', '2025-12-06 11:27:25'),
@@ -384,7 +372,17 @@ INSERT INTO `orders` (`id`, `user_id`, `order_code`, `total_amount`, `discount_a
 (51, 3, 'ORD202512078785', 117000, 0, 25000, 0, 142000, 'pending', 'cod', 'pending', 'Minh Kê', '0966666666', 'buiminhtai97@gmail.com', 'Bà Rịa Vũng Tàu', 'Xã Tân Phong', 'Huyện Thống Kê', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 09:43:22', '2025-12-07 09:43:22'),
 (52, 3, 'ORD202512075605', 28000, 0, 25000, 0, 53000, 'pending', 'cod', 'pending', 'Minh Kê', '0966666666', 'buiminhtai97@gmail.com', 'Bà Rịa Vũng Tàu', 'Xã Tân Phong', 'Huyện Thống Kê', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 09:45:44', '2025-12-07 09:45:44'),
 (53, 3, 'ORD202512072316', 32000, 0, 25000, 0, 57000, 'pending', 'cod', 'pending', 'Hiếu Toàn', '+84966330649', 'buiminhtai97@gmail.com', '65/13A,Ấp Dân Thằng 1, Xã Tân Thới Nhì, Hóc Môn', 'Xã tân Thới Nhì', 'Hóc Môn', 'TP. Hà Nọi', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 09:53:08', '2025-12-07 09:53:08'),
-(54, 7, 'ORD202512078479', 234000, 0, 25000, 0, 259000, 'cancelled', 'cod', 'pending', 'Minh Nhật', '0966340635', 'buiminhtai3114@gmail.com', '65 Tình Nghĩa', 'Xã Xuân Tình', 'Huyện Tình Bạn', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, '2025-12-07 11:33:10', NULL, '2025-12-07 11:31:45', '2025-12-07 11:33:10');
+(54, 7, 'ORD202512078479', 234000, 0, 25000, 0, 259000, 'cancelled', 'cod', 'pending', 'Minh Nhật', '0966340635', 'buiminhtai3114@gmail.com', '65 Tình Nghĩa', 'Xã Xuân Tình', 'Huyện Tình Bạn', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, '2025-12-07 11:33:10', NULL, '2025-12-07 11:31:45', '2025-12-07 11:33:10'),
+(55, 8, 'ORD202512079383', 2063000, 0, 0, 0, 2063000, 'cancelled', 'cod', 'pending', 'Toàn', '0927832131', 'thijenphuc@gmail.com', 'Hêjjdndnd', '', 'Hóc mno', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 11:56:30', '2025-12-07 12:07:05'),
+(56, 3, 'ORD202512074930', 260000, 0, 25000, 0, 285000, 'pending', 'cod', 'pending', 'Minh Tài', '0966330634', 'buiminhtai97@gmail.com', '65 An Xương', 'Tân Thới Nhì', 'Huyện Hóc Môn', 'TP. Hồ Chí Minh', 'Giao đúng hẹn', NULL, NULL, NULL, NULL, NULL, '2025-12-07 16:31:07', '2025-12-07 16:31:07'),
+(57, NULL, 'ORD202512087276', 77000, 0, 25000, 0, 102000, 'shipping', 'cod', 'pending', 'Bui Minh Tai', '0528837261', 'thaovimk0902@gmail.com', 'lô o16 khu dân cư thới an', 'thới an', '12', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 17:09:40', '2025-12-07 17:20:38'),
+(58, 3, 'ORD202512085916', 153000, 0, 25000, 0, 178000, 'pending', 'cod', 'pending', 'Thảo Vi', '0967890199', 'buiminhtai97@gmail.com', 'Tân An', 'Xã Đông Thạnh', 'Huyện Cái bè', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-07 17:42:44', '2025-12-07 17:42:44'),
+(63, 12, 'ORD202512135029', 365000, 36500, 25000, 0, 353500, 'pending', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', 'WELCOME10', NULL, NULL, NULL, NULL, '2025-12-12 17:01:42', '2025-12-12 17:01:42'),
+(64, 12, 'ORD202512136795', 65000, 0, 25000, 0, 90000, 'cancelled', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, '2025-12-12 17:26:20', NULL, '2025-12-12 17:08:07', '2025-12-12 17:26:20'),
+(65, 12, 'ORD202512139129', 22000, 0, 25000, 0, 47000, 'pending', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-12 17:26:38', '2025-12-12 17:26:38'),
+(66, 12, 'ORD202512135192', 160000, 0, 25000, 0, 185000, 'pending', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-12 17:38:36', '2025-12-12 17:38:36'),
+(67, 12, 'ORD202512136591', 140000, 0, 25000, 0, 165000, 'pending', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-12 17:42:09', '2025-12-12 17:42:09'),
+(68, 12, 'ORD202512134043', 124000, 0, 25000, 0, 149000, 'pending', 'cod', 'pending', 'Nguyễn Trung Hậu', '0931878932', 'haunguyen04012000@gmail.com', '123/1232', 'Thạnh Mỹ Lợi', 'Thủ Đức', 'TP. Hồ Chí Minh', '', NULL, NULL, NULL, NULL, NULL, '2025-12-12 17:49:28', '2025-12-12 17:49:28');
 
 -- --------------------------------------------------------
 
@@ -406,7 +404,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=146 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `order_items`
@@ -514,7 +512,37 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `prod
 (102, 53, NULL, 'Sữa hạt óc chó', 'sua_oc_cho.jpg', 1, 32000, 32000, '2025-12-07 09:53:08'),
 (103, 54, 7, 'Khoai tây vàng', 'khoai_tay.jpg', 2, 32000, 64000, '2025-12-07 11:31:45'),
 (104, 54, 8, 'Hành lá hữu cơ', 'hanh_la.jpg', 2, 15000, 30000, '2025-12-07 11:31:45'),
-(105, 54, 44, 'Sữa tươi không đường', 'sua_tuoi.jpg', 4, 35000, 140000, '2025-12-07 11:31:45');
+(105, 54, 44, 'Sữa tươi không đường', 'sua_tuoi.jpg', 4, 35000, 140000, '2025-12-07 11:31:45'),
+(106, 55, 2, 'Cà chua bi', 'images/product/1763973835_ca-chua-bi-organic-1763772009-3acfe533b4.png', 1, 25000, 25000, '2025-12-07 11:56:30'),
+(107, 55, 5, 'Rau cải xanh hữu cơ', 'cai_xanh.jpg', 1, 25000, 25000, '2025-12-07 11:56:30'),
+(108, 55, 6, 'Cà rốt Đà Lạt', 'carot.jpg', 1, 28000, 28000, '2025-12-07 11:56:30'),
+(109, 55, 8, 'Hành lá hữu cơ', 'hanh_la.jpg', 1, 15000, 15000, '2025-12-07 11:56:30'),
+(110, 55, 15, 'Táo Fuji nhập khẩu', 'tao_fuji.jpg', 2, 85000, 170000, '2025-12-07 11:56:30'),
+(111, 55, NULL, 'Sữa đậu nành', 'sua_dau_nanh.jpg', 100, 18000, 1800000, '2025-12-07 11:56:30'),
+(112, 56, 5, 'Rau cải xanh hữu cơ', 'images/product/1765121049_cai-xanh.png', 7, 25000, 175000, '2025-12-07 16:31:07'),
+(113, 56, 15, 'Táo Fuji nhập khẩu', 'images/product/1765121215_tao-envy.jpg', 1, 85000, 85000, '2025-12-07 16:31:07'),
+(114, 57, NULL, 'Trà xanh túi lọc', 'images/product/1765121829_tra-xanh-tui-loc.jpg', 1, 45000, 45000, '2025-12-07 17:09:40'),
+(115, 57, NULL, 'Sữa hạt óc chó', 'images/product/1765121851_sua-hat-oc-cho.jpg', 1, 32000, 32000, '2025-12-07 17:09:40'),
+(116, 58, NULL, 'Sữa hạt óc chó', 'images/product/1765121851_sua-hat-oc-cho.jpg', 2, 32000, 64000, '2025-12-07 17:42:44'),
+(117, 58, NULL, 'Nước khoáng thiên nhiên', 'images/product/1765042613_hat.png', 1, 14000, 14000, '2025-12-07 17:42:44'),
+(118, 58, NULL, 'Sữa chua uống', 'images/product/1765121931_sua-chua-uong.jpg', 1, 25000, 25000, '2025-12-07 17:42:44'),
+(119, 58, NULL, 'Trà hoa cúc', 'images/product/1765121894_tra-hoa-cuc.jpg', 1, 50000, 50000, '2025-12-07 17:42:44'),
+(130, 63, 58, 'Rau mồng tơi hữu cơ', 'images/product/1765264339_rau-mong-toi.png', 1, 15000, 15000, '2025-12-12 17:01:42'),
+(131, 63, 65, 'Rau ngót sạch', 'images/product/1765264446_rau-ngot.jpg', 1, 15000, 15000, '2025-12-12 17:01:42'),
+(132, 63, 66, 'Củ dền đỏ', 'images/product/1765264458_cu-den.jpg', 1, 30000, 30000, '2025-12-12 17:01:42'),
+(133, 63, 103, 'Bạch tuộc tươi', 'images/product/1765264886_bach-tuoc.jpg', 1, 160000, 160000, '2025-12-12 17:01:42'),
+(134, 63, 106, 'Nghêu sạch Gò Công', 'images/product/1765264855_ngheu-sach3.jpg', 1, 35000, 35000, '2025-12-12 17:01:42'),
+(135, 63, 107, 'Cá lóc đồng', 'images/product/1765264834_ca-loc.jpg', 1, 110000, 110000, '2025-12-12 17:01:42'),
+(136, 64, 66, 'Củ dền đỏ', 'images/product/1765264458_cu-den.jpg', 1, 30000, 30000, '2025-12-12 17:08:07'),
+(137, 64, 106, 'Nghêu sạch Gò Công', 'images/product/1765264855_ngheu-sach3.jpg', 1, 35000, 35000, '2025-12-12 17:08:07'),
+(138, 65, 60, 'Cà tím quả dài', 'images/product/1765264365_ca-tim.jpg', 1, 22000, 22000, '2025-12-12 17:26:38'),
+(139, 66, 5, 'Rau cải xanh hữu cơ', 'images/product/1765260808_cai-xanh.png', 1, 25000, 25000, '2025-12-12 17:38:36'),
+(140, 66, 15, 'Táo Fuji nhập khẩu', 'images/product/1765260931_tao-envy.jpg', 1, 85000, 85000, '2025-12-12 17:38:36'),
+(141, 66, 105, 'Hàu sữa Pháp', 'images/product/1765264867_hau-sua.jpg', 1, 50000, 50000, '2025-12-12 17:38:36'),
+(142, 67, 66, 'Củ dền đỏ', 'images/product/1765264458_cu-den.jpg', 1, 30000, 30000, '2025-12-12 17:42:09'),
+(143, 67, 107, 'Cá lóc đồng', 'images/product/1765264834_ca-loc.jpg', 1, 110000, 110000, '2025-12-12 17:42:09'),
+(144, 68, 3, 'Táo Envy', 'images/product/1765265611_tao-envy.jpg', 1, 99000, 99000, '2025-12-12 17:49:28'),
+(145, 68, 5, 'Rau cải xanh hữu cơ', 'images/product/1765260808_cai-xanh.png', 1, 25000, 25000, '2025-12-12 17:49:28');
 
 -- --------------------------------------------------------
 
@@ -533,15 +561,14 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
   KEY `idx_email` (`email`),
   KEY `idx_token` (`token`),
   KEY `idx_expires` (`expires_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `password_resets`
 --
 
 INSERT INTO `password_resets` (`id`, `email`, `token`, `expires_at`, `created_at`) VALUES
-(13, 'buiminhtai3114@gmail.com', '2a0f8426cec37ef53ba176c2a7cbf53cffd758c3f33882737f4e17070ac943ad', '2025-12-08 11:26:51', '2025-12-07 11:26:51'),
-(15, 'admin@xanhorganic.com', 'c643664100d5bfbc2d958942fc49e941c4a399eb79e5c3fe82e5174036ad8d46', '2025-12-13 18:36:51', '2025-12-12 18:36:51');
+(13, 'buiminhtai3114@gmail.com', '2a0f8426cec37ef53ba176c2a7cbf53cffd758c3f33882737f4e17070ac943ad', '2025-12-08 11:26:51', '2025-12-07 11:26:51');
 
 -- --------------------------------------------------------
 
@@ -597,17 +624,17 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `slug`, `description`, `sho
 (2, 1, 'Cà chua bi', 'ca-chua-bi', 'Cà chua bi ngọt tự nhiên, hoàn hảo cho salad', NULL, 25000, NULL, NULL, 'hộp 250g', NULL, 'images/product/1765265603_ca-chua.png', NULL, 71, 'VEG003', NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-11-24 08:14:59', '2025-12-09 07:33:23'),
 (3, 2, 'Táo Envy', 'tao-envy', 'Táo nhập khẩu New Zealand, giòn ngọt', NULL, 99000, NULL, NULL, '0.5kg', NULL, 'images/product/1765265611_tao-envy.jpg', NULL, 20, 'FRU001', NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-11-24 08:14:59', '2025-12-12 17:49:28'),
 (4, 3, 'Trứng gà thả vườn', 'trung-ga-tha-vuon', 'Trứng gà sạch tự nhiên, giàu dinh dưỡng', NULL, 129000, NULL, NULL, 'vỉ 10 trứng', NULL, 'images/product/1765265623_trung-ga.jpg', NULL, 26, 'DAI001', NULL, 1, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-11-24 08:14:59', '2025-12-09 07:33:43'),
-(5, 1, 'Rau cải xanh hữu cơ', 'rau-cai-xanh-huu-co', 'Rau cải xanh trồng theo tiêu chuẩn hữu cơ.', NULL, 25000, NULL, NULL, 'kg', NULL, 'images/product/1765260808_cai-xanh.png', NULL, 106, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-12 18:36:03'),
-(6, 1, 'Cà rốt Đà Lạt', 'ca-rot-da-lat', 'Cà rốt tươi, giòn, giàu vitamin A.', NULL, 28000, NULL, NULL, 'kg', NULL, 'images/product/1765260819_carot.jpg', NULL, 99, NULL, NULL, 1, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-12 18:33:21'),
+(5, 1, 'Rau cải xanh hữu cơ', 'rau-cai-xanh-huu-co', 'Rau cải xanh trồng theo tiêu chuẩn hữu cơ.', NULL, 25000, NULL, NULL, 'kg', NULL, 'images/product/1765260808_cai-xanh.png', NULL, 108, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-12 17:49:28'),
+(6, 1, 'Cà rốt Đà Lạt', 'ca-rot-da-lat', 'Cà rốt tươi, giòn, giàu vitamin A.', NULL, 28000, NULL, NULL, 'kg', NULL, 'images/product/1765260819_carot.jpg', NULL, 100, NULL, NULL, 1, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:13:39'),
 (7, 1, 'Khoai tây vàng', 'khoai-tay-vang', 'Khoai tây loại 1, củ lớn.', NULL, 32000, NULL, NULL, 'kg', NULL, 'images/product/1765260825_khoaitay.jpg', NULL, 140, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:13:45'),
 (8, 1, 'Hành lá hữu cơ', 'hanh-la-huu-co', 'Hành lá sạch, không hóa chất.', NULL, 15000, NULL, NULL, 'kg', NULL, 'images/product/1765260841_hanh-la.jpg', NULL, 200, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:14:01'),
 (9, 1, 'Rau muống hữu cơ', 'rau-muong-huu-co', 'Rau muống tươi, trồng thủy canh.', NULL, 22000, NULL, NULL, 'kg', NULL, 'images/product/1765260853_raumuong.jpg', NULL, 150, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:14:13'),
 (10, 1, 'Bí đỏ hồ lô', 'bi-do-ho-lo', 'Bí đỏ giàu vitamin A.', NULL, 30000, NULL, NULL, 'kg', NULL, 'images/product/1765260861_bidoholo.jpg', NULL, 80, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:14:21'),
 (11, 1, 'Cải ngọt hữu cơ', 'cai-ngot-huu-co', 'Cải ngọt sạch, an toàn.', NULL, 24000, NULL, NULL, 'kg', NULL, 'images/product/1765260868_cai-ngot.jpg', NULL, 110, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:14:28'),
-(12, 1, 'Su su non', 'su-su-non', 'Su su Đà Lạt loại non.', NULL, 26000, NULL, NULL, 'kg', NULL, 'images/product/1765260904_cu-su-su.jpg', NULL, 127, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-12 18:36:03'),
+(12, 1, 'Su su non', 'su-su-non', 'Su su Đà Lạt loại non.', NULL, 26000, NULL, NULL, 'kg', NULL, 'images/product/1765260904_cu-su-su.jpg', NULL, 130, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:15:04'),
 (13, 1, 'Dưa leo hữu cơ', 'dua-leo-huu-co', 'Dưa leo giòn, ngọt.', NULL, 20000, NULL, NULL, 'kg', NULL, 'images/product/1765260912_dua-leo.jpg', NULL, 160, NULL, NULL, 1, 1, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:15:12'),
 (14, 1, 'Bắp cải trắng', 'bap-cai-trang', 'Bắp cải trắng, tươi giòn.', NULL, 27000, NULL, NULL, 'kg', NULL, 'images/product/1765260920_bap-cai-trang.jpg', NULL, 95, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:12', '2025-12-09 06:15:20'),
-(15, 2, 'Táo Fuji nhập khẩu', 'tao-fuji', 'Táo Fuji giòn ngọt.', NULL, 85000, NULL, NULL, 'kg', NULL, 'images/product/1765260931_tao-envy.jpg', NULL, 84, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:53', '2025-12-12 18:36:03'),
+(15, 2, 'Táo Fuji nhập khẩu', 'tao-fuji', 'Táo Fuji giòn ngọt.', NULL, 85000, NULL, NULL, 'kg', NULL, 'images/product/1765260931_tao-envy.jpg', NULL, 86, NULL, NULL, 1, 1, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:53', '2025-12-12 17:38:36'),
 (16, 2, 'Cam vàng Úc', 'cam-vang-uc', 'Cam vàng mọng nước, không hạt.', NULL, 75000, NULL, NULL, 'kg', NULL, 'images/product/1765260938_cam-vang-uc.png', NULL, 100, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:53', '2025-12-09 06:15:38'),
 (17, 2, 'Nho đen không hạt', 'nho-den-khong-hat', 'Nho đen tươi ngọt.', NULL, 120000, NULL, NULL, 'kg', NULL, 'images/product/1765260958_nho-den-khong-hat.jpg', NULL, 60, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:53', '2025-12-09 06:15:58'),
 (18, 2, 'Xoài cát Hòa Lộc', 'xoai-cat-hoa-loc', 'Xoài chín tự nhiên.', NULL, 65000, NULL, NULL, 'kg', NULL, 'images/product/1765260967_xoai.png', NULL, 80, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:11:53', '2025-12-09 06:16:07'),
@@ -636,14 +663,14 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `slug`, `description`, `sho
 (42, 4, 'Đậu xanh hạt', 'dau-xanh', 'Đậu xanh loại 1.', NULL, 50000, NULL, NULL, 'kg', NULL, 'images/product/1765261248_dau-xanh-hat.jpg', NULL, 130, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:12:17', '2025-12-09 06:20:48'),
 (43, 4, 'Đậu đỏ hạt', 'dau-do', 'Đậu đỏ sạch.', NULL, 55000, NULL, NULL, 'kg', NULL, 'images/product/1765261260_dau-do-hat.jpg', NULL, 110, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:12:17', '2025-12-09 06:21:00'),
 (44, 3, 'Sữa tươi không đường', 'sua-tuoi', 'Sữa tươi nguyên chất.', NULL, 35000, NULL, NULL, 'kg', NULL, 'images/product/1765261273_sua-tuoi.jpg', NULL, 199, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-05 18:12:27', '2025-12-09 07:23:48'),
-(58, 1, 'Rau mồng tơi hữu cơ', 'rau-mong-toi-huu-co', 'Rau mồng tơi xanh tươi, thích hợp nấu canh.', NULL, 15000, NULL, NULL, 'bó', NULL, 'images/product/1765264339_rau-mong-toi.png', NULL, 88, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 18:40:37'),
+(58, 1, 'Rau mồng tơi hữu cơ', 'rau-mong-toi-huu-co', 'Rau mồng tơi xanh tươi, thích hợp nấu canh.', NULL, 15000, NULL, NULL, 'bó', NULL, 'images/product/1765264339_rau-mong-toi.png', NULL, 98, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:01:42'),
 (59, 1, 'Khoai lang mật Đà Lạt', 'khoai-lang-mat', 'Khoai lang mật ngọt lịm, dẻo thơm.', NULL, 35000, NULL, NULL, 'kg', NULL, 'images/product/1765264353_khoai-lang.jpg', NULL, 150, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:12:33'),
-(60, 1, 'Cà tím quả dài', 'ca-tim', 'Cà tím tươi, vỏ bóng mượt, ít hạt.', NULL, 22000, NULL, NULL, 'kg', NULL, 'images/product/1765264365_ca-tim.jpg', NULL, 77, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 18:40:37'),
+(60, 1, 'Cà tím quả dài', 'ca-tim', 'Cà tím tươi, vỏ bóng mượt, ít hạt.', NULL, 22000, NULL, NULL, 'kg', NULL, 'images/product/1765264365_ca-tim.jpg', NULL, 78, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:26:38'),
 (61, 1, 'Ớt chuông đỏ', 'ot-chuong-do', 'Ớt chuông đỏ giàu vitamin C, giòn ngọt.', NULL, 65000, NULL, NULL, 'kg', NULL, 'images/product/1765264382_ot-chuong.jpg', NULL, 60, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:13:02'),
 (62, 1, 'Đậu bắp xanh', 'dau-bap', 'Đậu bắp tươi non, tốt cho xương khớp.', NULL, 20000, NULL, NULL, 'kg', NULL, 'images/product/1765264391_dau-bap.jpg', NULL, 90, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:13:11'),
 (63, 1, 'Bí xanh (Bí đao)', 'bi-xanh', 'Bí xanh tươi mát, giải nhiệt tốt.', NULL, 18000, NULL, NULL, 'kg', NULL, 'images/product/1765264402_bi-dao.jpg', NULL, 100, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:13:22'),
-(64, 1, 'Mướp hương', 'muop-huong', 'Mướp hương thơm nhẹ, nấu canh rất ngon.', NULL, 25000, NULL, NULL, 'kg', NULL, 'images/product/1765264418_muop-huong.jpg', NULL, 69, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 18:40:37'),
-(65, 1, 'Rau ngót sạch', 'rau-ngot', 'Rau ngót trồng chuẩn organic, nhiều đạm.', NULL, 15000, NULL, NULL, 'bó', NULL, 'images/product/1765264446_rau-ngot.jpg', NULL, 117, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 18:40:37'),
+(64, 1, 'Mướp hương', 'muop-huong', 'Mướp hương thơm nhẹ, nấu canh rất ngon.', NULL, 25000, NULL, NULL, 'kg', NULL, 'images/product/1765264418_muop-huong.jpg', NULL, 70, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:13:38'),
+(65, 1, 'Rau ngót sạch', 'rau-ngot', 'Rau ngót trồng chuẩn organic, nhiều đạm.', NULL, 15000, NULL, NULL, 'bó', NULL, 'images/product/1765264446_rau-ngot.jpg', NULL, 118, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:01:42'),
 (66, 1, 'Củ dền đỏ', 'cu-den-do', 'Củ dền đỏ bổ máu, màu sắc đẹp tự nhiên.', NULL, 30000, NULL, NULL, 'kg', NULL, 'images/product/1765264458_cu-den.jpg', NULL, 48, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:42:09'),
 (67, 1, 'Nấm đùi gà', 'nam-dui-ga', 'Nấm đùi gà tươi, giòn sần sật.', NULL, 85000, NULL, NULL, 'kg', NULL, 'images/product/1765264469_nam-dui-ga.jpg', NULL, 40, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:14:29'),
 (68, 2, 'Dưa hấu đỏ không hạt', 'dua-hau-khong-hat', 'Dưa hấu đỏ ngọt lịm, mọng nước.', NULL, 18000, NULL, NULL, 'kg', NULL, 'images/product/1765264479_dua-hau-ruot-do.jpg', NULL, 200, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:14:39'),
@@ -672,7 +699,7 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `slug`, `description`, `sho
 (92, 4, 'Bánh quy yến mạch', 'banh-quy-yen-mach', 'Bánh quy healthy từ yến mạch.', NULL, 55000, NULL, NULL, 'hũ 200g', NULL, 'images/product/1765264820_banh-quy-yen-mach.jpg', NULL, 80, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:20:20'),
 (103, 5, 'Bạch tuộc tươi', 'bach-tuoc', 'Bạch tuộc tươi, giòn ngọt.', NULL, 160000, NULL, NULL, 'kg', NULL, 'images/product/1765264886_bach-tuoc.jpg', NULL, 39, NULL, NULL, 0, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:01:42'),
 (104, 5, 'Cá diêu hồng', 'ca-dieu-hong', 'Cá diêu hồng sống, làm sạch.', NULL, 65000, NULL, NULL, 'kg', NULL, 'images/product/1765264875_ca-dieu-hong.jpg', NULL, 70, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-09 07:21:15'),
-(105, 5, 'Hàu sữa Pháp', 'hau-sua', 'Hàu sữa béo, nhiều dinh dưỡng.', NULL, 50000, NULL, NULL, 'kg', NULL, 'images/product/1765264867_hau-sua.jpg', NULL, 96, NULL, NULL, 0, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 18:36:03'),
+(105, 5, 'Hàu sữa Pháp', 'hau-sua', 'Hàu sữa béo, nhiều dinh dưỡng.', NULL, 50000, NULL, NULL, 'kg', NULL, 'images/product/1765264867_hau-sua.jpg', NULL, 98, NULL, NULL, 0, 0, 1, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:38:36'),
 (106, 5, 'Nghêu sạch Gò Công', 'ngheu-sach', 'Nghêu sạch cát, thịt đầy.', NULL, 35000, NULL, NULL, 'kg', NULL, 'images/product/1765264855_ngheu-sach3.jpg', NULL, 149, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:26:20'),
 (107, 5, 'Cá lóc đồng', 'ca-loc-dong', 'Cá lóc đồng thịt dai, ngọt.', NULL, 110000, NULL, NULL, 'kg', NULL, 'images/product/1765264834_ca-loc.jpg', NULL, 28, NULL, NULL, 1, 0, 0, 0, 1, 0, 0, 0.00, 0, NULL, NULL, NULL, '2025-12-09 06:00:44', '2025-12-12 17:42:09');
 
@@ -729,7 +756,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `setting_key` (`setting_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=247 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=218 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `settings`
@@ -743,7 +770,7 @@ INSERT INTO `settings` (`id`, `setting_key`, `setting_value`, `setting_type`, `d
 (5, 'smtp_port', '587', 'text', 'SMTP Port', '2025-11-24 08:14:59', '2025-11-24 08:14:59'),
 (6, 'smtp_username', '', 'text', 'SMTP Username', '2025-11-24 08:14:59', '2025-11-24 08:14:59'),
 (7, 'smtp_password', 'admin123', 'password', 'SMTP Password', '2025-11-24 08:14:59', '2025-11-29 17:45:42'),
-(8, 'free_shipping_threshold', '200000', 'number', 'Miễn phí ship từ', '2025-11-24 08:14:59', '2025-12-12 18:34:45'),
+(8, 'free_shipping_threshold', '500000', 'number', 'Miễn phí ship từ', '2025-11-24 08:14:59', '2025-11-24 08:14:59'),
 (9, 'default_shipping_fee', '25000', 'number', 'Phí ship mặc định', '2025-11-24 08:14:59', '2025-11-24 08:14:59'),
 (13, 'site_address', '123 Đường Xanh, Q.1, TP.HCM', 'text', NULL, '2025-11-29 17:45:42', '2025-11-29 17:45:42'),
 (14, 'site_description', 'Rau sạch hữu cơ, giao tận nhà', 'text', NULL, '2025-11-29 17:45:42', '2025-11-29 17:45:42'),
@@ -798,7 +825,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_email` (`email`),
   KEY `idx_role` (`role`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `users`
@@ -808,11 +835,10 @@ INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `avatar`, `gend
 (3, 'Bùi Minh Tài', 'buiminhtai97@gmail.com', '0966330634', '$2y$10$GBEKwBCOxBUUWXwxiFRbhuQ9XKO4/Xd4HqHZjfDvSk.FLFcPJkdba', 'images/avatars/user_3_1764480499.jpg', NULL, '2025-11-19', 'gold', 0, 'staff', 1, 0, NULL, NULL, NULL, '2025-11-24 08:23:40', '2025-12-09 07:37:32', 'active'),
 (4, 'admin', 'admin@xanhorganic.com', '0966330634', '$2y$10$fXjLRd/NLOBh/7l4v2KdDOxowj9MOGfc6dF3u/3aAKFS4VV4932gy', NULL, NULL, '0000-00-00', 'bronze', 0, 'admin', 1, 0, NULL, NULL, NULL, '2025-11-24 08:24:00', '2025-11-24 10:09:46', 'active'),
 (5, 'dâu tây hữu cơ', 'dautayhuuco@gmail.com', '0966330634', '$2y$10$kIMlg1gnDJQZn5MZ5cEjVOisEaSGZFV/uHi45ST8Sm/o7woyxW4Ay', NULL, NULL, NULL, 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-11-28 06:18:29', '2025-11-28 06:18:29', 'active'),
-(6, 'người iu của Minh Tài', 'thaovimk0902@gmail.com', '0528837261', '$2y$10$GvYK6IFYYFUH2tSI/YAUwOQc9xKkynHKfa031nrJkMH5insez9Kji', 'images/avatars/user_6_1765127309.jpeg', NULL, '0000-00-00', 'gold', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-05 18:21:32', '2025-12-07 17:08:29', 'active'),
 (7, 'Bùi Minh Nhật', 'buiminhtai3114@gmail.com', '0966330635', '$2y$10$q3svyK9L/msMUV4/TgnIe.osjUTNYFvKw5TesjhpvoZWNP3VepGlW', 'images/avatars/user_7_1765107084.jpeg', NULL, '2025-12-31', 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-07 11:26:09', '2025-12-07 12:12:00', 'active'),
 (8, 'Tài', 'thijenphuc@gmail.com', '0898489754', '$2y$10$mAcPer6s3YDUG.C8tFgD7.Sj.KtwHUkJ/qLNWvjwa53ciRWyYtPaW', NULL, NULL, NULL, 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-07 11:53:52', '2025-12-07 12:13:48', 'active'),
 (12, 'Nguyễn Trung Hậu', 'haunguyen04012000@gmail.com', '0931878932', '$2y$10$wVeD6reeki3PgWepFIyrke9XcWICP1ooaH1msGhgvkQmVl23x6M9a', NULL, NULL, NULL, 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-12 16:18:48', '2025-12-12 16:18:48', 'active'),
-(14, 'user', 'user@xanhorganic.com', '096452626', '$2y$10$Wu34MOt2RSOhTQVoQ4JA/escuZ9e78CFo.73Pc8uEXnzjH1E/VSjm', NULL, NULL, NULL, 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-12 18:45:00', '2025-12-12 18:45:00', 'active');
+(13, 'user', 'user@xanhorganic.com', '0963666666', '$2y$10$y8ptoZqw8KXb2zjx/QIOzOqpTXWUZ0OZYzTlAw.QtbQuRqt1lBHt.', NULL, NULL, NULL, 'bronze', 0, 'customer', 1, 0, NULL, NULL, NULL, '2025-12-13 11:33:36', '2025-12-13 11:33:36', 'active');
 
 -- --------------------------------------------------------
 
@@ -830,7 +856,7 @@ CREATE TABLE IF NOT EXISTS `wishlists` (
   UNIQUE KEY `unique_wishlist` (`user_id`,`product_id`),
   KEY `idx_user` (`user_id`),
   KEY `idx_product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=74 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `wishlists`
@@ -840,16 +866,9 @@ INSERT INTO `wishlists` (`id`, `user_id`, `product_id`, `created_at`) VALUES
 (50, 12, 60, '2025-12-12 16:35:14'),
 (51, 12, 65, '2025-12-12 16:35:15'),
 (52, 12, 2, '2025-12-12 16:36:41'),
-(62, 3, 105, '2025-12-12 18:32:11'),
-(63, 3, 15, '2025-12-12 18:32:12'),
-(64, 3, 5, '2025-12-12 18:32:13'),
-(65, 3, 6, '2025-12-12 18:32:14'),
-(66, 3, 12, '2025-12-12 18:32:15'),
-(69, 14, 103, '2025-12-13 03:42:09'),
-(70, 14, 105, '2025-12-13 03:42:10'),
-(71, 14, 15, '2025-12-13 03:42:12'),
-(72, 14, 60, '2025-12-13 03:42:21'),
-(73, 14, 65, '2025-12-13 03:42:22');
+(61, 13, 103, '2025-12-13 11:33:47'),
+(62, 13, 105, '2025-12-13 11:33:47'),
+(63, 13, 15, '2025-12-13 11:33:48');
 
 --
 -- Các ràng buộc cho các bảng đã đổ

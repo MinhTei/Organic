@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
         $slug = trim($slug, '-');
     }
+	
 
     // handle image upload
     $imagePath = $product['image']; // keep existing by default
@@ -57,9 +58,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (empty($name) || $price === null) {
-        $error = 'Vui lòng nhập tên và giá sản phẩm.';
-    } else {
+	   if (empty($name)) {
+		$error = 'Vui lòng nhập tên sản phẩm.';
+	} elseif ($price === null || $price <= 0) {
+		// Logic: Giá gốc phải lớn hơn 0
+		$error = 'Giá sản phẩm phải lớn hơn 0.';
+	} elseif ($sale_price !== null && $sale_price < 0) {
+		// Logic: Giá giảm không được là số âm
+		$error = 'Giá giảm không thể là số âm.';
+	} elseif ($sale_price !== null && $sale_price >= $price) {
+		// Logic: Giá giảm phải nhỏ hơn giá gốc
+		$error = 'Giá giảm phải nhỏ hơn giá gốc.';
+	} else {
         $sql = "UPDATE products SET category_id = ?, name = ?, slug = ?, description = ?, price = ?, sale_price = ?, unit = ?, image = ?, stock = ?, is_organic = ?, is_new = ?, is_featured = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $res = $stmt->execute([
@@ -79,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         if ($res) {
-            $success = 'Cập nhật sản phẩm thành công!';
+            $_SESSION['success'] = 'Cập nhật sản phẩm thành công!';
             redirect('products.php');
         } else {
             $error = 'Có lỗi khi cập nhật sản phẩm.';
@@ -103,7 +113,12 @@ $pageTitle = 'Chỉnh sửa sản phẩm';
     <h1 class="text-2xl font-bold mb-4">Chỉnh sửa sản phẩm</h1>
 
     <?php if ($error): ?>
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700"><?= $error ?></div>
+        <div id="errorAlert" class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between">
+            <div>
+                <strong>✕ Lỗi!</strong> <?= $error ?>
+            </div>
+            <button onclick="document.getElementById('errorAlert').remove();" class="text-red-700 hover:text-red-900">&times;</button>
+        </div>
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg border">
@@ -178,8 +193,8 @@ $pageTitle = 'Chỉnh sửa sản phẩm';
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded">Lưu</button>
-            <a href="products.php" class="ml-3 px-4 py-2 bg-gray-200 rounded">Hủy</a>
+            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">Lưu</button>
+            <a href="products.php" class="ml-3 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">Hủy</a>
         </div>
     </form>
 </div>

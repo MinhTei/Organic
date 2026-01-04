@@ -25,8 +25,72 @@ $conn = getConnection();
 $success = '';
 $error = '';
 
+// Check if this is AJAX request
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
 // Xử lý các hành động với sản phẩm (xóa, chuyển trạng thái nổi bật/mới)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? null;
+    $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+
+    // AJAX Requests
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        
+        if (!$productId) {
+            echo json_encode(['success' => false, 'message' => 'ID sản phẩm không hợp lệ']);
+            exit;
+        }
+
+        // Verify product exists
+        $stmt = $conn->prepare("SELECT id FROM products WHERE id = :id");
+        $stmt->execute([':id' => $productId]);
+        if (!$stmt->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại']);
+            exit;
+        }
+
+        try {
+            switch ($action) {
+                case 'delete':
+                    $stmt = $conn->prepare("DELETE FROM products WHERE id = :id");
+                    $stmt->execute([':id' => $productId]);
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Đã xóa sản phẩm thành công!',
+                        'type' => 'success'
+                    ]);
+                    exit;
+
+                case 'toggle_featured':
+                    $stmt = $conn->prepare("SELECT is_featured FROM products WHERE id = :id");
+                    $stmt->execute([':id' => $productId]);
+                    $product = $stmt->fetch();
+                    $newState = $product['is_featured'] ? 0 : 1;
+                    
+                    $stmt = $conn->prepare("UPDATE products SET is_featured = :state WHERE id = :id");
+                    $stmt->execute([':state' => $newState, ':id' => $productId]);
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $newState ? 'Đánh dấu nổi bật thành công!' : 'Bỏ nổi bật thành công!',
+                        'type' => 'success',
+                        'new_state' => $newState
+                    ]);
+                    exit;
+
+                default:
+                    echo json_encode(['success' => false, 'message' => 'Hành động không hợp lệ']);
+                    exit;
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Có lỗi khi xử lý: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+
+    // Regular Form Submissions (non-AJAX)
     // Xóa sản phẩm và cập nhật ID tự động
     if (isset($_POST['delete_product'])) {
         $productId = (int)$_POST['product_id'];
@@ -134,7 +198,7 @@ $pageTitle = 'Quản lý sản phẩm';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
     <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
-    <link href="../css/styles.css" rel="stylesheet" />
+    <link href="/css/styles.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 </head>
@@ -175,6 +239,74 @@ $pageTitle = 'Quản lý sản phẩm';
 
         <!-- Main Content -->
         <main class="flex-1 p-3 sm:p-4 md:p-6">
+            <?php if (isset($_SESSION['success'])): ?>
+                <script>
+                    function showToast(message, type = 'success') {
+                        const toast = document.createElement('div');
+                        const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+                        const icon = type === 'success' ? '✓' : '✕';
+                        
+                        toast.innerHTML = `
+                            <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+                                <span class="text-xl">${icon}</span>
+                                <span>${message}</span>
+                            </div>
+                        `;
+                        
+                        toast.style.position = 'fixed';
+                        toast.style.top = '20px';
+                        toast.style.right = '20px';
+                        toast.style.zIndex = '9999';
+                        toast.style.maxWidth = '400px';
+                        
+                        document.body.appendChild(toast);
+                        
+                        setTimeout(() => {
+                            toast.style.transition = 'opacity 0.3s ease';
+                            toast.style.opacity = '0';
+                            setTimeout(() => toast.remove(), 300);
+                        }, 2000);
+                    }
+                    
+                    showToast('<?= addslashes($_SESSION['success']) ?>', 'success');
+                </script>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['error'])): ?>
+                <script>
+                    function showToast(message, type = 'success') {
+                        const toast = document.createElement('div');
+                        const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+                        const icon = type === 'success' ? '✓' : '✕';
+                        
+                        toast.innerHTML = `
+                            <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+                                <span class="text-xl">${icon}</span>
+                                <span>${message}</span>
+                            </div>
+                        `;
+                        
+                        toast.style.position = 'fixed';
+                        toast.style.top = '20px';
+                        toast.style.right = '20px';
+                        toast.style.zIndex = '9999';
+                        toast.style.maxWidth = '400px';
+                        
+                        document.body.appendChild(toast);
+                        
+                        setTimeout(() => {
+                            toast.style.transition = 'opacity 0.3s ease';
+                            toast.style.opacity = '0';
+                            setTimeout(() => toast.remove(), 300);
+                        }, 2000);
+                    }
+                    
+                    showToast('<?= addslashes($_SESSION['error']) ?>', 'error');
+                </script>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+
             <?php if ($success): ?>
                 <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center gap-2">
                     <span class="material-symbols-outlined">check_circle</span>
@@ -198,11 +330,11 @@ $pageTitle = 'Quản lý sản phẩm';
                     <p class="text-gray-600 mt-1">Quản lý danh sách sản phẩm và thông tin</p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                    <a href="product_import.php" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <a href="/admin/product_import.php" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                         <span class="material-symbols-outlined">upload_file</span>
                         Import Excel
                     </a>
-                    <a href="product_add.php" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                    <a href="/admin/product_add.php" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
                         <span class="material-symbols-outlined">add</span>
                         Thêm sản phẩm mới
                     </a>
@@ -292,7 +424,7 @@ $pageTitle = 'Quản lý sản phẩm';
                     </button>
 
                     <?php if ($search || $categoryId || $status !== 'all'): ?>
-                        <a href="products.php" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2">
+                        <a href="/admin/products.php" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2">
                             <span class="material-symbols-outlined text-lg">restart_alt</span>
                             Đặt lại
                         </a>
@@ -384,30 +516,23 @@ $pageTitle = 'Quản lý sản phẩm';
                                         </td>
                                         <td class="py-4 px-4">
                                             <div class="flex items-center gap-2">
-                                                <a href="product_edit.php?id=<?= $product['id'] ?>"
+                                                <a href="/admin/product_edit.php?id=<?= $product['id'] ?>"
                                                     class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                                                     title="Chỉnh sửa">
                                                     <span class="material-symbols-outlined text-lg">edit</span>
                                                 </a>
 
-                                                <form method="POST" class="inline">
-                                                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                                                    <button type="submit" name="toggle_featured"
-                                                        class="p-2 <?= $product['is_featured'] ? 'text-yellow-600 hover:bg-yellow-50' : 'text-gray-400 hover:bg-gray-100' ?> rounded-lg"
-                                                        title="<?= $product['is_featured'] ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật' ?>">
-                                                        <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' <?= $product['is_featured'] ? '1' : '0' ?>;">star</span>
-                                                    </button>
-                                                </form>
+                                                <button type="button" onclick="toggleFeatured(<?= $product['id'] ?>)"
+                                                    class="p-2 <?= $product['is_featured'] ? 'text-yellow-600 hover:bg-yellow-50' : 'text-gray-400 hover:bg-gray-100' ?> rounded-lg toggle-featured-btn-<?= $product['id'] ?>"
+                                                    title="<?= $product['is_featured'] ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật' ?>">
+                                                    <span class="material-symbols-outlined text-lg toggle-featured-icon-<?= $product['id'] ?>" style="font-variation-settings: 'FILL' <?= $product['is_featured'] ? '1' : '0' ?>;">star</span>
+                                                </button>
 
-                                                <form method="POST" class="inline"
-                                                    onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
-                                                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                                                    <button type="submit" name="delete_product"
-                                                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                        title="Xóa">
-                                                        <span class="material-symbols-outlined text-lg">delete</span>
-                                                    </button>
-                                                </form>
+                                                <button type="button" onclick="deleteProduct(<?= $product['id'] ?>, this)"
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                                    title="Xóa">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -448,7 +573,123 @@ $pageTitle = 'Quản lý sản phẩm';
                 padding: 0.6rem 0.4rem !important;
             }
         }
+
+        /* Fade out animation */
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        .fade-out-row {
+            animation: fadeOut 0.3s ease forwards;
+        }
     </style>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const icon = type === 'success' ? '✓' : '✕';
+            
+            toast.innerHTML = `
+                <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+                    <span class="text-xl">${icon}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '9999';
+            toast.style.maxWidth = '400px';
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function deleteProduct(productId, btn) {
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                return;
+            }
+
+            const row = btn.closest('tr');
+            
+            fetch('/admin/products.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'action=delete&product_id=' + productId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    row.classList.add('fade-out-row');
+                    setTimeout(() => {
+                        row.remove();
+                        showToast(data.message, 'success');
+                    }, 300);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra', 'error');
+            });
+        }
+
+        function toggleFeatured(productId) {
+            const btn = document.querySelector(`.toggle-featured-btn-${productId}`);
+            const icon = document.querySelector(`.toggle-featured-icon-${productId}`);
+
+            fetch('/admin/products.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'action=toggle_featured&product_id=' + productId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const newState = data.new_state;
+                    
+                    // Update icon fill
+                    icon.style.fontVariationSettings = `'FILL' ${newState ? '1' : '0'}`;
+                    
+                    // Update button color
+                    if (newState) {
+                        btn.classList.remove('text-gray-400', 'hover:bg-gray-100');
+                        btn.classList.add('text-yellow-600', 'hover:bg-yellow-50');
+                    } else {
+                        btn.classList.remove('text-yellow-600', 'hover:bg-yellow-50');
+                        btn.classList.add('text-gray-400', 'hover:bg-gray-100');
+                    }
+                    
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra', 'error');
+            });
+        }
+    </script>
 
 </body>
 
