@@ -13,10 +13,8 @@ require_once __DIR__ . '/includes/settings_helper.php';
 $search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
 if ($search) {
     // Tìm kiếm sản phẩm theo tên hoặc mô tả
-    $conn = getConnection();
-    $stmt = $conn->prepare("SELECT * FROM products WHERE name LIKE :kw1 OR description LIKE :kw2 ORDER BY id DESC LIMIT 12");
-    $stmt->execute([':kw1' => "%$search%", ':kw2' => "%$search%"]);
-    $searchProducts = $stmt->fetchAll();
+    $result = getProducts(['search' => $search, 'limit' => 12, 'page' => 1]);
+    $searchProducts = $result['products'];
 } else {
     // Get featured products
     $featuredProducts = getFeaturedProducts(8);
