@@ -1,4 +1,5 @@
 <?php
+
 /**
  * admin/role_manager.php - Quản lý Role và Quyền người dùng
  * - Đổi role dễ dàng cho user
@@ -22,7 +23,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_role'])) {
     $userId = (int)$_POST['user_id'];
     $newRole = sanitize($_POST['new_role']);
-    
+
     if (in_array($newRole, ['admin', 'staff', 'customer', 'user_ma'])) {
         $stmt = $conn->prepare("UPDATE users SET role = :role WHERE id = :id");
         if ($stmt->execute([':role' => $newRole, ':id' => $userId])) {
@@ -34,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_role'])) {
                     ':desc' => "Đổi role user #$userId thành $newRole",
                     ':ip' => $_SERVER['REMOTE_ADDR']
                 ]);
-            } catch (PDOException $e) {}
-            
+            } catch (PDOException $e) {
+            }
+
             $success = 'Đã cập nhật role thành công!';
         }
     }
@@ -44,13 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_role'])) {
 // Xử lý khóa/mở khóa tài khoản
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_status'])) {
     $userId = (int)$_POST['user_id'];
-    
+
     $stmt = $conn->prepare("SELECT status FROM users WHERE id = :id");
     $stmt->execute([':id' => $userId]);
     $currentStatus = $stmt->fetchColumn();
-    
+
     $newStatus = ($currentStatus === 'active') ? 'blocked' : 'active';
-    
+
     $stmt = $conn->prepare("UPDATE users SET status = :status WHERE id = :id");
     if ($stmt->execute([':status' => $newStatus, ':id' => $userId])) {
         $success = $newStatus === 'blocked' ? 'Đã khóa tài khoản!' : 'Đã mở khóa tài khoản!';
@@ -70,10 +72,27 @@ if ($filterRole !== 'all') {
 }
 
 if ($search) {
-    $where[] = "email LIKE :search";
-    $params[':search'] = "%$search%";
-}
+    $search = trim($search);
+    // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
+    $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
+    if (!empty($keywords)) {
+        $searchConditions = [];
+        $keywordIndex = 0;
+
+        // Tìm kiếm theo tên hoặc email khách hàng
+        foreach ($keywords as $keyword) {
+            $searchConditions[] = "(name REGEXP :regexp_name$keywordIndex OR email LIKE :email$keywordIndex OR phone LIKE :phone$keywordIndex)";
+            $params[':regexp_name' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
+            $params[':email' . $keywordIndex] = "%$keyword%";
+            $params[':phone' . $keywordIndex] = "%$keyword%";
+            $keywordIndex++;
+        }
+
+        // Sử dụng OR để tìm khách hàng chứa bất kỳ từ khóa nào
+        $where[] = "(" . implode(' OR ', $searchConditions) . ")";
+    }
+}
 $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $stmt = $conn->prepare("SELECT * FROM users $whereClause ORDER BY created_at DESC LIMIT 100");
@@ -106,16 +125,18 @@ $pageTitle = 'Quản lý Role & Quyền';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-50 font-['Be_Vietnam_Pro']">
-    
+
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="px-4 sm:px-6 lg:px-8">
@@ -221,10 +242,10 @@ $pageTitle = 'Quản lý Role & Quyền';
             <!-- Filters -->
             <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
                 <form method="GET" class="flex gap-4">
-                    <input type="text" name="search" value="<?= sanitize($search) ?>" 
-                           placeholder="Tìm theo tên, email..."
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                    
+                    <input type="text" name="search" value="<?= sanitize($search) ?>"
+                        placeholder="Tìm theo tên, email..."
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+
                     <select name="role" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
                         <option value="all" <?= $filterRole === 'all' ? 'selected' : '' ?>>Tất cả role</option>
                         <option value="admin" <?= $filterRole === 'admin' ? 'selected' : '' ?>>Admin</option>
@@ -232,7 +253,7 @@ $pageTitle = 'Quản lý Role & Quyền';
                         <option value="user_ma" <?= $filterRole === 'user_ma' ? 'selected' : '' ?>>User MA</option>
                         <option value="customer" <?= $filterRole === 'customer' ? 'selected' : '' ?>>Khách hàng</option>
                     </select>
-                    
+
                     <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                         Lọc
                     </button>
@@ -255,61 +276,61 @@ $pageTitle = 'Quản lý Role & Quyền';
                     </thead>
                     <tbody>
                         <?php foreach ($users as $user): ?>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-4 px-4 font-medium">#<?= $user['id'] ?></td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
-                                        <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-4 px-4 font-medium">#<?= $user['id'] ?></td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                                            <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium"><?= sanitize($user['name']) ?></p>
+                                            <p class="text-sm text-gray-500"><?= sanitize($user['phone']) ?></p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p class="font-medium"><?= sanitize($user['name']) ?></p>
-                                        <p class="text-sm text-gray-500"><?= sanitize($user['phone']) ?></p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 text-sm"><?= sanitize($user['email']) ?></td>
-                            <td class="py-4 px-4">
-                                <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $roleColors[$user['role']] ?>">
-                                    <?= $roleLabels[$user['role']] ?>
-                                </span>
-                            </td>
-                            <td class="py-4 px-4">
-                                <?php $status = $user['status'] ?? 'active'; ?>
-                                <?php if ($status === 'active'): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Hoạt động</span>
-                                <?php else: ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Đã khóa</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="py-4 px-4">
-                                <form method="POST" class="flex items-center justify-center gap-2">
-                                    <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                    <select name="new_role" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                        <?php foreach ($roleLabels as $key => $label): ?>
-                                            <option value="<?= $key ?>" <?= $user['role'] === $key ? 'selected' : '' ?>><?= $label ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <button type="submit" name="change_role" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                                        Đổi
-                                    </button>
-                                </form>
-                            </td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center justify-center gap-2">
-                                    <form method="POST" class="inline">
+                                </td>
+                                <td class="py-4 px-4 text-sm"><?= sanitize($user['email']) ?></td>
+                                <td class="py-4 px-4">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $roleColors[$user['role']] ?>">
+                                        <?= $roleLabels[$user['role']] ?>
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <?php $status = $user['status'] ?? 'active'; ?>
+                                    <?php if ($status === 'active'): ?>
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Hoạt động</span>
+                                    <?php else: ?>
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Đã khóa</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <form method="POST" class="flex items-center justify-center gap-2">
                                         <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                                        <button type="submit" name="toggle_status" 
-                                                class="p-2 <?= ($user['status'] ?? 'active') === 'active' ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50' ?> rounded-lg"
-                                                title="<?= ($user['status'] ?? 'active') === 'active' ? 'Khóa tài khoản' : 'Mở khóa' ?>">
-                                            <span class="material-symbols-outlined text-lg">
-                                                <?= ($user['status'] ?? 'active') === 'active' ? 'lock' : 'lock_open' ?>
-                                            </span>
+                                        <select name="new_role" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                                            <?php foreach ($roleLabels as $key => $label): ?>
+                                                <option value="<?= $key ?>" <?= $user['role'] === $key ? 'selected' : '' ?>><?= $label ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <button type="submit" name="change_role" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                            Đổi
                                         </button>
                                     </form>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <form method="POST" class="inline">
+                                            <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                                            <button type="submit" name="toggle_status"
+                                                class="p-2 <?= ($user['status'] ?? 'active') === 'active' ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50' ?> rounded-lg"
+                                                title="<?= ($user['status'] ?? 'active') === 'active' ? 'Khóa tài khoản' : 'Mở khóa' ?>">
+                                                <span class="material-symbols-outlined text-lg">
+                                                    <?= ($user['status'] ?? 'active') === 'active' ? 'lock' : 'lock_open' ?>
+                                                </span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -324,11 +345,12 @@ $pageTitle = 'Quản lý Role & Quyền';
             table {
                 font-size: 0.75rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.5rem 0.25rem !important;
             }
-            
+
             .btn {
                 padding: 0.25rem 0.5rem !important;
                 font-size: 0.7rem !important;
@@ -340,13 +362,14 @@ $pageTitle = 'Quản lý Role & Quyền';
             table {
                 font-size: 0.85rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.6rem 0.4rem !important;
             }
         }
     </style>
 
 </body>
-</html>
 
+</html>

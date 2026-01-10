@@ -1,5 +1,5 @@
-
 <?php
+
 /**
  * admin/customers.php - Trang Quản lý Khách hàng
  *
@@ -31,17 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_membership'])) {
         $userId = (int)$_POST['user_id'];
         $membership = sanitize($_POST['membership']);
-        
+
         $stmt = $conn->prepare("UPDATE users SET membership = :membership WHERE id = :id");
         if ($stmt->execute([':membership' => $membership, ':id' => $userId])) {
             $success = 'Cập nhật hạng thành viên thành công!';
         }
     }
-    
+
     // Xóa khách hàng
     if (isset($_POST['delete_customer'])) {
         $userId = (int)$_POST['user_id'];
-        
+
         $stmt = $conn->prepare("DELETE FROM users WHERE id = :id AND role = 'customer'");
         if ($stmt->execute([':id' => $userId])) {
             $success = 'Xóa khách hàng thành công!';
@@ -49,18 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Không thể xóa khách hàng này.';
         }
     }
-    
+
     // Khóa/mở khóa tài khoản
     if (isset($_POST['toggle_status'])) {
         $userId = (int)$_POST['user_id'];
-        
+
         // Kiểm tra trạng thái hiện tại
         $stmt = $conn->prepare("SELECT status FROM users WHERE id = :id");
         $stmt->execute([':id' => $userId]);
         $currentStatus = $stmt->fetchColumn();
-        
+
         $newStatus = ($currentStatus === 'active') ? 'blocked' : 'active';
-        
+
         $stmt = $conn->prepare("UPDATE users SET status = :status WHERE id = :id");
         if ($stmt->execute([':status' => $newStatus, ':id' => $userId])) {
             $success = $newStatus === 'blocked' ? 'Đã khóa tài khoản!' : 'Đã mở khóa tài khoản!';
@@ -80,8 +80,26 @@ $where = ["role = 'customer'"];
 $params = [];
 
 if ($search) {
-    $where[] = "(name LIKE :search OR email LIKE :search OR phone LIKE :search)";
-    $params[':search'] = "%$search%";
+    $search = trim($search);
+    // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
+    $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+    if (!empty($keywords)) {
+        $searchConditions = [];
+        $keywordIndex = 0;
+
+        // Tìm kiếm theo tên hoặc email khách hàng
+        foreach ($keywords as $keyword) {
+            $searchConditions[] = "(name REGEXP :regexp_name$keywordIndex OR email LIKE :email$keywordIndex OR phone LIKE :phone$keywordIndex)";
+            $params[':regexp_name' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
+            $params[':email' . $keywordIndex] = "%$keyword%";
+            $params[':phone' . $keywordIndex] = "%$keyword%";
+            $keywordIndex++;
+        }
+
+        // Sử dụng OR để tìm khách hàng chứa bất kỳ từ khóa nào
+        $where[] = "(" . implode(' OR ', $searchConditions) . ")";
+    }
 }
 
 if ($membership) {
@@ -136,16 +154,18 @@ $pageTitle = 'Quản lý Khách hàng';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-50 font-['Be_Vietnam_Pro']">
-    
+
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div class="px-3 sm:px-4 md:px-6 lg:px-8">
@@ -251,17 +271,17 @@ $pageTitle = 'Quản lý Khách hàng';
             <!-- Filters -->
             <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-4 mb-6">
                 <form method="GET" class="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                    <input type="text" name="search" value="<?= sanitize($search) ?>" 
-                           placeholder="Tìm theo tên, email, số điện thoại..."
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
-                    
+                    <input type="text" name="search" value="<?= sanitize($search) ?>"
+                        placeholder="Tìm theo tên, email, số điện thoại..."
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
+
                     <select name="membership" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
                         <option value="">Tất cả hạng thành viên</option>
                         <option value="bronze" <?= $membership === 'bronze' ? 'selected' : '' ?>>Đồng</option>
                         <option value="silver" <?= $membership === 'silver' ? 'selected' : '' ?>>Bạc</option>
                         <option value="gold" <?= $membership === 'gold' ? 'selected' : '' ?>>Vàng</option>
                     </select>
-                    
+
                     <button type="submit" class="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
                         Lọc
                     </button>
@@ -284,80 +304,80 @@ $pageTitle = 'Quản lý Khách hàng';
                         </thead>
                         <tbody>
                             <?php foreach ($customers as $customer): ?>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 sm:py-4 px-3 sm:px-4">
-                                    <div class="flex items-center gap-2 sm:gap-3">
-                                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
-                                            <?= strtoupper(substr($customer['name'], 0, 1)) ?>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium"><?= sanitize($customer['name']) ?></p>
-                                        <p class="text-sm text-gray-500">ID: <?= $customer['id'] ?></p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4">
-                                <p class="text-sm"><?= sanitize($customer['email']) ?></p>
-                                <p class="text-sm text-gray-500"><?= sanitize($customer['phone']) ?></p>
-                            </td>
-                            <td class="py-4 px-4">
-                                <form method="POST" class="inline">
-                                    <input type="hidden" name="user_id" value="<?= $customer['id'] ?>">
-                                    <select name="membership" onchange="this.form.submit()"
-                                            class="px-3 py-1 rounded-full text-xs font-semibold border-none cursor-pointer <?= $membershipColors[$customer['membership']] ?>">
-                                        <?php foreach ($membershipLabels as $key => $label): ?>
-                                            <option value="<?= $key ?>" <?= $customer['membership'] === $key ? 'selected' : '' ?>>
-                                                <?= $label ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <input type="hidden" name="update_membership" value="1">
-                                </form>
-                            </td>
-                            <td class="py-4 px-4 font-medium">
-                                <?= number_format($customer['total_orders']) ?> đơn
-                            </td>
-                            <td class="py-4 px-4 font-semibold text-green-600">
-                                <?= formatPrice($customer['total_spent']) ?>
-                            </td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center justify-center gap-2">
-                                    <a href="customer_detail.php?id=<?= $customer['id'] ?>" 
-                                       class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                                       title="Chi tiết">
-                                        <span class="material-symbols-outlined text-lg">visibility</span>
-                                    </a>
-                                    
-                                    <form method="POST" class="inline" 
-                                          onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này?')">
-                                        <input type="hidden" name="user_id" value="<?= $customer['id'] ?>">
-                                        <button type="submit" name="delete_customer" 
-                                                class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                title="Xóa">
-                                            <span class="material-symbols-outlined text-lg">delete</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4">
+                                        <div class="flex items-center gap-2 sm:gap-3">
+                                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
+                                                <?= strtoupper(substr($customer['name'], 0, 1)) ?>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium"><?= sanitize($customer['name']) ?></p>
+                                                <p class="text-sm text-gray-500">ID: <?= $customer['id'] ?></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <p class="text-sm"><?= sanitize($customer['email']) ?></p>
+                                        <p class="text-sm text-gray-500"><?= sanitize($customer['phone']) ?></p>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <form method="POST" class="inline">
+                                            <input type="hidden" name="user_id" value="<?= $customer['id'] ?>">
+                                            <select name="membership" onchange="this.form.submit()"
+                                                class="px-3 py-1 rounded-full text-xs font-semibold border-none cursor-pointer <?= $membershipColors[$customer['membership']] ?>">
+                                                <?php foreach ($membershipLabels as $key => $label): ?>
+                                                    <option value="<?= $key ?>" <?= $customer['membership'] === $key ? 'selected' : '' ?>>
+                                                        <?= $label ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <input type="hidden" name="update_membership" value="1">
+                                        </form>
+                                    </td>
+                                    <td class="py-4 px-4 font-medium">
+                                        <?= number_format($customer['total_orders']) ?> đơn
+                                    </td>
+                                    <td class="py-4 px-4 font-semibold text-green-600">
+                                        <?= formatPrice($customer['total_spent']) ?>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="customer_detail.php?id=<?= $customer['id'] ?>"
+                                                class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                title="Chi tiết">
+                                                <span class="material-symbols-outlined text-lg">visibility</span>
+                                            </a>
 
-            <!-- Pagination -->
-            <?php if ($totalPages > 1): ?>
-            <div class="flex justify-center mt-6">
-                <nav class="flex gap-2">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a href="?page=<?= $i ?><?= $search ? '&search=' . urlencode($search) : '' ?><?= $membership ? '&membership=' . $membership : '' ?>"
-                           class="px-4 py-2 rounded-lg <?= $i == $page ? 'bg-green-600 text-white' : 'bg-white hover:bg-gray-100' ?>">
-                            <?= $i ?>
-                        </a>
-                    <?php endfor; ?>
-                </nav>
-            </div>
-            <?php endif; ?>
+                                            <form method="POST" class="inline"
+                                                onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này?')">
+                                                <input type="hidden" name="user_id" value="<?= $customer['id'] ?>">
+                                                <button type="submit" name="delete_customer"
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                                    title="Xóa">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
+                    <div class="flex justify-center mt-6">
+                        <nav class="flex gap-2">
+                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                <a href="?page=<?= $i ?><?= $search ? '&search=' . urlencode($search) : '' ?><?= $membership ? '&membership=' . $membership : '' ?>"
+                                    class="px-4 py-2 rounded-lg <?= $i == $page ? 'bg-green-600 text-white' : 'bg-white hover:bg-gray-100' ?>">
+                                    <?= $i ?>
+                                </a>
+                            <?php endfor; ?>
+                        </nav>
+                    </div>
+                <?php endif; ?>
         </main>
     </div>
 
@@ -368,11 +388,12 @@ $pageTitle = 'Quản lý Khách hàng';
             table {
                 font-size: 0.75rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.5rem 0.25rem !important;
             }
-            
+
             .actions-btn {
                 padding: 0.25rem 0.5rem !important;
                 font-size: 0.7rem !important;
@@ -384,13 +405,14 @@ $pageTitle = 'Quản lý Khách hàng';
             table {
                 font-size: 0.85rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.6rem 0.4rem !important;
             }
         }
     </style>
 
 </body>
-</html>
 
+</html>

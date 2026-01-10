@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/wishlist_functions.php';
 
 // Lấy sản phẩm trước khi xử lý đánh giá
 $slug = isset($_GET['slug']) ? sanitize($_GET['slug']) : '';
@@ -158,9 +159,25 @@ include __DIR__ . '/includes/header.php';
                         </button>
 
                         <!-- Wishlist Button -->
-                        <button class="product-favorite-btn" onclick="toggleFavorite(<?= $product['id'] ?>, event)"
+                        <?php
+                        // Kiểm tra sản phẩm có trong wishlist không
+                        $isInWishlist = false;
+                        $wishlistBtnClass = '';
+                        $wishlistBtnTitle = 'Thêm vào yêu thích';
+                        $heartStyle = '';
+
+                        if (isset($_SESSION['user_id'])) {
+                            $isInWishlist = isInWishlist($_SESSION['user_id'], $product['id']);
+                            if ($isInWishlist) {
+                                $wishlistBtnClass = 'in-wishlist';
+                                $wishlistBtnTitle = 'Xóa khỏi yêu thích';
+                                $heartStyle = "style=\"font-variation-settings: 'FILL' 1; color: #ef4444;\"";
+                            }
+                        }
+                        ?>
+                        <button class="product-favorite-btn <?= $wishlistBtnClass ?>" onclick="toggleFavorite(<?= $product['id'] ?>, event)" data-product-id="<?= $product['id'] ?>" title="<?= $wishlistBtnTitle ?>"
                             style="padding: 0.75rem 1.25rem; border: 2px solid var(--border-light); border-radius: 0.5rem; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
-                            <span class="material-symbols-outlined" style="font-size: 1.5rem;">favorite</span>
+                            <span class="material-symbols-outlined" <?= $heartStyle ?>>favorite</span>
                         </button>
                     </div>
 

@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_new = isset($_POST['is_new']) ? 1 : 0;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
-    // server-side slug fallback
+    // Sinh slug phía server nếu chưa có
     if (empty($slug)) {
         $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
         $slug = trim($slug, '-');
@@ -115,7 +115,7 @@ if (file_exists($headerPath)) {
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Slug</label>
-                <input name="slug" class="w-full border px-3 py-2 rounded" value="<?= isset($_POST['slug']) ? sanitize($_POST['slug']) : '' ?>">
+                <input name="slug" id="slugInput" class="w-full border px-3 py-2 rounded" value="<?= isset($_POST['slug']) ? sanitize($_POST['slug']) : '' ?>">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Danh mục</label>
@@ -181,6 +181,25 @@ if (file_exists($headerPath)) {
     </form>
 </div>
 
+<script>
+        // Auto-generate slug from name for convenience
+        function slugify(text) {
+            return text.toString().toLowerCase() // Chuyển thành chữ thường
+                .normalize('NFKD') // 
+                .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
+                .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
+                .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối
+        }
+
+        const nameInput = document.querySelector('input[name="name"]'); // Lấy input tên danh mục
+        const slugInput = document.getElementById('slugInput'); // Lấy input slug
+        if (nameInput && slugInput) {
+            nameInput.addEventListener('input', function() {
+                //Lấy giá trị hiện tại của ô tên, đi qua bộ lọc slugify, rồi gán kết quả vào ô slug.
+                slugInput.value = slugify(this.value);
+            });
+        }
+</script>
 <style>
     /* ===== RESPONSIVE FOR ADMIN FORMS ===== */
     /* Mobile: < 768px */

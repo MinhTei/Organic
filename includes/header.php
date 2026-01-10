@@ -986,7 +986,7 @@ $siteLogo = getSystemSetting('site_logo', (defined('SITE_LOGO') ? SITE_LOGO : ''
             <div class="header-actions">
                 <!-- Search - Desktop -->
                 <form method="GET" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; gap: 0; align-items: center; background: #fff; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                    <input type="text" name="search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>" placeholder="Tìm..." style="flex:1; padding: 0.6rem 0.75rem; border: none; font-size: 0.9rem; outline: none; background: transparent;">
+                    <input type="text" name="search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>" placeholder="Tìm kiếm theo từ khóa." style="flex:1; padding: 0.6rem 0.75rem; border: none; font-size: 0.9rem; outline: none; background: transparent;">
                     <button type="submit" class="btn btn-primary" style="padding: 0.6rem 0.8rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; background: #b6e633; border: none; border-radius: 0; cursor: pointer;">
                         <span class="material-symbols-outlined" style="font-size: 1.25rem; color: #161811;">search</span>
                     </button>

@@ -12,43 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/settings_helper.php';
-
-/**
- * Load user's cart from database into session
- */
-function loadCartFromDatabase($userId)
-{
-    if (!$userId) return;
-
-    $conn = getConnection();
-    $stmt = $conn->prepare("SELECT product_id, quantity FROM carts WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $_SESSION['cart'] = [];
-    foreach ($cartItems as $item) {
-        $_SESSION['cart'][$item['product_id']] = $item['quantity'];
-    }
-}
-
-/**
- * Save cart to database
- */
-function saveCartToDatabase($userId)
-{
-    if (!$userId || empty($_SESSION['cart'])) return;
-
-    $conn = getConnection();
-
-    // Clear existing cart
-    $conn->prepare("DELETE FROM carts WHERE user_id = ?")->execute([$userId]);
-
-    // Insert new cart items
-    $stmt = $conn->prepare("INSERT INTO carts (user_id, product_id, quantity) VALUES (?, ?, ?)");
-    foreach ($_SESSION['cart'] as $productId => $quantity) {
-        $stmt->execute([$userId, $productId, $quantity]);
-    }
-}
+require_once __DIR__ . '/includes/cart_functions.php';
 
 // Load cart from database if user is logged in
 if (isset($_SESSION['user_id'])) {

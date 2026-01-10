@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // AJAX Requests
     if ($isAjax) {
         header('Content-Type: application/json');
-        
+
         if (!$productId) {
             echo json_encode(['success' => false, 'message' => 'ID sản phẩm không hợp lệ']);
             exit;
@@ -67,10 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute([':id' => $productId]);
                     $product = $stmt->fetch();
                     $newState = $product['is_featured'] ? 0 : 1;
-                    
+
                     $stmt = $conn->prepare("UPDATE products SET is_featured = :state WHERE id = :id");
                     $stmt->execute([':state' => $newState, ':id' => $productId]);
-                    
+
                     echo json_encode([
                         'success' => true,
                         'message' => $newState ? 'Đánh dấu nổi bật thành công!' : 'Bỏ nổi bật thành công!',
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Xóa sản phẩm và cập nhật ID tự động
     if (isset($_POST['delete_product'])) {
         $productId = (int)$_POST['product_id'];
-        
+
         try {
             // Kiểm tra sản phẩm có tồn tại không
             $stmt = $conn->prepare("SELECT id FROM products WHERE id = :id");
@@ -150,8 +150,25 @@ if ($categoryId) {
 }
 
 if ($search) {
-    $where[] = "(p.name LIKE :search OR p.description LIKE :search)";
-    $params[':search'] = "%$search%";
+    $search = trim($search);
+    // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
+    $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+    if (!empty($keywords)) {
+        $searchConditions = [];
+        $keywordIndex = 0;
+
+        // Với mỗi từ khóa, tạo điều kiện tìm kiếm trong tên sản phẩm
+        // Sử dụng REGEXP để tìm từ hoàn chỉnh (không phải ký tự đơn lẻ)
+        foreach ($keywords as $keyword) {
+            $searchConditions[] = "p.name REGEXP :regexp$keywordIndex";
+            $params[':regexp' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
+            $keywordIndex++;
+        }
+
+        // Sử dụng OR để tìm sản phẩm chứa bất kỳ từ khóa nào
+        $where[] = "(" . implode(' OR ', $searchConditions) . ")";
+    }
 }
 
 if ($status === 'featured') {
@@ -197,7 +214,7 @@ $pageTitle = 'Quản lý sản phẩm';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
     <link href="/css/styles.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
@@ -245,29 +262,29 @@ $pageTitle = 'Quản lý sản phẩm';
                         const toast = document.createElement('div');
                         const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
                         const icon = type === 'success' ? '✓' : '✕';
-                        
+
                         toast.innerHTML = `
                             <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
                                 <span class="text-xl">${icon}</span>
                                 <span>${message}</span>
                             </div>
                         `;
-                        
+
                         toast.style.position = 'fixed';
                         toast.style.top = '20px';
                         toast.style.right = '20px';
                         toast.style.zIndex = '9999';
                         toast.style.maxWidth = '400px';
-                        
+
                         document.body.appendChild(toast);
-                        
+
                         setTimeout(() => {
                             toast.style.transition = 'opacity 0.3s ease';
                             toast.style.opacity = '0';
                             setTimeout(() => toast.remove(), 300);
                         }, 2000);
                     }
-                    
+
                     showToast('<?= addslashes($_SESSION['success']) ?>', 'success');
                 </script>
                 <?php unset($_SESSION['success']); ?>
@@ -279,29 +296,29 @@ $pageTitle = 'Quản lý sản phẩm';
                         const toast = document.createElement('div');
                         const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
                         const icon = type === 'success' ? '✓' : '✕';
-                        
+
                         toast.innerHTML = `
                             <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
                                 <span class="text-xl">${icon}</span>
                                 <span>${message}</span>
                             </div>
                         `;
-                        
+
                         toast.style.position = 'fixed';
                         toast.style.top = '20px';
                         toast.style.right = '20px';
                         toast.style.zIndex = '9999';
                         toast.style.maxWidth = '400px';
-                        
+
                         document.body.appendChild(toast);
-                        
+
                         setTimeout(() => {
                             toast.style.transition = 'opacity 0.3s ease';
                             toast.style.opacity = '0';
                             setTimeout(() => toast.remove(), 300);
                         }, 2000);
                     }
-                    
+
                     showToast('<?= addslashes($_SESSION['error']) ?>', 'error');
                 </script>
                 <?php unset($_SESSION['error']); ?>
@@ -330,11 +347,11 @@ $pageTitle = 'Quản lý sản phẩm';
                     <p class="text-gray-600 mt-1">Quản lý danh sách sản phẩm và thông tin</p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                    <a href="/admin/product_import.php" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <a href="product_import.php" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                         <span class="material-symbols-outlined">upload_file</span>
                         Import Excel
                     </a>
-                    <a href="/admin/product_add.php" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                    <a href="product_add.php" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
                         <span class="material-symbols-outlined">add</span>
                         Thêm sản phẩm mới
                     </a>
@@ -424,7 +441,7 @@ $pageTitle = 'Quản lý sản phẩm';
                     </button>
 
                     <?php if ($search || $categoryId || $status !== 'all'): ?>
-                        <a href="/admin/products.php" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2">
+                        <a href="products.php" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2">
                             <span class="material-symbols-outlined text-lg">restart_alt</span>
                             Đặt lại
                         </a>
@@ -516,7 +533,7 @@ $pageTitle = 'Quản lý sản phẩm';
                                         </td>
                                         <td class="py-4 px-4">
                                             <div class="flex items-center gap-2">
-                                                <a href="/admin/product_edit.php?id=<?= $product['id'] ?>"
+                                                <a href="product_edit.php?id=<?= $product['id'] ?>"
                                                     class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                                                     title="Chỉnh sửa">
                                                     <span class="material-symbols-outlined text-lg">edit</span>
@@ -552,11 +569,12 @@ $pageTitle = 'Quản lý sản phẩm';
             table {
                 font-size: 0.75rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.5rem 0.25rem !important;
             }
-            
+
             .actions-btn {
                 padding: 0.25rem 0.5rem !important;
                 font-size: 0.7rem !important;
@@ -568,8 +586,9 @@ $pageTitle = 'Quản lý sản phẩm';
             table {
                 font-size: 0.85rem !important;
             }
-            
-            th, td {
+
+            th,
+            td {
                 padding: 0.6rem 0.4rem !important;
             }
         }
@@ -592,22 +611,22 @@ $pageTitle = 'Quản lý sản phẩm';
             const toast = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
             const icon = type === 'success' ? '✓' : '✕';
-            
+
             toast.innerHTML = `
                 <div class="${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
                     <span class="text-xl">${icon}</span>
                     <span>${message}</span>
                 </div>
             `;
-            
+
             toast.style.position = 'fixed';
             toast.style.top = '20px';
             toast.style.right = '20px';
             toast.style.zIndex = '9999';
             toast.style.maxWidth = '400px';
-            
+
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.transition = 'opacity 0.3s ease';
                 toast.style.opacity = '0';
@@ -621,77 +640,76 @@ $pageTitle = 'Quản lý sản phẩm';
             }
 
             const row = btn.closest('tr');
-            
-            fetch('/admin/products.php', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: 'action=delete&product_id=' + productId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    row.classList.add('fade-out-row');
-                    setTimeout(() => {
-                        row.remove();
-                        showToast(data.message, 'success');
-                    }, 300);
-                } else {
-                    showToast(data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Có lỗi xảy ra', 'error');
-            });
+
+            fetch('products.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'action=delete&product_id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        row.classList.add('fade-out-row');
+                        setTimeout(() => {
+                            row.remove();
+                            showToast(data.message, 'success');
+                        }, 300);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Có lỗi xảy ra', 'error');
+                });
         }
 
         function toggleFeatured(productId) {
             const btn = document.querySelector(`.toggle-featured-btn-${productId}`);
             const icon = document.querySelector(`.toggle-featured-icon-${productId}`);
 
-            fetch('/admin/products.php', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: 'action=toggle_featured&product_id=' + productId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const newState = data.new_state;
-                    
-                    // Update icon fill
-                    icon.style.fontVariationSettings = `'FILL' ${newState ? '1' : '0'}`;
-                    
-                    // Update button color
-                    if (newState) {
-                        btn.classList.remove('text-gray-400', 'hover:bg-gray-100');
-                        btn.classList.add('text-yellow-600', 'hover:bg-yellow-50');
+            fetch('products.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'action=toggle_featured&product_id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const newState = data.new_state;
+
+                        // Update icon fill
+                        icon.style.fontVariationSettings = `'FILL' ${newState ? '1' : '0'}`;
+
+                        // Update button color
+                        if (newState) {
+                            btn.classList.remove('text-gray-400', 'hover:bg-gray-100');
+                            btn.classList.add('text-yellow-600', 'hover:bg-yellow-50');
+                        } else {
+                            btn.classList.remove('text-yellow-600', 'hover:bg-yellow-50');
+                            btn.classList.add('text-gray-400', 'hover:bg-gray-100');
+                        }
+
+                        showToast(data.message, 'success');
                     } else {
-                        btn.classList.remove('text-yellow-600', 'hover:bg-yellow-50');
-                        btn.classList.add('text-gray-400', 'hover:bg-gray-100');
+                        showToast(data.message, 'error');
                     }
-                    
-                    showToast(data.message, 'success');
-                } else {
-                    showToast(data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Có lỗi xảy ra', 'error');
-            });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Có lỗi xảy ra', 'error');
+                });
         }
     </script>
 
 </body>
 
 </html>
-

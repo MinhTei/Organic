@@ -1,4 +1,3 @@
-
 <?php
 // includes/functions.php - Các hàm dùng chung cho website
 
@@ -6,7 +5,8 @@
  * Lấy tất cả danh mục sản phẩm
  * @return array
  */
-function getCategories() {
+function getCategories()
+{
     $conn = getConnection();
     // Lấy danh sách danh mục, sắp xếp theo id tăng dần
     $stmt = $conn->query("SELECT * FROM categories ORDER BY id ASC");
@@ -18,16 +18,17 @@ function getCategories() {
  * @param array $options
  * @return array
  */
-function getProducts($options = []) {
+function getProducts($options = [])
+{
     $conn = getConnection();
-    
+
     $page = isset($options['page']) ? (int)$options['page'] : 1;
     $limit = isset($options['limit']) ? (int)$options['limit'] : ITEMS_PER_PAGE;
     $offset = ($page - 1) * $limit;
-    
+
     $where = ["1=1"];
     $params = [];
-    
+
     // Lọc theo danh mục
     if (!empty($options['category_id'])) {
         $where[] = "p.category_id = :category_id";
@@ -35,10 +36,29 @@ function getProducts($options = []) {
     }
     // Lọc theo từ khóa tìm kiếm
     if (!empty($options['search'])) {
-        $where[] = "(p.name LIKE :search1 OR p.description LIKE :search2)";
-        $params[':search1'] = '%' . $options['search'] . '%';
-        $params[':search2'] = '%' . $options['search'] . '%';
+        $search = trim($options['search']);
+        // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
+        $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (!empty($keywords)) {
+            $searchConditions = [];
+            $keywordIndex = 0;
+
+            // Với mỗi từ khóa, tạo điều kiện tìm kiếm trong tên sản phẩm
+            // Sử dụng REGEXP để tìm từ hoàn chỉnh (không phải ký tự đơn lẻ)
+            foreach ($keywords as $keyword) {
+                $paramKey = ':search' . $keywordIndex;
+                // Tìm từ khóa được bao quanh bởi ranh giới từ hoặc khoảng trắng
+                $searchConditions[] = "p.name REGEXP :regexp$keywordIndex";
+                $params[':regexp' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
+                $keywordIndex++;
+            }
+
+            // Sử dụng OR để tìm sản phẩm chứa bất kỳ từ khóa nào
+            $where[] = "(" . implode(' OR ', $searchConditions) . ")";
+        }
     }
+
     // Lọc sản phẩm đang giảm giá
     if (!empty($options['on_sale'])) {
         $where[] = "p.sale_price IS NOT NULL";
@@ -60,9 +80,9 @@ function getProducts($options = []) {
         $where[] = "COALESCE(p.sale_price, p.price) <= :max_price";
         $params[':max_price'] = $options['max_price'];
     }
-    
+
     $whereClause = implode(' AND ', $where);
-    
+
     // Sắp xếp
     $orderBy = "p.created_at DESC";
     if (!empty($options['sort'])) {
@@ -81,13 +101,13 @@ function getProducts($options = []) {
                 break;
         }
     }
-    
+
     // Đếm tổng số sản phẩm
     $countSql = "SELECT COUNT(*) FROM products p WHERE $whereClause";
     $countStmt = $conn->prepare($countSql);
     $countStmt->execute($params);
     $total = $countStmt->fetchColumn();
-    
+
     // Lấy danh sách sản phẩm
     $sql = "SELECT p.*, c.name as category_name, c.slug as category_slug 
             FROM products p 
@@ -95,11 +115,11 @@ function getProducts($options = []) {
             WHERE $whereClause 
             ORDER BY $orderBy 
             LIMIT $limit OFFSET $offset";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $products = $stmt->fetchAll();
-    
+
     return [
         'products' => $products,
         'total' => $total,
@@ -114,7 +134,8 @@ function getProducts($options = []) {
  * @param int|string $idOrSlug
  * @return array|false
  */
-function getProduct($idOrSlug) {
+function getProduct($idOrSlug)
+{
     $conn = getConnection();
     $field = is_numeric($idOrSlug) ? 'id' : 'slug';
     $sql = "SELECT p.*, c.name as category_name, c.slug as category_slug 
@@ -131,7 +152,8 @@ function getProduct($idOrSlug) {
  * @param int $limit
  * @return array
  */
-function getFeaturedProducts($limit = 4) {
+function getFeaturedProducts($limit = 4)
+{
     $conn = getConnection();
     $sql = "SELECT * FROM products WHERE is_featured = 1 ORDER BY created_at DESC LIMIT :limit";
     $stmt = $conn->prepare($sql);
@@ -145,7 +167,8 @@ function getFeaturedProducts($limit = 4) {
  * @param int $limit
  * @return array
  */
-function getLatestPosts($limit = 4) {
+function getLatestPosts($limit = 4)
+{
     $conn = getConnection();
     $sql = "SELECT id, title, slug, excerpt, featured_image, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT :limit";
     $stmt = $conn->prepare($sql);
@@ -162,7 +185,8 @@ function getLatestPosts($limit = 4) {
  * @param string $path
  * @return string
  */
-function imageUrl($path) {
+function imageUrl($path)
+{
     if (empty($path)) {
         return rtrim(SITE_URL, '/') . '/images/placeholder.png';
     }
@@ -182,7 +206,8 @@ function imageUrl($path) {
  * @param int $limit
  * @return array
  */
-function getRelatedProducts($productId, $categoryId, $limit = 4) {
+function getRelatedProducts($productId, $categoryId, $limit = 4)
+{
     $conn = getConnection();
     $sql = "SELECT * FROM products 
             WHERE category_id = :category_id AND id != :product_id 
@@ -201,7 +226,8 @@ function getRelatedProducts($productId, $categoryId, $limit = 4) {
  * @param array $params
  * @return string
  */
-function buildPaginationUrl($page, $params = []) {
+function buildPaginationUrl($page, $params = [])
+{
     $params['page'] = $page;
     return '?' . http_build_query($params);
 }
@@ -213,7 +239,8 @@ function buildPaginationUrl($page, $params = []) {
  * @param array $params
  * @return string
  */
-function renderPagination($currentPage, $totalPages, $params = []) {
+function renderPagination($currentPage, $totalPages, $params = [])
+{
     if ($totalPages <= 1) return '';
     unset($params['page']);
     $html = '<nav class="pagination">';
@@ -248,12 +275,28 @@ function renderPagination($currentPage, $totalPages, $params = []) {
  * @param array $product
  * @return string
  */
-function renderProductCard($product) {
+function renderProductCard($product)
+{
     $price = $product['sale_price'] ?? $product['price'];
     $hasDiscount = !empty($product['sale_price']);
     $discountPercent = $hasDiscount ? round((1 - $product['sale_price'] / $product['price']) * 100) : 0;
+
+    // Kiểm tra sản phẩm có trong wishlist không
+    $isInWishlist = false;
+    $wishlistClass = '';
+    $heartFill = '';
+    $heartColor = '';
+    if (isset($_SESSION['user_id'])) {
+        require_once __DIR__ . '/wishlist_functions.php';
+        $isInWishlist = isInWishlist($_SESSION['user_id'], $product['id']);
+        if ($isInWishlist) {
+            $wishlistClass = 'in-wishlist';
+            $heartFill = "style=\"font-variation-settings: 'FILL' 1; color: #ef4444;\"";
+        }
+    }
+
     ob_start();
-    ?>
+?>
     <div class="product-card">
         <div class="product-image">
             <a href="<?= SITE_URL ?>/product_detail.php?slug=<?= $product['slug'] ?>">
@@ -264,8 +307,8 @@ function renderProductCard($product) {
             <?php elseif ($product['is_new']): ?>
                 <span class="product-badge badge-new">Mới</span>
             <?php endif; ?>
-            <button class="product-favorite" onclick="toggleFavorite(<?= $product['id'] ?>)">
-                <span class="material-symbols-outlined">favorite</span>
+            <button class="product-favorite <?= $wishlistClass ?>" onclick="toggleFavorite(<?= $product['id'] ?>)" data-product-id="<?= $product['id'] ?>" title="<?= $isInWishlist ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích' ?>">
+                <span class="material-symbols-outlined" <?= $heartFill ?>>favorite</span>
             </button>
         </div>
         <div class="product-info">
@@ -286,7 +329,7 @@ function renderProductCard($product) {
             </button>
         </div>
     </div>
-    <?php
+<?php
     return ob_get_clean();
 }
 
@@ -296,7 +339,8 @@ function renderProductCard($product) {
  * @param string $status Trạng thái đơn hàng (pending, confirmed, processing, shipping, delivered, cancelled, refunded)
  * @return array Mảng chứa label, color, css_class
  */
-function getOrderStatusInfo($status) {
+function getOrderStatusInfo($status)
+{
     $statuses = [
         'pending' => [
             'label' => 'Chờ xác nhận',
@@ -334,7 +378,7 @@ function getOrderStatusInfo($status) {
             'css_class' => 'bg-purple-100 text-purple-800'
         ]
     ];
-    
+
     return $statuses[$status] ?? $statuses['pending'];
 }
 
@@ -344,12 +388,13 @@ function getOrderStatusInfo($status) {
  * @param string $method Phương thức (cod, bank_transfer)
  * @return string Nhãn phương thức thanh toán
  */
-function getPaymentMethodLabel($method) {
+function getPaymentMethodLabel($method)
+{
     $methods = [
         'cod' => 'Thanh toán khi nhận',
         'bank_transfer' => 'Chuyển khoản'
     ];
-    
+
     return $methods[$method] ?? 'Không xác định';
 }
 ?>

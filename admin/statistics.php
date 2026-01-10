@@ -91,57 +91,57 @@ $orderStatus = $statusStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 $pageTitle = 'Thống kê & Báo cáo';
 
 // Nếu không có dữ liệu thực tế (DB trống), sinh dữ liệu mẫu để xem giao diện
-$isSample = false;
-if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0) === 0) {
-    $isSample = true;
-    // 7 ngày gần nhất
-    $dates = [];
-    for ($i = 6; $i >= 0; $i--) {
-        $dates[] = date('Y-m-d', strtotime("-{$i} days"));
-    }
-    $sampleRevenues = [1200000, 2400000, 1800000, 3000000, 1500000, 900000, 2100000];
-    $revenueData = [];
-    foreach ($dates as $idx => $d) {
-        $revenueData[] = [
-            'date' => $d,
-            'orders' => rand(2, 12),
-            'revenue' => $sampleRevenues[$idx] ?? 0
-        ];
-    }
+// $isSample = false;
+// if (empty($revenueData) || empty($totals) || (int)($totals['total_orders'] ?? 0) === 0) {
+//     $isSample = true;
+//     // 7 ngày gần nhất
+//     $dates = [];
+//     for ($i = 6; $i >= 0; $i--) {
+//         $dates[] = date('Y-m-d', strtotime("-{$i} days"));
+//     }
+//     $sampleRevenues = [1200000, 2400000, 1800000, 3000000, 1500000, 900000, 2100000];
+//     $revenueData = [];
+//     foreach ($dates as $idx => $d) {
+//         $revenueData[] = [
+//             'date' => $d,
+//             'orders' => rand(2, 12),
+//             'revenue' => $sampleRevenues[$idx] ?? 0
+//         ];
+//     }
 
-    $totals = [
-        'total_orders' => array_sum(array_map(fn($r) => $r['orders'], $revenueData)),
-        'total_revenue' => array_sum($sampleRevenues),
-        'avg_order_value' => array_sum($sampleRevenues) / max(1, array_sum(array_map(fn($r) => $r['orders'], $revenueData)))
-    ];
+//     $totals = [
+//         'total_orders' => array_sum(array_map(fn($r) => $r['orders'], $revenueData)),
+//         'total_revenue' => array_sum($sampleRevenues),
+//         'avg_order_value' => array_sum($sampleRevenues) / max(1, array_sum(array_map(fn($r) => $r['orders'], $revenueData)))
+//     ];
 
-    // Lấy danh sách sản phẩm từ database để tạo dữ liệu mẫu đồng bộ
-    $sampleProductsStmt = $conn->prepare("SELECT id, name, image FROM products ORDER BY id LIMIT 3");
-    $sampleProductsStmt->execute();
-    $sampleProductsData = $sampleProductsStmt->fetchAll();
+//     // Lấy danh sách sản phẩm từ database để tạo dữ liệu mẫu đồng bộ
+//     $sampleProductsStmt = $conn->prepare("SELECT id, name, image FROM products ORDER BY id LIMIT 3");
+//     $sampleProductsStmt->execute();
+//     $sampleProductsData = $sampleProductsStmt->fetchAll();
     
-    if (!empty($sampleProductsData)) {
-        $topProducts = [
-            ['id' => $sampleProductsData[0]['id'] ?? 1, 'name' => $sampleProductsData[0]['name'] ?? 'Green Apple', 'image' => $sampleProductsData[0]['image'] ?? 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
-            ['id' => $sampleProductsData[1]['id'] ?? 2, 'name' => $sampleProductsData[1]['name'] ?? 'Organic Carrot', 'image' => $sampleProductsData[1]['image'] ?? 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
-            ['id' => $sampleProductsData[2]['id'] ?? 3, 'name' => $sampleProductsData[2]['name'] ?? 'Romaine Lettuce', 'image' => $sampleProductsData[2]['image'] ?? 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
-        ];
-    } else {
-        $topProducts = [
-            ['id' => 1, 'name' => 'Green Apple', 'image' => 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
-            ['id' => 2, 'name' => 'Organic Carrot', 'image' => 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
-            ['id' => 3, 'name' => 'Romaine Lettuce', 'image' => 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
-        ];
-    }
+//     if (!empty($sampleProductsData)) {
+//         $topProducts = [
+//             ['id' => $sampleProductsData[0]['id'] ?? 1, 'name' => $sampleProductsData[0]['name'] ?? 'Green Apple', 'image' => $sampleProductsData[0]['image'] ?? 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
+//             ['id' => $sampleProductsData[1]['id'] ?? 2, 'name' => $sampleProductsData[1]['name'] ?? 'Organic Carrot', 'image' => $sampleProductsData[1]['image'] ?? 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
+//             ['id' => $sampleProductsData[2]['id'] ?? 3, 'name' => $sampleProductsData[2]['name'] ?? 'Romaine Lettuce', 'image' => $sampleProductsData[2]['image'] ?? 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
+//         ];
+//     } else {
+//         $topProducts = [
+//             ['id' => 1, 'name' => 'Green Apple', 'image' => 'images/product/pro01.jpg', 'total_sold' => 120, 'total_revenue' => 120 * 45000],
+//             ['id' => 2, 'name' => 'Organic Carrot', 'image' => 'images/product/pro02.jpg', 'total_sold' => 85, 'total_revenue' => 85 * 35000],
+//             ['id' => 3, 'name' => 'Romaine Lettuce', 'image' => 'images/product/pro03.jpg', 'total_sold' => 60, 'total_revenue' => 60 * 22000]
+//         ];
+//     }
 
-    $orderStatus = [
-        'pending' => 5,
-        'confirmed' => 20,
-        'shipping' => 8,
-        'delivered' => 10,
-        'cancelled' => 2
-    ];
-}
+//     $orderStatus = [
+//         'pending' => 5,
+//         'confirmed' => 20,
+//         'shipping' => 8,
+//         'delivered' => 10,
+//         'cancelled' => 2
+//     ];
+// }
 ?>
 <!DOCTYPE html>
 <html lang="vi">

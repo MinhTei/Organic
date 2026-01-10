@@ -1,4 +1,5 @@
 <?php
+
 /**
  * auth.php - Đăng nhập và đăng ký với giao diện mới
  */
@@ -6,7 +7,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/settings_helper.php';
-
+require_once __DIR__ . '/includes/cart_functions.php';
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'login';
 $success = '';
 $error = '';
@@ -15,7 +16,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $email = sanitize($_POST['email']);
     $password = $_POST['password'];
-    
+
     if (empty($email) || empty($password)) {
         $error = 'Vui lòng nhập đầy đủ thông tin.';
     } else {
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
-        
+
         if ($user && password_verify($password, $user['password'])) {
             if (isset($user['status']) && $user['status'] !== 'active') {
                 $error = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.';
@@ -33,6 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_membership'] = $user['membership'];
                 $_SESSION['user_role'] = $user['role'];
+
+                // Đồng bộ giỏ hàng từ session vào database khi đăng nhập
+                mergeCartOnLogin($user['id']);
+
                 if ($user['role'] === 'admin') {
                     redirect(SITE_URL . '/admin/dashboard.php');
                 } else {
@@ -51,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $email = sanitize($_POST['email']);
     $phone = sanitize($_POST['phone']);
     $password = $_POST['password'];
-    
+
     if (empty($name) || empty($email) || empty($password)) {
         $error = 'Vui lòng điền đầy đủ thông tin bắt buộc.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -62,13 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         $conn = getConnection();
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
         $stmt->execute([':email' => $email]);
-        
+
         if ($stmt->fetch()) {
             $error = 'Email đã được sử dụng.';
         } else {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO users (name, email, phone, password, membership, role) VALUES (:name, :email, :phone, :password, 'bronze', 'customer')");
-            
+
             if ($stmt->execute([
                 ':name' => $name,
                 ':email' => $email,
@@ -88,13 +93,14 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= $pageTitle ?> - Xanh Organic</title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
@@ -130,6 +136,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
         }
     </script>
 </head>
+
 <body class="font-display bg-background-light text-text-light antialiased">
     <div class="relative flex min-h-screen w-full">
         <!-- Left Side - Form -->
@@ -138,7 +145,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                 <!-- Logo & Title -->
                 <div class="mb-4 text-center">
                     <a class="inline-flex items-center gap-2 mb-2" href="<?= SITE_URL ?>">
-                        <?php 
+                        <?php
                         $siteLogo = getSystemSetting('site_logo', '');
                         $siteName = getSystemSetting('site_name', 'Xanh Organic');
                         if (!empty($siteLogo)): ?>
@@ -167,7 +174,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                         <span><?= $success ?></span>
                     </div>
                 <?php endif; ?>
-                
+
                 <?php if ($error): ?>
                     <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl flex items-center gap-2">
                         <span class="material-symbols-outlined">error</span>
@@ -176,19 +183,19 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                 <?php endif; ?>
 
                 <?php if ($mode === 'login'): ?>
-                <!-- Demo Account Hint -->
-                <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div class="flex items-start gap-2">
-                        <span class="material-symbols-outlined text-blue-600 flex-shrink-0 text-sm" style="font-size: 18px;">info</span>
-                        <div class="text-xs text-blue-900">
-                            <p class="font-semibold mb-1">Tài khoản demo:</p>
-                            <div class="space-y-1 bg-white/60 p-1.5 rounded border border-blue-100 text-xs">
-                                <p><strong>User:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">user@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
-                                <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">admin123</code></p>
+                    <!-- Demo Account Hint -->
+                    <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-blue-600 flex-shrink-0 text-sm" style="font-size: 18px;">info</span>
+                            <div class="text-xs text-blue-900">
+                                <p class="font-semibold mb-1">Tài khoản demo:</p>
+                                <div class="space-y-1 bg-white/60 p-1.5 rounded border border-blue-100 text-xs">
+                                    <p><strong>User:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">user@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">123456</code></p>
+                                    <p><strong>Admin:</strong> <code class=" px-1.5 py-0.5 rounded text-xs">admin@xanhorganic.com</code> / <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">admin123</code></p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
                 <?php if ($mode === 'login'): ?>
@@ -197,18 +204,18 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                         <label class="flex flex-col w-full">
                             <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Email</p>
                             <input type="email" name="email" required
-                                   class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                   placeholder="ban@email.com"/>
+                                class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                placeholder="ban@email.com" />
                         </label>
 
                         <label class="flex flex-col w-full">
                             <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Mật khẩu</p>
                             <div class="relative flex w-full items-stretch">
                                 <input type="password" name="password" id="password" required
-                                       class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 p-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                       placeholder="Nhập mật khẩu của bạn"/>
+                                    class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 p-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                    placeholder="Nhập mật khẩu của bạn" />
                                 <button type="button" onclick="togglePassword('password')"
-                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-text-light">
+                                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-text-light">
                                     <span class="material-symbols-outlined text-xl">visibility</span>
                                 </button>
                             </div>
@@ -216,7 +223,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
 
                         <div class="flex items-center justify-between pt-2">
                             <label class="flex items-center gap-2">
-                                <input type="checkbox" name="remember" class="w-4 h-4 rounded text-primary focus:ring-primary"/>
+                                <input type="checkbox" name="remember" class="w-4 h-4 rounded text-primary focus:ring-primary" />
                                 <span class="text-sm text-text-subtle">Ghi nhớ đăng nhập</span>
                             </label>
                             <a href="<?= SITE_URL ?>/forgot_password.php" class="text-sm font-medium text-primary hover:underline">
@@ -225,7 +232,7 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                         </div>
 
                         <button type="submit" name="login"
-                                class="flex items-center justify-center font-bold text-white h-12 px-6 rounded-xl bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 w-full mt-4 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30">
+                            class="flex items-center justify-center font-bold text-white h-12 px-6 rounded-xl bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 w-full mt-4 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30">
                             Đăng nhập
                         </button>
                         <p class="pt-4 text-center text-sm text-text-subtle">
@@ -240,32 +247,32 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                             <label class="flex flex-col w-full">
                                 <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Họ và Tên <span class="text-red-500">*</span></p>
                                 <input type="text" name="name" required
-                                       class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                       placeholder="Ví dụ: An Nguyễn"/>
+                                    class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                    placeholder="Ví dụ: An Nguyễn" />
                             </label>
                             <label class="flex flex-col w-full">
                                 <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Số điện thoại</p>
                                 <input type="tel" name="phone"
-                                       class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                       placeholder="09xxxxxxxx"/>
+                                    class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                    placeholder="09xxxxxxxx" />
                             </label>
                         </div>
 
                         <label class="flex flex-col w-full">
                             <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Email <span class="text-red-500">*</span></p>
                             <input type="email" name="email" required
-                                   class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                   placeholder="ban@email.com"/>
+                                class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 px-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                placeholder="ban@email.com" />
                         </label>
 
                         <label class="flex flex-col w-full">
                             <p class="text-sm font-medium leading-normal pb-2 text-gray-700">Mật khẩu <span class="text-red-500">*</span></p>
                             <div class="relative flex w-full items-stretch">
                                 <input type="password" name="password" id="register-password" required
-                                       class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 p-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
-                                       placeholder="Tạo mật khẩu của bạn"/>
+                                    class="form-input flex w-full rounded-xl text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50 border-border-light bg-white h-12 placeholder:text-gray-400 p-4 text-base font-normal leading-normal transition-all duration-200 shadow-sm focus:border-primary border"
+                                    placeholder="Tạo mật khẩu của bạn" />
                                 <button type="button" onclick="togglePassword('register-password')"
-                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-text-light">
+                                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-text-light">
                                     <span class="material-symbols-outlined text-xl">visibility</span>
                                 </button>
                             </div>
@@ -273,14 +280,14 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
 
                         <div class="flex items-start pt-2">
                             <p class="text-xs text-text-subtle">
-                                Bằng việc đăng ký, bạn đồng ý với 
-                                <a class="font-medium text-primary hover:underline" href="#">Điều khoản Dịch vụ</a> và 
+                                Bằng việc đăng ký, bạn đồng ý với
+                                <a class="font-medium text-primary hover:underline" href="#">Điều khoản Dịch vụ</a> và
                                 <a class="font-medium text-primary hover:underline" href="#">Chính sách Bảo mật</a> của chúng tôi.
                             </p>
                         </div>
 
                         <button type="submit" name="register"
-                                class="flex items-center justify-center font-bold text-white h-12 px-6 rounded-xl bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 w-full mt-4 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30">
+                            class="flex items-center justify-center font-bold text-white h-12 px-6 rounded-xl bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 w-full mt-4 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30">
                             Đăng ký ngay
                         </button>
 
@@ -300,8 +307,8 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                 <?php if ($mode === 'login'): ?>
                     <!-- Đăng nhập Image -->
                     <div class="relative w-full aspect-square rounded-2xl shadow-soft overflow-hidden">
-                        <div class="w-full h-full bg-center bg-no-repeat bg-cover" 
-                             style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTWbfW23Vp_lDS4MiB1QuORVu16-GBIHQgJih4yI8Jk0KFvEJ9Cs0teSe_hbp5x4Sc09jHNqiQzV4_Pvg8ivg9vFDWS1F-BigbwfEzpbFioEwqZzUhdTCqZroq07Gfx7DIYwnCnEBa40HfEGJPNleSWzekcOX2Ipy44dPlJr4ZHePO6DJ0rfavKGMXsINl-jQ_w01dpP2cfcWTBGFx2A5yA_hf9xny1joK4a5HBsriL3pw-QuIvJIfbbwB7fCTW2j95YQmLMEZpSNr"); background-size: contain;'></div>
+                        <div class="w-full h-full bg-center bg-no-repeat bg-cover"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTWbfW23Vp_lDS4MiB1QuORVu16-GBIHQgJih4yI8Jk0KFvEJ9Cs0teSe_hbp5x4Sc09jHNqiQzV4_Pvg8ivg9vFDWS1F-BigbwfEzpbFioEwqZzUhdTCqZroq07Gfx7DIYwnCnEBa40HfEGJPNleSWzekcOX2Ipy44dPlJr4ZHePO6DJ0rfavKGMXsINl-jQ_w01dpP2cfcWTBGFx2A5yA_hf9xny1joK4a5HBsriL3pw-QuIvJIfbbwB7fCTW2j95YQmLMEZpSNr"); background-size: contain;'></div>
                     </div>
                     <div class="p-6 bg-white/70 backdrop-blur-sm rounded-2xl shadow-soft">
                         <h2 class="text-2xl font-bold text-gray-800">"Khởi đầu lối sống lành mạnh, ngay từ hôm nay."</h2>
@@ -310,8 +317,8 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
                 <?php else: ?>
                     <!-- Đăng ký Image -->
                     <div class="relative w-full aspect-square rounded-2xl shadow-soft overflow-hidden">
-                        <div class="w-full h-full bg-center bg-no-repeat bg-cover" 
-                             style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCll8A3mPQzyBcabsJu_08U639k1Qbk_e45fMwD8d6n6JSlatK8KyW9PBmiKHnzojVu0PxpHSh6739dDTL13AAmfA7W5I4Hq9ScmA4Dg4w8pfE5c-v-_SjmpenrjWVa1LZKDvkAWbestnOgD8tCFmeVXggX8uf2mORzhwjGJtoWWqrp7VzJt81-OAhStK_A9GgT6RoijXf0xZZtlrC2XWGYSkj5iM18aPPfH7mJapIfwPN3i39XiWRzTSYfyx9uPmDdR0s-Qh0o0gw"); background-size: contain;'></div>
+                        <div class="w-full h-full bg-center bg-no-repeat bg-cover"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCll8A3mPQzyBcabsJu_08U639k1Qbk_e45fMwD8d6n6JSlatK8KyW9PBmiKHnzojVu0PxpHSh6739dDTL13AAmfA7W5I4Hq9ScmA4Dg4w8pfE5c-v-_SjmpenrjWVa1LZKDvkAWbestnOgD8tCFmeVXggX8uf2mORzhwjGJtoWWqrp7VzJt81-OAhStK_A9GgT6RoijXf0xZZtlrC2XWGYSkj5iM18aPPfH7mJapIfwPN3i39XiWRzTSYfyx9uPmDdR0s-Qh0o0gw"); background-size: contain;'></div>
                     </div>
                     <div class="p-6 bg-white/70 backdrop-blur-sm rounded-2xl shadow-soft">
                         <h2 class="text-2xl font-bold text-gray-800">"Sức khỏe là tài sản quý giá nhất."</h2>
@@ -323,19 +330,20 @@ $pageTitle = $mode === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản';
     </div>
 
     <script>
-    function togglePassword(fieldId) {
-        const field = document.getElementById(fieldId);
-        const button = field.nextElementSibling;
-        const icon = button.querySelector('.material-symbols-outlined');
-        
-        if (field.type === 'password') {
-            field.type = 'text';
-            icon.textContent = 'visibility_off';
-        } else {
-            field.type = 'password';
-            icon.textContent = 'visibility';
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = field.nextElementSibling;
+            const icon = button.querySelector('.material-symbols-outlined');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                field.type = 'password';
+                icon.textContent = 'visibility';
+            }
         }
-    }
     </script>
 </body>
+
 </html>
