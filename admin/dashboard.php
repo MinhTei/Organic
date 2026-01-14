@@ -16,9 +16,9 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-// Check if user is admin
+// kiểm tra quyền admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    redirect(SITE_URL . '/auth.php');
+    redirect(SITE_URL . '/auth.php');// chuyển về trang đăng nhập
 }
 
 $conn = getConnection();
@@ -326,7 +326,7 @@ $pageTitle = 'Dashboard Admin';
                                     ];
                                 ?>
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium text-gray-900">#<?= $order['id'] ?></td>
+                                    <td class="py-2 sm:py-4 px-3 sm:px-4 font-medium text-gray-900">#<?= $order['order_code'] ?></td>
                                     <td class="py-2 sm:py-4 px-3 sm:px-4 text-gray-700 truncate"><?= sanitize($order['customer_name'] ?? 'Khách') ?></td>
                                     <td class="py-2 sm:py-4 px-3 sm:px-4 font-semibold text-green-600"><?= formatPrice($order['total_amount']) ?></td>
                                     <td class="py-2 sm:py-4 px-3 sm:px-4">

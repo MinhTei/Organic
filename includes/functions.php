@@ -54,8 +54,8 @@ function getProducts($options = [])
                 $keywordIndex++;
             }
 
-            // Sử dụng OR để tìm sản phẩm chứa bất kỳ từ khóa nào
-            $where[] = "(" . implode(' OR ', $searchConditions) . ")";
+            // Sử dụng AND để tìm sản phẩm chứa tất cả các từ khóa
+            $where[] = "(" . implode(' AND ', $searchConditions) . ")";
         }
     }
 

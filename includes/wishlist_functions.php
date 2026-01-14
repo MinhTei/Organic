@@ -56,12 +56,12 @@ function getUserWishlist($userId, $page = 1, $limit = 12)
     $conn = getConnection();
     $offset = ($page - 1) * $limit;
 
-    // Count total
+    // dếm tổng số sản phẩm trong wishlist
     $stmt = $conn->prepare("SELECT COUNT(*) FROM wishlists WHERE user_id = ?");
     $stmt->execute([$userId]);
     $total = $stmt->fetchColumn();
 
-    // Get products
+    // Lây sản phẩm với phân trang
     $sql = "SELECT p.*, w.created_at as added_at
             FROM wishlists w
             INNER JOIN products p ON w.product_id = p.id

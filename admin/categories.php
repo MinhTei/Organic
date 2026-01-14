@@ -328,14 +328,14 @@ $pageTitle = 'Quản lý Danh mục';
 
     <script>
         // Auto-generate slug from name for convenience
-        function slugify(text) {
+            function slugify(text) {
             return text.toString().toLowerCase() // Chuyển thành chữ thường
-                .normalize('NFKD') // 
+                .normalize('NFKD') // Chuẩn hóa Unicode
+                .replace(/đ/g, 'd')// Thay đ bằng d
                 .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
                 .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
                 .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối
         }
-
         const nameInput = document.querySelector('input[name="name"]'); // Lấy input tên danh mục
         const slugInput = document.getElementById('slugInput'); // Lấy input slug
         if (nameInput && slugInput) {

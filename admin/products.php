@@ -188,7 +188,7 @@ $sql = "SELECT p.*, c.name as category_name
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
     WHERE $whereClause
-    ORDER BY p.id ASC";
+    ORDER BY p.created_at DESC";
 
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);

@@ -20,6 +20,7 @@ $importResult = null;
 // Load categories
 $categories = getCategories();
 
+// Xử lý import khi form được submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Kiểm tra file upload
     if (empty($_FILES['import_file']['name'])) {

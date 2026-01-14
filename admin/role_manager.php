@@ -73,26 +73,13 @@ if ($filterRole !== 'all') {
 
 if ($search) {
     $search = trim($search);
-    // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
-    $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
-
-    if (!empty($keywords)) {
-        $searchConditions = [];
-        $keywordIndex = 0;
-
-        // Tìm kiếm theo tên hoặc email khách hàng
-        foreach ($keywords as $keyword) {
-            $searchConditions[] = "(name REGEXP :regexp_name$keywordIndex OR email LIKE :email$keywordIndex OR phone LIKE :phone$keywordIndex)";
-            $params[':regexp_name' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
-            $params[':email' . $keywordIndex] = "%$keyword%";
-            $params[':phone' . $keywordIndex] = "%$keyword%";
-            $keywordIndex++;
-        }
-
-        // Sử dụng OR để tìm khách hàng chứa bất kỳ từ khóa nào
-        $where[] = "(" . implode(' OR ', $searchConditions) . ")";
-    }
+    // Tìm kiếm theo tên, email, phone - tương tự pattern orders.php
+    $where[] = "(name LIKE :search_name OR email LIKE :search_email OR phone LIKE :search_phone)";
+    $params[':search_name'] = "%$search%";
+    $params[':search_email'] = "%$search%";
+    $params[':search_phone'] = "%$search%";
 }
+
 $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $stmt = $conn->prepare("SELECT * FROM users $whereClause ORDER BY created_at DESC LIMIT 100");

@@ -185,12 +185,12 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
-// Get shipping fee from settings
+// lấy phí vận chuyển mặc định từ cài đặt hệ thống 
 $shippingFee = (int) getSystemSetting('default_shipping_fee', 25000);
 
 $total = $subtotal + ($subtotal > 0 ? $shippingFee : 0);
 
-// Free shipping threshold
+// Kiểm tra điều kiện miễn phí vận chuyển 500k
 $freeShippingThreshold = (int) getSystemSetting('free_shipping_threshold', 500000);
 $isFreeShipping = $subtotal >= $freeShippingThreshold;
 if ($isFreeShipping) {
@@ -297,7 +297,7 @@ include __DIR__ . '/includes/header.php';
                                     </button>
                                 </div>
 
-                                <!-- Quantity Error Message -->
+                                <!-- Số lượng khi lỗi -->
                                 <div class="qty-error" data-product-id="<?= $item['product']['id'] ?>"
                                     style="display: none; padding: 0.5rem 0.75rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger); border-radius: 4px; font-size: 0.8125rem; color: var(--danger); line-height: 1.4;"></div>
 
@@ -363,7 +363,7 @@ include __DIR__ . '/includes/header.php';
                 </button>
             </div>
 
-            <!-- Order Summary -->
+            <!-- Hóa đơn tổng cộng -->
             <div class="order-summary-mobile" style="position: sticky; top: clamp(60px, 10vw, 100px); height: fit-content;">
                 <div style="background: var(--card-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--border-light);">
                     <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 700; margin-bottom: clamp(1rem, 2vw, 1.5rem); color: var(--text-light);">Tóm tắt đơn hàng</h3>
@@ -451,7 +451,7 @@ include __DIR__ . '/includes/header.php';
                         }
                     }
 
-                    // Update subtotal, shipping, grand total
+                    //Cập nhật lại tổng giá trị giỏ hàng
                     if (data.subtotal !== undefined) {
                         const subtotalEl = document.querySelector('.cart-subtotal');
                         if (subtotalEl) subtotalEl.textContent = formatPrice(data.subtotal);
@@ -465,22 +465,22 @@ include __DIR__ . '/includes/header.php';
                         if (totalEl) totalEl.textContent = formatPrice(data.total);
                     }
 
-                    // Update free shipping hint
+                    // cập nhật gợi ý miễn phí vận chuyển
                     if (data.isFreeShipping !== undefined) {
                         const hintEl = document.getElementById('freeShippingHint');
                         const amountEl = document.getElementById('freeShippingAmount');
                         if (hintEl && data.isFreeShipping) {
-                            // Hide hint when free shipping is achieved
+                            // Ân gợi ý nếu đã đủ điều kiện
                             hintEl.style.display = 'none';
                         } else if (hintEl && !data.isFreeShipping && data.remainingAmount !== undefined) {
-                            // Show hint and update remaining amount
+                            // hiên thị gợi ý nếu chưa đủ điều kiện
                             hintEl.style.display = 'block';
                             if (amountEl) amountEl.textContent = formatPrice(data.remainingAmount);
                         }
                     }
                 } else {
                     if (typeof showNotification === 'function') showNotification(data.message || 'Kho hiện tại không còn đủ', 'error');
-                    // Update max stock if provided
+                    // Cập nhật lại giá trị input về số lượng tối đa trong kho nếu có
                     if (data.max_stock !== undefined) {
                         const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
                         if (input) input.dataset.stock = data.max_stock;
@@ -496,13 +496,30 @@ include __DIR__ . '/includes/header.php';
                 const productId = e.target.dataset.productId;
                 const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
                 let qty = parseInt(input.value) || 1;
-                updateCart(productId, qty + 1);
+                const stock = parseInt(input.dataset.stock || "0");
+
+                // Check if increasing would exceed stock
+                if (stock > 0 && qty + 1 > stock) {
+                    showNotification(`Số lượng vượt quá tồn kho. Chỉ còn ${stock} sản phẩm.`, 'error');
+                } else {
+                    updateCart(productId, qty + 1);
+                }
             }
             if (e.target.classList.contains('qty-decrease')) {
                 const productId = e.target.dataset.productId;
                 const input = document.querySelector(`.cart-qty-input[data-product-id='${productId}']`);
                 let qty = parseInt(input.value) || 1;
-                updateCart(productId, qty > 1 ? qty - 1 : 1);
+                const newQty = qty - 1;
+
+                if (newQty <= 0) {
+                    // Trigger change event on input with qty=0 to use js/scripts.js logic
+                    input.value = 0;
+                    input.dispatchEvent(new Event('change', {
+                        bubbles: true
+                    }));
+                } else {
+                    updateCart(productId, newQty);
+                }
             }
         });
     });

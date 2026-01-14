@@ -1,4 +1,5 @@
 <?php
+
 /**
  * admin/product_edit.php - Edit existing product (admin)
  */
@@ -11,7 +12,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $conn = getConnection();
-$success = '';
 $error = '';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
         $slug = trim($slug, '-');
     }
-	
+
 
     // handle image upload
     $imagePath = $product['image']; // keep existing by default
@@ -58,18 +58,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-	   if (empty($name)) {
-		$error = 'Vui lòng nhập tên sản phẩm.';
-	} elseif ($price === null || $price <= 0) {
-		// Logic: Giá gốc phải lớn hơn 0
-		$error = 'Giá sản phẩm phải lớn hơn 0.';
-	} elseif ($sale_price !== null && $sale_price < 0) {
-		// Logic: Giá giảm không được là số âm
-		$error = 'Giá giảm không thể là số âm.';
-	} elseif ($sale_price !== null && $sale_price >= $price) {
-		// Logic: Giá giảm phải nhỏ hơn giá gốc
-		$error = 'Giá giảm phải nhỏ hơn giá gốc.';
-	} else {
+    if (empty($name)) {
+        $error = 'Vui lòng nhập tên sản phẩm.';
+    } elseif ($price === null || $price <= 0) {
+        // Logic: Giá gốc phải lớn hơn 0
+        $error = 'Giá sản phẩm phải lớn hơn 0.';
+    } elseif ($sale_price !== null && $sale_price < 0) {
+        // Logic: Giá giảm không được là số âm
+        $error = 'Giá giảm không thể là số âm.';
+    } elseif ($sale_price !== null && $sale_price >= $price) {
+        // Logic: Giá giảm phải nhỏ hơn giá gốc
+        $error = 'Giá giảm phải nhỏ hơn giá gốc.';
+    } else {
         $sql = "UPDATE products SET category_id = ?, name = ?, slug = ?, description = ?, price = ?, sale_price = ?, unit = ?, image = ?, stock = ?, is_organic = ?, is_new = ?, is_featured = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $res = $stmt->execute([
@@ -101,132 +101,159 @@ $pageTitle = 'Chỉnh sửa sản phẩm';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= $pageTitle ?> - <?= SITE_NAME ?></title>
-    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet"/>
+    <link href="<?= SITE_URL ?>/css/tailwind.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="bg-gray-50">
-<div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Chỉnh sửa sản phẩm</h1>
+    <div class="p-6">
+        <h1 class="text-2xl font-bold mb-4">Chỉnh sửa sản phẩm</h1>
 
-    <?php if ($error): ?>
-        <div id="errorAlert" class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between">
-            <div>
-                <strong>✕ Lỗi!</strong> <?= $error ?>
-            </div>
-            <button onclick="document.getElementById('errorAlert').remove();" class="text-red-700 hover:text-red-900">&times;</button>
-        </div>
-    <?php endif; ?>
-
-    <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg border">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Tên sản phẩm</label>
-                <input name="name" required class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['name']) ?>">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Slug</label>
-                <input name="slug" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['slug']) ?>">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Danh mục</label>
-                <select name="category_id" class="w-full border px-3 py-2 rounded">
-                    <option value="">-- Chọn danh mục --</option>
-                    <?php foreach ($categories as $c): ?>
-                        <option value="<?= $c['id'] ?>" <?= $product['category_id'] == $c['id'] ? 'selected' : '' ?>><?= sanitize($c['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Đơn vị</label>
-                <input name="unit" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['unit']) ?>">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Giá</label>
-                <input type="number" name="price" step="0.01" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['price']) ?>">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Giá giảm (nếu có)</label>
-                <input type="number" name="sale_price" step="0.01" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['sale_price']) ?>">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium mb-1">Mô tả</label>
-                <textarea name="description" class="w-full border px-3 py-2 rounded" rows="4"><?= sanitize($product['description']) ?></textarea>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Ảnh hiện tại</label>
-                <div class="mb-2">
-                    <img src="<?= imageUrl($product['image']) ?>" class="w-32 h-32 object-cover border rounded">
+        <?php if ($error): ?>
+            <div id="errorAlert" class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between">
+                <div>
+                    <strong>✕ Lỗi!</strong> <?= $error ?>
                 </div>
-                <label class="block text-sm font-medium mb-1">Thay ảnh</label>
-                <div style="position:relative;">
-                    <input type="file" name="image" accept="image/*" id="productImageInput" class="w-full">
-                    <button type="button" onclick="document.getElementById('productImageInput').value=''; productImagePreview.src=''; productImagePreview.style.display='none';" 
+                <button onclick="document.getElementById('errorAlert').remove();" class="text-red-700 hover:text-red-900">&times;</button>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg border">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tên sản phẩm</label>
+                    <input name="name" required class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['name']) ?>">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Slug</label>
+                    <input name="slug" id="slugInput" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['slug']) ?>">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Danh mục</label>
+                    <select name="category_id" class="w-full border px-3 py-2 rounded">
+                        <option value="">-- Chọn danh mục --</option>
+                        <?php foreach ($categories as $c): ?>
+                            <option value="<?= $c['id'] ?>" <?= $product['category_id'] == $c['id'] ? 'selected' : '' ?>><?= sanitize($c['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Đơn vị</label>
+                    <input name="unit" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['unit']) ?>">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Giá</label>
+                    <input type="number" name="price" step="0.01" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['price']) ?>">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Giá giảm (nếu có)</label>
+                    <input type="number" name="sale_price" step="0.01" class="w-full border px-3 py-2 rounded" value="<?= sanitize($product['sale_price']) ?>">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-1">Mô tả</label>
+                    <textarea name="description" class="w-full border px-3 py-2 rounded" rows="4"><?= sanitize($product['description']) ?></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Ảnh hiện tại</label>
+                    <div class="mb-2">
+                        <img src="<?= imageUrl($product['image']) ?>" class="w-32 h-32 object-cover border rounded">
+                    </div>
+                    <label class="block text-sm font-medium mb-1">Thay ảnh</label>
+                    <div style="position:relative;">
+                        <input type="file" name="image" accept="image/*" id="productImageInput" class="w-full">
+                        <button type="button" onclick="document.getElementById('productImageInput').value=''; productImagePreview.src=''; productImagePreview.style.display='none';"
                             class="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" style="z-index:2;">Xóa hình</button>
+                    </div>
+                    <img id="productImagePreview" src="" style="display:none;max-width:96px;margin-top:8px;" />
+                    <script>
+                        document.getElementById('productImageInput').addEventListener('change', function(e) {
+                            const [file] = e.target.files;
+                            if (file) {
+                                productImagePreview.src = URL.createObjectURL(file);
+                                productImagePreview.style.display = 'block';
+                            } else {
+                                productImagePreview.src = '';
+                                productImagePreview.style.display = 'none';
+                            }
+                        });
+                    </script>
                 </div>
-                <img id="productImagePreview" src="" style="display:none;max-width:96px;margin-top:8px;" />
-                <script>
-                document.getElementById('productImageInput').addEventListener('change', function(e) {
-                    const [file] = e.target.files;
-                    if (file) {
-                        productImagePreview.src = URL.createObjectURL(file);
-                        productImagePreview.style.display = 'block';
-                    } else {
-                        productImagePreview.src = '';
-                        productImagePreview.style.display = 'none';
-                    }
-                });
-                </script>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tồn kho</label>
+                    <input type="number" name="stock" class="w-full border px-3 py-2 rounded" value="<?= (int)$product['stock'] ?>">
+                </div>
+                <div class="flex items-center gap-4">
+                    <label><input type="checkbox" name="is_organic" <?= $product['is_organic'] ? 'checked' : '' ?>> Hữu cơ</label>
+                    <label><input type="checkbox" name="is_new" <?= $product['is_new'] ? 'checked' : '' ?>> Mới</label>
+                    <label><input type="checkbox" name="is_featured" <?= $product['is_featured'] ? 'checked' : '' ?>> Nổi bật</label>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Tồn kho</label>
-                <input type="number" name="stock" class="w-full border px-3 py-2 rounded" value="<?= (int)$product['stock'] ?>">
+
+            <div class="mt-4">
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">Lưu</button>
+                <a href="products.php" class="ml-3 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">Hủy</a>
             </div>
-            <div class="flex items-center gap-4">
-                <label><input type="checkbox" name="is_organic" <?= $product['is_organic'] ? 'checked' : '' ?>> Hữu cơ</label>
-                <label><input type="checkbox" name="is_new" <?= $product['is_new'] ? 'checked' : '' ?>> Mới</label>
-                <label><input type="checkbox" name="is_featured" <?= $product['is_featured'] ? 'checked' : '' ?>> Nổi bật</label>
-            </div>
-        </div>
+        </form>
+    </div>
+    <script>
+        // Tạo slug tự động khi nhập tên
+               function slugify(text) {
+            return text.toString().toLowerCase() // Chuyển thành chữ thường
+                .normalize('NFKD') // Chuẩn hóa Unicode
+                .replace(/đ/g, 'd')// Thay đ bằng d
+                .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
+                .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
+                .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối
+        }
 
-        <div class="mt-4">
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">Lưu</button>
-            <a href="products.php" class="ml-3 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">Hủy</a>
-        </div>
-    </form>
-</div>
+        const nameInput = document.querySelector('input[name="name"]'); // Lấy input tên danh mục
+        const slugInput = document.getElementById('slugInput'); // Lấy input slug
+        if (nameInput && slugInput) {
+            nameInput.addEventListener('input', function() {
+                //Lấy giá trị hiện tại của ô tên, đi qua bộ lọc slugify, rồi gán kết quả vào ô slug.
+                slugInput.value = slugify(this.value);
+            });
+        }
+</script>
+    <style>
+        /* ===== RESPONSIVE FOR ADMIN FORMS ===== */
+        /* Mobile: < 768px */
+        @media (max-width: 767px) {
 
-<style>
-    /* ===== RESPONSIVE FOR ADMIN FORMS ===== */
-    /* Mobile: < 768px */
-    @media (max-width: 767px) {
-        input, textarea, select {
-            font-size: 16px !important;
-        }
-        
-        label {
-            font-size: 0.85rem !important;
-        }
-        
-        button, a {
-            padding: 0.5rem 1rem !important;
-            font-size: 0.9rem !important;
-        }
-    }
+            input,
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
 
-    /* Tablet: 768px - 1024px */
-    @media (min-width: 768px) and (max-width: 1024px) {
-        input, textarea, select {
-            padding: 0.6rem !important;
-            font-size: 0.9rem !important;
+            label {
+                font-size: 0.85rem !important;
+            }
+
+            button,
+            a {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem !important;
+            }
         }
-    }
-</style>
+
+        /* Tablet: 768px - 1024px */
+        @media (min-width: 768px) and (max-width: 1024px) {
+
+            input,
+            textarea,
+            select {
+                padding: 0.6rem !important;
+                font-size: 0.9rem !important;
+            }
+        }
+    </style>
 
 </body>
+
 </html>
-
-

@@ -5,7 +5,7 @@
  */
 
 /**
- * Load user's cart from database into session
+ * tải giỏ hàng từ database vào session
  */
 function loadCartFromDatabase($userId)
 {
@@ -23,18 +23,21 @@ function loadCartFromDatabase($userId)
 }
 
 /**
- * Save cart to database
+ * lưu giỏ hàng từ session vào database
  */
 function saveCartToDatabase($userId)
 {
-    if (!$userId || empty($_SESSION['cart'])) return;
+    if (!$userId) return;
 
     $conn = getConnection();
 
-    // Clear existing cart
+    //Xóa giỏ hàng hiện tại của người dùng trong database
     $conn->prepare("DELETE FROM carts WHERE user_id = ?")->execute([$userId]);
 
-    // Insert new cart items
+    // Nếu session cart trống, không cần chèn gì
+    if (empty($_SESSION['cart'])) return;
+
+    // chèn các mục giỏ hàng mới
     $stmt = $conn->prepare("INSERT INTO carts (user_id, product_id, quantity) VALUES (?, ?, ?)");
     foreach ($_SESSION['cart'] as $productId => $quantity) {
         $stmt->execute([$userId, $productId, $quantity]);
@@ -42,7 +45,7 @@ function saveCartToDatabase($userId)
 }
 
 /**
- * Merge session cart with database cart when user logs in
+ * gop giỏ hàng khi người dùng đăng nhập
  * Nếu sản phẩm tồn tại cả ở session và database, sử dụng số lượng lớn hơn
  */
 function mergeCartOnLogin($userId)

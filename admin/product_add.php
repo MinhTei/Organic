@@ -11,12 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 }
 
 $conn = getConnection();
-$success = '';
 $error = '';
 
 // Load categories
 $categories = getCategories();
-
+//Xử lý form khi thêm sản phẩm
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = isset($_POST['category_id']) ? (int)$_POST['category_id'] : null;
     $name = sanitize($_POST['name'] ?? '');
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $slug = trim($slug, '-');
     }
 
-    // handle image upload
+    // Xử lý upload ảnh
     $imagePath = '';
     if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../images/product/';
@@ -45,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $safe = time() . '_' . preg_replace('/[^a-z0-9_\-\.]/i', '_', $orig);
         $target = $uploadDir . $safe;
         if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            $imagePath = 'images/product/' . $safe; // store relative
+            $imagePath = 'images/product/' . $safe; // lưu đường dẫn tương đối
         }
     }
 
-    // Basic validation
+    // Thêm sản phẩm vào database
     if (empty($name) || $price === null) {
         $error = 'Vui lòng nhập tên và giá sản phẩm.';
     } else {
@@ -71,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         if ($res) {
-            $success = 'Thêm sản phẩm thành công!';
+            $_SESSION['success'] = 'Thêm sản phẩm thành công!';
             redirect('products.php');
         } else {
             $error = 'Có lỗi khi thêm sản phẩm.';
@@ -94,7 +93,7 @@ $pageTitle = 'Thêm sản phẩm';
 </head>
 <body class="bg-gray-50">
 <?php
-// Include the public header if available (use __DIR__ to resolve reliably)
+// thêm header
 $headerPath = __DIR__ . '/../includes/header.php';
 if (file_exists($headerPath)) {
     include $headerPath;
@@ -182,10 +181,11 @@ if (file_exists($headerPath)) {
 </div>
 
 <script>
-        // Auto-generate slug from name for convenience
+        // Tạo slug tự động khi nhập tên
         function slugify(text) {
             return text.toString().toLowerCase() // Chuyển thành chữ thường
-                .normalize('NFKD') // 
+                .normalize('NFKD') // Chuẩn hóa Unicode
+                .replace(/đ/g, 'd')// Thay đ bằng d
                 .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
                 .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
                 .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối

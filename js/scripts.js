@@ -5,7 +5,7 @@
 // Site URL (set from PHP)
 let SITE_URL = document.querySelector('meta[name="site-url"]')?.content || "";
 
-// Fallback to window location if SITE_URL not set
+// goi lại SITE_URL nếu chưa được thiết lập
 if (!SITE_URL) {
   const path = window.location.pathname;
   if (path.includes("/organic")) {
@@ -14,13 +14,13 @@ if (!SITE_URL) {
 }
 
 /**
- * Add product to cart
+ * thêm sản phẩm vào giỏ hàng qua AJAX
  */
 function addToCart(productId, quantity = 1) {
   // Sử dụng SITE_URL để đảm bảo đường dẫn tuyệt đối
   const url = SITE_URL + "/cart.php";
 
-  // Create abort controller for timeout
+  // tạo controller để hủy yêu cầu nếu quá thời gian chờ 10 giây
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
@@ -29,7 +29,7 @@ function addToCart(productId, quantity = 1) {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    credentials: "include",
+    credentials: "include", //Gửi session cookie để máy chủ nhận dạng người dùng
     signal: controller.signal,
     body: `action=add&product_id=${productId}&quantity=${quantity}`,
   })
@@ -69,22 +69,22 @@ function addToCart(productId, quantity = 1) {
 }
 
 /**
- * Toggle favorite product
+ * chuyển đổi trạng thái yêu thích của sản phẩm
  */
 function toggleFavorite(productId, evt) {
-  // Accept an optional event (for inline calls) and be resilient when locating the button
+  // chấp nhân sự kiện tùy chọn để xác định nút đã nhấp
   const e = evt || window.event || null;
   let btn = null;
 
   if (e && e.target && typeof e.target.closest === "function") {
-    btn = e.target.closest(".product-favorite, .product-favorite-btn");
+    btn = e.target.closest(".product-favorite, .product-favorite-btn"); //tìm nút btn yêu thích
   }
 
-  // Fallbacks: try currentTarget, or query by onclick/data attribute
+  // gọi lại nếu không tìm thấy nút từ sự kiện
   if (!btn && e && e.currentTarget) {
     btn = e.currentTarget.closest(".product-favorite, .product-favorite-btn");
   }
-
+  // cuối cùng, tìm nút trong tài liệu nếu vẫn không tìm thấy
   if (!btn) {
     btn = document.querySelector(
       `.product-favorite[onclick*="${productId}"], .product-favorite-btn[onclick*="${productId}"], .product-favorite[data-product-id="${productId}"], .product-favorite-btn[data-product-id="${productId}"]`
@@ -96,7 +96,7 @@ function toggleFavorite(productId, evt) {
   const icon = btn.querySelector(".material-symbols-outlined");
   if (!icon) return;
 
-  // Toggle visual state
+  // chuyen đổi trạng thái biểu tượng ngay lập tức cho phản hồi nhanh
   if (icon.style.fontVariationSettings?.includes("'FILL' 1")) {
     icon.style.fontVariationSettings = "'FILL' 0";
     icon.style.color = "";
@@ -105,16 +105,16 @@ function toggleFavorite(productId, evt) {
     icon.style.color = "#ef4444";
   }
 
-  // Delegate to the proper wishlist function for persistence and pass the button reference
+  // gọi hàm chuyển đổi yêu thích thực tế
   toggleWishlist(productId, btn);
   showNotification("Đã cập nhật yêu thích", "success");
 }
 
 /**
- * Update cart count in header
+ * Câp nhật số lượng giỏ hàng trong header
  */
 function updateCartCount(count) {
-  // Only update the cart icon badge (shopping_bag)
+  // Chỉ cập nhật biểu tượng giỏ hàng trong header
   const cartIconBtn = document.querySelector(
     '.header-actions a.icon-btn[href$="cart.php"]'
   );
@@ -123,7 +123,7 @@ function updateCartCount(count) {
       "span:not(.material-symbols-outlined)"
     );
     if (!cartBadge && count > 0) {
-      // Create badge if it doesn't exist
+      // Tạo thẻ badge nếu chưa tồn tại và số lượng > 0
       cartBadge = document.createElement("span");
       cartIconBtn.appendChild(cartBadge);
     }
@@ -285,13 +285,76 @@ function debounce(func, wait) {
 // Export functions for global use
 // Cart quantity update (AJAX, no reload)
 document.addEventListener("DOMContentLoaded", function () {
+  // Store previous value on focus for restoration if needed
+  document.body.addEventListener("focusin", function (e) {
+    if (e.target.classList && e.target.classList.contains("cart-qty-input")) {
+      e.target.dataset.prevValue = e.target.value;
+    }
+  });
+
   document.body.addEventListener("change", function (e) {
     if (e.target.classList.contains("cart-qty-input")) {
       const input = e.target;
       const productId = input.dataset.productId;
+      const stock = parseInt(input.dataset.stock || "0");
+      const prevVal =
+        parseInt(input.dataset.prevValue) || parseInt(input.defaultValue) || 1;
       let qty = parseInt(input.value);
-      if (isNaN(qty) || qty < 1) qty = 1;
+      if (isNaN(qty)) qty = prevVal;
+
       const cartUrl = SITE_URL + "/cart.php";
+
+      // If qty <= 0 -> ask user to confirm removal
+      if (qty <= 0) {
+        const confirmRemove = confirm(
+          " Bạn có muốn xóa sản phẩm khỏi giỏ hàng?"
+        );
+        if (confirmRemove) {
+          // Send remove request
+          fetch(cartUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            credentials: "include",
+            body: `action=remove&product_id=${productId}`,
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success) {
+                showNotification("Đã xóa sản phẩm", "success");
+                updateCartCount(data.cart_count || 0);
+                // Remove DOM row if present
+                const row = document.querySelector(
+                  `.cart-item[data-product-id='${productId}']`
+                );
+                if (row) row.remove();
+                // Reload to recalc totals
+                setTimeout(() => location.reload(), 300);
+              } else {
+                showNotification(data.message || "Có lỗi khi xóa", "error");
+              }
+            })
+            .catch((err) => {
+              console.error("Remove error", err);
+              showNotification("Lỗi khi xóa sản phẩm", "error");
+            });
+        } else {
+          // User cancelled removal → restore previous value
+          input.value = prevVal;
+        }
+        return;
+      }
+
+      // If qty exceeds stock, notify and set to max stock
+      if (stock > 0 && qty > stock) {
+        showNotification(
+          `Số lượng vượt quá tồn kho. Chỉ còn ${stock} sản phẩm.`,
+          "error"
+        );
+        input.value = stock;
+        qty = stock;
+      }
+
+      // Valid qty -> send update
       fetch(cartUrl, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -305,8 +368,18 @@ document.addEventListener("DOMContentLoaded", function () {
             updateCartCount(data.cart_count);
             // Optionally update cart total, etc. via JS here
           } else {
-            showNotification("Có lỗi khi cập nhật", "error");
+            showNotification(data.message || "Có lỗi khi cập nhật", "error");
+            // If server returned max_stock, update the input stock and value
+            if (data.max_stock !== undefined) {
+              input.dataset.stock = data.max_stock;
+              input.value = Math.min(qty, data.max_stock);
+            }
           }
+        })
+        .catch((err) => {
+          console.error("Update error", err);
+          showNotification("Lỗi khi cập nhật giỏ hàng", "error");
+          input.value = prevVal;
         });
     }
   });
@@ -316,13 +389,13 @@ window.toggleFavorite = toggleFavorite;
 window.showNotification = showNotification;
 
 /**
- * Toggle wishlist
+ * chuyển đổi trạng thái yêu thích của sản phẩm
  */
 function toggleWishlist(productId, btn = null) {
-  // Use a relative URL so the browser sends the current site's cookies (avoids SITE_URL mismatches)
+  //Sur dụng SITE_URL để đảm bảo đường dẫn tuyệt đối
   const wishlistUrl = "api/wishlist.php";
 
-  // If no button reference, get it from document
+  // Nếu nút không được cung cấp, cố gắng tìm nó trong tài liệu
   if (!btn) {
     btn = document.querySelector(`.product-favorite[onclick*="${productId}"]`);
   }
@@ -397,7 +470,7 @@ function toggleWishlist(productId, btn = null) {
     });
 }
 /**
- * Update wishlist count in header
+ * Cập nhật số lượng yêu thích trong header
  */
 function updateWishlistCount(count) {
   const badges = document.querySelectorAll(".wishlist-count-badge");
@@ -419,7 +492,7 @@ function updateWishlistCount(count) {
   });
 }
 
-// Fetch initial wishlist count on page load and update header badges
+// hiển thị số lượng yêu thích khi tải trang
 document.addEventListener("DOMContentLoaded", function () {
   const wishlistApi = "api/wishlist.php";
   fetch(wishlistApi, { method: "GET", credentials: "include" })

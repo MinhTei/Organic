@@ -49,7 +49,7 @@ echo implode(',', $headerRow) . "\r\n";
 
 // Sample data
 $sampleData = [
-    ['SP mẫu', 45000, '', 'Trái cây', 'cái', 30, 'Dưa hấu ngọt từ Tây Ninh', 'yes', 'no'],
+    ['Sầu riêng', 60000, '', 'Trái cây', 'kg', 30, 'Sầu riêng ri 6', 'yes', 'no'],
 ];
 
 // Write sample data - wrap fields có tiếng Việt với quotes
@@ -67,5 +67,3 @@ foreach ($sampleData as $row) {
 }
 
 exit;
-
-
