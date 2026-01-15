@@ -48,7 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Vui lòng nhập tên và giá sản phẩm.';
     } elseif (!$category_id) {
         $error = 'Vui lòng chọn danh mục sản phẩm.';
-    } else {
+    } 
+     elseif ($price === null || $price <= 0) {
+        // Logic: Giá gốc phải lớn hơn 0
+        $error = 'Giá sản phẩm phải lớn hơn 0.';
+    } elseif ($sale_price !== null && $sale_price < 0) {
+        // Logic: Giá giảm không được là số âm
+        $error = 'Giá giảm không thể là số âm.';
+    } elseif ($sale_price !== null && $sale_price >= $price) {
+        // Logic: Giá giảm phải nhỏ hơn giá gốc
+        $error = 'Giá giảm phải nhỏ hơn giá gốc.';
+    }else {
         $sql = "INSERT INTO products (category_id, name, slug, description, price, sale_price, unit, image, stock, is_organic, is_new, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $res = $stmt->execute([

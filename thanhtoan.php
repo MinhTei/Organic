@@ -95,7 +95,7 @@ if (isset($_POST['apply_coupon'])) {
                 if ($coupon['usage_limit'] && $coupon['used_count'] >= $coupon['usage_limit']) {
                     $couponError = 'Mã giảm giá đã hết lượt sử dụng.';
                 } else {
-                    if ($coupon['discount_type'] === 'percentage') { 
+                    if ($coupon['discount_type'] === 'percentage') {
                         $discountAmount = ($subtotal * $coupon['discount_value']) / 100;
                         if ($coupon['max_discount'] && $discountAmount > $coupon['max_discount']) {
                             $discountAmount = $coupon['max_discount'];
@@ -374,7 +374,7 @@ include __DIR__ . '/includes/header.php';
                     Địa chỉ giao hàng
                 </h2>
 
-                <!-- Option 1: Saved Address -->
+                <!-- Option 1: Địa chỉ đã lưu -->
                 <div style="margin-bottom: clamp(1rem, 2vw, 1.5rem);">
                     <label style="display: flex; align-items: flex-start; gap: clamp(0.75rem, 2vw, 1rem); cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); transition: all 0.3s;">
                         <input type="radio" name="address_type" value="saved" checked style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); margin-top: clamp(0.15rem, 0.5vw, 0.25rem); cursor: pointer; accent-color: var(--primary);">
@@ -407,7 +407,7 @@ include __DIR__ . '/includes/header.php';
                     </label>
                 </div>
 
-                <!-- Option 2: New Address -->
+                <!-- Option 2: Địa chỉ khác -->
                 <div style="margin-bottom: clamp(0.75rem, 1.5vw, 1rem);">
                     <label style="display: flex; align-items: flex-start; gap: clamp(0.75rem, 2vw, 1rem); cursor: pointer; padding: clamp(0.75rem, 1.5vw, 1rem); border: 2px solid var(--border-light); border-radius: clamp(0.5rem, 1vw, 0.75rem); transition: all 0.3s;">
                         <input type="radio" name="address_type" value="new" style="width: clamp(16px, 3vw, 20px); height: clamp(16px, 3vw, 20px); margin-top: clamp(0.15rem, 0.5vw, 0.25rem); cursor: pointer; accent-color: var(--primary);">
@@ -418,7 +418,7 @@ include __DIR__ . '/includes/header.php';
                     </label>
                 </div>
 
-                <!-- New Address Form (Hidden by default) -->
+                <!-- Nhập địa chỉ  -->
                 <div id="new-address-form" style="display: none; background: #f9f9f9; padding: clamp(1rem, 2vw, 1.5rem); border-radius: clamp(0.5rem, 1vw, 0.75rem); margin-top: clamp(1rem, 2vw, 1rem); border: 1px solid var(--border-light);">
                     <div style="display: grid; gap: clamp(0.75rem, 1.5vw, 1rem);">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1rem);">
@@ -440,7 +440,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
 
                         <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Email</label>
+                            <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">Email </label>
                             <input type="email" name="email" value="<?= $user ? sanitize($user['email']) : '' ?>" placeholder="Nhập email người nhận" maxlength="100"
                                 style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                         </div>
@@ -821,6 +821,7 @@ include __DIR__ . '/includes/header.php';
             // Thêm required cho các input trong new address form
             document.querySelector('input[name="name"]').setAttribute('required', 'required');
             document.querySelector('input[name="phone"]').setAttribute('required', 'required');
+            document.querySelector('input[name="email"]').setAttribute('required', 'required');
             document.querySelector('input[name="address"]').setAttribute('required', 'required');
 
             // Clear the form inputs - để trống tất cả để người dùng tự nhập
@@ -832,11 +833,6 @@ include __DIR__ . '/includes/header.php';
             document.querySelector('input[name="district"]').value = '';
             document.querySelector('input[name="city"]').value = ''; // Để trống, không mặc định TP. Hồ Chí Minh
             document.querySelector('textarea[name="note"]').value = '';
-
-            // Remove readonly từ email input
-            const emailInput = document.querySelector('input[name="email"]');
-            emailInput.removeAttribute('readonly');
-            emailInput.style.backgroundColor = 'transparent';
         } else {
             newAddressForm.style.display = 'none';
             shippingInfo.style.display = 'block';
@@ -844,15 +840,10 @@ include __DIR__ . '/includes/header.php';
             // Khi sử dụng địa chỉ đã lưu, set email từ tài khoản
             const emailInput = document.querySelector('input[name="email"]');
             emailInput.value = '<?= $user ? sanitize($user['email']) : '' ?>';
-            emailInput.setAttribute('readonly', 'readonly'); // Để readonly để không người dùng sửa
-            emailInput.style.backgroundColor = '#f9f9f9';
+            emailInput.removeAttribute('readonly'); // Cho phép người dùng sửa email
+            emailInput.style.backgroundColor = 'transparent'; // Đặt lại nền để người dùng biết có thể chỉnh sửa
 
-            // Loại bỏ required khi form ẩn
-            document.querySelector('input[name="name"]').removeAttribute('required');
-            document.querySelector('input[name="phone"]').removeAttribute('required');
-            document.querySelector('input[name="address"]').removeAttribute('required');
-
-            // Populate shipping info from selected address
+            // nhập dữ liệu từ địa chỉ đã lưu vào form hiển thị
             if (savedAddressSelect && savedAddressSelect.options.length > 0) {
                 const selectedOption = savedAddressSelect.options[savedAddressSelect.selectedIndex];
                 const text = selectedOption.text;
@@ -890,7 +881,7 @@ include __DIR__ . '/includes/header.php';
                     document.getElementById('email_saved').value = email;
                 }
 
-                // Get ward, district, city from data attributes
+                // Lấy dữ liệu quận/huyện, phường/xã, tỉnh/thành phố từ thuộc tính data- của option
                 const ward = selectedOption.getAttribute('data-ward') || '';
                 const district = selectedOption.getAttribute('data-district') || '';
                 const city = selectedOption.getAttribute('data-city') || '';
@@ -915,7 +906,7 @@ include __DIR__ . '/includes/header.php';
         }
     }
 
-    // Update payment method border on selection
+    // Cập nhật viền cho phương thức thanh toán
     function updatePaymentBorder() {
         const labels = document.querySelectorAll('label');
         labels.forEach(label => {
@@ -932,7 +923,7 @@ include __DIR__ . '/includes/header.php';
         });
     }
 
-    // Validate phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
+    // Định dạng số điện thoại: bắt đầu bằng 0 hoặc +84, tiếp theo là 3,5,7,8 hoặc 9, sau đó là 8 chữ số
     function validatePhoneNumber(phone) {
         return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.trim());
     }
@@ -941,7 +932,7 @@ include __DIR__ . '/includes/header.php';
     function showPhoneError(phoneInput, message) {
         let errorEl = phoneInput.nextElementSibling;
 
-        // Remove existing error if it exists
+        // Xóa lỗi cũ nếu có
         if (errorEl && errorEl.classList && errorEl.classList.contains('phone-error')) {
             errorEl.remove();
         }
@@ -960,20 +951,20 @@ include __DIR__ . '/includes/header.php';
         }
     }
 
-    // Initialize on page load
+    // Khởi tạo khi tải trang
     document.addEventListener('DOMContentLoaded', function() {
         updateAddressType();
         updatePaymentBorder();
 
-        // Phone number validation
+        // đinh dạng số điện thoại
         const phoneInputs = document.querySelectorAll('input[name="phone"]');
         phoneInputs.forEach(phoneInput => {
-            // Clear error on focus
+            // Xóa lỗi khi focus vào input
             phoneInput.addEventListener('focus', function() {
                 showPhoneError(this, '');
             });
 
-            // Real-time validation while typing
+            // "Kiểm tra định dạng số điện thoại khi nhập"
             phoneInput.addEventListener('input', function() {
                 const value = this.value.trim();
                 if (value.length > 0 && !validatePhoneNumber(value)) {
@@ -984,19 +975,19 @@ include __DIR__ . '/includes/header.php';
             });
         });
 
-        // Update shipping info when saved address changes
+        // Cập nhật khi thay đổi địa chỉ đã lưu
         const savedAddressSelect = document.querySelector('select[name="saved_address_id"]');
         if (savedAddressSelect) {
             savedAddressSelect.addEventListener('change', updateAddressType);
         }
 
-        // Update address type border when radio changes
+        // Cập nhật khi thay đổi loại địa chỉ 
         document.querySelectorAll('input[name="address_type"]').forEach(radio => {
             radio.addEventListener('change', updateAddressType);
         });
     });
 
-    // Update on radio change for payment method
+    // Cập nhật khi thay đổi phương thức thanh toán
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
         radio.addEventListener('change', updatePaymentBorder);
     });
