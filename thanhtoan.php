@@ -453,23 +453,25 @@ include __DIR__ . '/includes/header.php';
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(0.5rem, 1vw, 1rem);">
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Phường/Xã</label>
-                                <input type="text" name="ward" maxlength="100"
-                                    style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Quận/Huyện</label>
+                                <select name="district" id="new_address_district" onchange="updateNewAddressWards()" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                    <option value="">-- Chọn quận --</option>
+                                </select>
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Quận/Huyện</label>
-                                <input type="text" name="district" maxlength="100"
-                                    style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Phường/Xã</label>
+                                <select name="ward" id="new_address_ward" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                    <option value="">-- Chọn phường/xã --</option>
+                                </select>
                             </div>
 
                             <div>
                                 <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                     Tỉnh/Thành phố <span style="color: var(--danger);">*</span>
                                 </label>
-                                <input type="text" name="city" value="TP. Hồ Chí Minh" required minlength="3" maxlength="100"
-                                    style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <input type="text" name="city" value="TP. Hồ Chí Minh" readonly required minlength="3" maxlength="100"
+                                    style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem); background-color: #f5f5f5; color: var(--muted-light);">
                             </div>
                         </div>
                     </div>
@@ -713,6 +715,82 @@ include __DIR__ . '/includes/header.php';
 </main>
 
 <script>
+    // Lưu trữ dữ liệu quận/huyện và phường/xã từ file JSON
+    let districtsData = {};
+
+    // Hàm tải dữ liệu địa chỉ từ file JSON và khởi tạo dropdown quận
+    async function loadDistrictsData() {
+        try {
+            // Gọi API lấy file districts.json
+            const response = await fetch('./js/districts.json');
+            // Chuyển đổi dữ liệu từ JSON thành object JavaScript
+            const data = await response.json();
+            // Duyệt qua từng quận trong file JSON
+            data.districts.forEach(district => {
+                // Lưu tên quận làm key, danh sách phường làm value
+                districtsData[district.name] = district.wards;
+            });
+            // Đưa dữ liệu quận vào dropdown
+            populateDistrictsDropdown();
+        } catch (error) {
+            // In lỗi ra console nếu không thể tải file
+            console.error('Error loading districts data:', error);
+        }
+    }
+
+    // Hàm điền dữ liệu quận vào dropdown quận
+    function populateDistrictsDropdown() {
+        // Lấy element dropdown quận từ HTML
+        const districtSelect = document.getElementById('new_address_district');
+        // Nếu element không tồn tại thì thoát hàm
+        if (!districtSelect) return;
+        // Lấy tất cả tên quận, sắp xếp theo thứ tự ABC
+        Object.keys(districtsData).sort().forEach(district => {
+            // Tạo element <option> mới
+            const option = document.createElement('option');
+            // Đặt giá trị cho option (tên quận)
+            option.value = district;
+            // Đặt text hiển thị cho option (tên quận)
+            option.textContent = district;
+            // Thêm option vào dropdown
+            districtSelect.appendChild(option);
+        });
+    }
+
+    // Hàm cập nhật danh sách phường khi người dùng chọn quận
+    function updateNewAddressWards() {
+        // Lấy element dropdown quận
+        const districtSelect = document.getElementById('new_address_district');
+        // Lấy element dropdown phường
+        const wardSelect = document.getElementById('new_address_ward');
+        // Lấy giá trị quận được chọn
+        const selectedDistrict = districtSelect.value;
+
+        // Xóa tất cả option phường cũ (giữ lại option mặc định)
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+
+        // Nếu đã chọn quận và quận tồn tại trong dữ liệu
+        if (selectedDistrict && districtsData[selectedDistrict]) {
+            // Duyệt qua từng phường của quận được chọn
+            districtsData[selectedDistrict].forEach(ward => {
+                // Tạo element <option> mới cho phường
+                const option = document.createElement('option');
+                // Đặt giá trị cho option (tên phường)
+                option.value = ward;
+                // Đặt text hiển thị cho option (tên phường)
+                option.textContent = ward;
+                // Thêm option vào dropdown phường
+                wardSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Khởi tạo các hàm khi trang tải xong
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tải dữ liệu quận/phường
+        loadDistrictsData();
+    });
+
     // Update address type display
     function updateAddressType() {
         const addressType = document.querySelector('input[name="address_type"]:checked').value;

@@ -612,20 +612,25 @@ include __DIR__ . '/includes/header.php';
                                     <!-- Ward and District Row -->
                                     <div class="form-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem);">
                                         <div>
-                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Phường/Xã</label>
-                                            <input type="text" id="address-ward" placeholder="Nhập phường/xã" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Quận/Huyện</label>
+                                            <select id="address-district" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onchange="updateWardsDropdown()" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)';">
+                                                <option value="">-- Chọn quận --</option>
+                                            </select>
                                         </div>
 
                                         <div>
-                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Quận/Huyện</label>
-                                            <input type="text" id="address-district" placeholder="Nhập quận/huyện" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Phường/Xã</label>
+                                            <select id="address-ward" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)';">
+                                                <option value="">-- Chọn phường/xã --</option>
+                                            </select>
                                         </div>
                                     </div>
 
-                                    <!-- City -->
+                                    <!-- City (Fixed as TP. Hồ Chí Minh) -->
                                     <div>
                                         <label class="form-label" style="display: block; font-weight: 600; margin-bottom: clamp(0.4rem, 0.8vw, 0.6rem);">Tỉnh/Thành phố</label>
-                                        <input type="text" id="address-city" value="TP. Hồ Chí Minh" minlength="3" maxlength="100" style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; transition: all 0.2s;" onblur="this.style.borderColor='var(--border-light)'" onfocus="this.style.borderColor='var(--primary)'">
+                                        <input type="text" id="address-city" value="TP. Hồ Chí Minh" readonly style="width: 100%; padding: clamp(0.6rem, 1vw, 0.875rem); border: 1px solid var(--border-light); border-radius: clamp(0.3rem, 0.8vw, 0.5rem); font-size: clamp(0.85rem, 1.8vw, 1rem); box-sizing: border-box; background-color: #f5f5f5; color: var(--muted-light);">
+                                        <input type="hidden" name="city" value="TP. Hồ Chí Minh">
                                     </div>
 
                                     <!-- Note -->
@@ -805,6 +810,74 @@ include __DIR__ . '/includes/header.php';
 </main>
 
 <script>
+    // Lưu trữ dữ liệu quận/huyện và phường/xã từ file JSON
+    let districtsData = {};
+
+    // Hàm tải dữ liệu địa chỉ từ file JSON và khởi tạo dropdown quận
+    async function loadDistrictsData() {
+        try {
+            // Gọi API lấy file districts.json
+            const response = await fetch('./js/districts.json');
+            // Chuyển đổi dữ liệu từ JSON thành object JavaScript
+            const data = await response.json();
+            // Duyệt qua từng quận trong file JSON
+            data.districts.forEach(district => {
+                // Lưu tên quận làm key, danh sách phường làm value
+                districtsData[district.name] = district.wards;
+            });
+            // Đưa dữ liệu quận vào dropdown
+            populateDistrictsDropdown();
+        } catch (error) {
+            // In lỗi ra console nếu không thể tải file
+            console.error('Error loading districts data:', error);
+        }
+    }
+
+    // Hàm điền dữ liệu quận vào dropdown quận
+    function populateDistrictsDropdown() {
+        // Lấy element dropdown quận từ HTML
+        const districtSelect = document.getElementById('address-district');
+        // Lấy tất cả tên quận, sắp xếp theo thứ tự ABC
+        Object.keys(districtsData).sort().forEach(district => {
+            // Tạo element <option> mới
+            const option = document.createElement('option');
+            // Đặt giá trị cho option (tên quận)
+            option.value = district;
+            // Đặt text hiển thị cho option (tên quận)
+            option.textContent = district;
+            // Thêm option vào dropdown
+            districtSelect.appendChild(option);
+        });
+    }
+
+    // Hàm cập nhật danh sách phường khi người dùng chọn quận
+    function updateWardsDropdown() {
+        // Lấy element dropdown quận
+        const districtSelect = document.getElementById('address-district');
+        // Lấy element dropdown phường
+        const wardSelect = document.getElementById('address-ward');
+        // Lấy giá trị quận được chọn
+        const selectedDistrict = districtSelect.value;
+
+        // Xóa tất cả option phường cũ (giữ lại option mặc định)
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+
+        // Nếu đã chọn quận và quận tồn tại trong dữ liệu
+        if (selectedDistrict && districtsData[selectedDistrict]) {
+            // Duyệt qua từng phường của quận được chọn
+            districtsData[selectedDistrict].forEach(ward => {
+                // Tạo element <option> mới cho phường
+                const option = document.createElement('option');
+                // Đặt giá trị cho option (tên phường)
+                option.value = ward;
+                // Đặt text hiển thị cho option (tên phường)
+                option.textContent = ward;
+                // Thêm option vào dropdown phường
+                wardSelect.appendChild(option);
+            });
+        }
+    }
+
     // Validate Vietnam phone number format: (0|+84)(3|5|7|8|9)[0-9]{8}
     function validateVietnamPhoneNumber(phone) {
         return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
@@ -1000,6 +1073,11 @@ include __DIR__ . '/includes/header.php';
     function validateVietnamPhoneNumber(phone) {
         return /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone);
     }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDistrictsData();
+    });
 
     // Add real-time phone validation
     document.getElementById('address-phone').addEventListener('input', function() {

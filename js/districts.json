@@ -1,0 +1,102 @@
+{
+  "districts": [
+    {
+      "name": "Quận 1",
+      "wards": [
+        "Phường Bến Nghé",
+        "Phường Bến Thành",
+        "Phường Cầu Kho",
+        "Phường Cầu Ông Lãnh",
+        "Phường Đa Kao",
+        "Phường Nguyễn Huệ",
+        "Phường Tân Định"
+      ]
+    },
+    {
+      "name": "Quận 3",
+      "wards": [
+        "Phường 1",
+        "Phường 2",
+        "Phường 3",
+        "Phường 4",
+        "Phường 5",
+        "Phường 6",
+        "Phường 7",
+        "Phường 8",
+        "Phường 9",
+        "Phường 10",
+        "Phường 11",
+        "Phường 12",
+        "Phường 13",
+        "Phường 14"
+      ]
+    },
+    {
+      "name": "Quận 4",
+      "wards": [
+        "Phường 1",
+        "Phường 2",
+        "Phường 3",
+        "Phường 4",
+        "Phường 5",
+        "Phường 6",
+        "Phường 7",
+        "Phường 8",
+        "Phường 9",
+        "Phường 10",
+        "Phường 11",
+        "Phường 12",
+        "Phường 13",
+        "Phường 14",
+        "Phường 15",
+        "Phường 16"
+      ]
+    },
+    {
+      "name": "Quận 8",
+      "wards": [
+        "Phường 1",
+        "Phường 2",
+        "Phường 3",
+        "Phường 4",
+        "Phường 5",
+        "Phường 6",
+        "Phường 7",
+        "Phường 8",
+        "Phường 9",
+        "Phường 10",
+        "Phường 11",
+        "Phường 12",
+        "Phường 13",
+        "Phường 14",
+        "Phường 15",
+        "Phường 16",
+        "Phường 17"
+      ]
+    },
+    {
+      "name": "Thành phố Thủ Đức",
+      "wards": [
+        "Phường An Khánh",
+        "Phường An Lợi Đông",
+        "Phường An Phú",
+        "Phường Bình An",
+        "Phường Bình Chiểu",
+        "Phường Bình Thạnh",
+        "Phường Cát Lái",
+        "Phường Linh Chiểu",
+        "Phường Linh Đông",
+        "Phường Linh Tây",
+        "Phường Linh Xuân",
+        "Phường Tam Bình",
+        "Phường Tam Phú",
+        "Phường Thạnh Mỹ Lợi",
+        "Phường Thảo Điền",
+        "Phường Trường Thạnh",
+        "Phường Tăng Nhơn Phú A",
+        "Phường Tăng Nhơn Phú B",
+        "Phường Tân Phú"
+      ]
+    }
+  ]
+}
