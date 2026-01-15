@@ -38,7 +38,8 @@ $headers = [
     'Tồn kho',
     'Mô tả',
     'Hữu cơ',
-    'Mới'
+    'Mới',
+    'Nổi bật',
 ];
 
 // Write header row - wrap tất cả fields với quotes vì có tiếng Việt
@@ -49,7 +50,9 @@ echo implode(',', $headerRow) . "\r\n";
 
 // Sample data
 $sampleData = [
-    ['Sầu riêng', 60000, '', 'Trái cây', 'kg', 30, 'Sầu riêng ri 6', 'yes', 'no'],
+    ['Sầu riêng', 60000, '', 'Trái cây', 'kg', 30, 'Sầu riêng ri 6', 'yes', 'no', 'yes'],
+    ['Cà chua', 30000, 25000, 'Rau củ quả', 'kg', 50, 'Cà chua bi đỏ', 'yes', 'yes', 'no'],
+    ['Mật ong hoa nhãn', 150000, '', 'Đồ uống', 'chai', 20, 'Mật ong nguyên chất từ hoa nhãn', 'yes', 'no', 'no'],
 ];
 
 // Write sample data - wrap fields có tiếng Việt với quotes

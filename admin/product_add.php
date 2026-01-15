@@ -30,12 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_new = isset($_POST['is_new']) ? 1 : 0;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
-    // Sinh slug phía server nếu chưa có
-    if (empty($slug)) {
-        $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
-        $slug = trim($slug, '-');
-    }
-
     // Xử lý upload ảnh
     $imagePath = '';
     if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -55,39 +49,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!$category_id) {
         $error = 'Vui lòng chọn danh mục sản phẩm.';
     } else {
-        // Kiểm tra danh mục có tồn tại không
-        $stmt = $conn->prepare("SELECT id FROM categories WHERE id = ?");
-        $stmt->execute([$category_id]);
-        if (!$stmt->fetch()) {
-            $error = 'Danh mục được chọn không tồn tại.';
-        } else {
-            $sql = "INSERT INTO products (category_id, name, slug, description, price, sale_price, unit, image, stock, is_organic, is_new, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $res = $stmt->execute([
-                $category_id,
-                $name,
-                $slug,
-                $description,
-                $price,
-                $sale_price,
-                $unit,
-                $imagePath,
-                $stock,
-                $is_organic,
-                $is_new,
-                $is_featured
-            ]);
+        $sql = "INSERT INTO products (category_id, name, slug, description, price, sale_price, unit, image, stock, is_organic, is_new, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $res = $stmt->execute([
+            $category_id,
+            $name,
+            $slug,
+            $description,
+            $price,
+            $sale_price,
+            $unit,
+            $imagePath,
+            $stock,
+            $is_organic,
+            $is_new,
+            $is_featured
+        ]);
 
-            if ($res) {
-                $_SESSION['success'] = 'Thêm sản phẩm thành công!';
-                redirect('products.php');
-            } else {
-                $error = 'Có lỗi khi thêm sản phẩm.';
-            }
+        if ($res) {
+            $_SESSION['success'] = 'Thêm sản phẩm thành công!';
+            redirect('products.php');
+        } else {
+            $error = 'Có lỗi khi thêm sản phẩm.';
         }
     }
 }
-
 $pageTitle = 'Thêm sản phẩm';
 ?>
 <!DOCTYPE html>

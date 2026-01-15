@@ -272,15 +272,15 @@ function processProductRows($rows, $categoryId = null)
  */
 function mapHeaderColumns($headers)
 {
-    // Normalize headers: trim, remove UTF-8 BOM (Byte Order Mark) and lowercase
+    //Chuẩn hóa header: viêt thường, bỏ BOM, bỏ khoảng trắng
     $headerLower = [];
     foreach ($headers as $h) {
-        // Cast to string first to avoid passing null to trim() (deprecated in PHP 8.1+)
         $h = trim((string)$h);
-        // Remove UTF-8 BOM if present (three-byte sequence \xEF\xBB\xBF)
+        //Xóa BOM nếu có
         if (strncmp($h, "\xEF\xBB\xBF", 3) === 0) {
-            $h = substr($h, 3);
+            $h = substr($h, 3); // Nếu có BOM xóa 3 ký tự đầu
         }
+        // chuyển thành chữ thường
         $hLower = function_exists('mb_strtolower') ? mb_strtolower($h) : strtolower($h);
         $headerLower[] = $hLower;
     }
@@ -350,6 +350,7 @@ function getColumnVariations($column)
         'stock' => ['tồn kho', 'stock', 'qty', 'số lượng', 'kho'],
         'is_organic' => ['hữu cơ', 'organic', 'có hữu cơ'],
         'is_new' => ['mới', 'is new', 'new', 'sản phẩm mới'],
+        'is_featured' => ['nổi bật', 'featured', 'hot'],
         'slug' => ['slug']
     ];
 

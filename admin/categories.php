@@ -30,13 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
     $name = sanitize($_POST['name']);
     $slug = sanitize($_POST['slug']);
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-
-    // Sinh slug phía server nếu chưa có
-    if (empty($slug)) {
-        $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
-        $slug = trim($slug, '-');
-    }
-
     // Xử lý upload icon (ảnh) nếu có
     $iconPath = '';
     if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_OK) {
