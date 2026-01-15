@@ -37,9 +37,26 @@ function getProducts($options = [])
     // Lọc theo từ khóa tìm kiếm
     if (!empty($options['search'])) {
         $search = trim($options['search']);
-        // Tìm kiếm theo tên hoặc mô tả sản phẩm (substring match)
-        $where[] = "(p.name LIKE :search OR p.description LIKE :search)";
-        $params[':search'] = "%$search%";
+        // Tách từ khóa thành từng từ và tìm kiếm theo từ hoàn chỉnh
+        $keywords = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (!empty($keywords)) {
+            $searchConditions = [];
+            $keywordIndex = 0;
+
+            // Với mỗi từ khóa, tạo điều kiện tìm kiếm trong tên sản phẩm
+            // Sử dụng REGEXP để tìm từ hoàn chỉnh (không phải ký tự đơn lẻ)
+            foreach ($keywords as $keyword) {
+                $paramKey = ':search' . $keywordIndex;
+                // Tìm từ khóa được bao quanh bởi ranh giới từ hoặc khoảng trắng
+                $searchConditions[] = "p.name REGEXP :regexp$keywordIndex";
+                $params[':regexp' . $keywordIndex] = '(^|[[:space:]]+)' . preg_quote($keyword, '/') . '([[:space:]]+|$)';
+                $keywordIndex++;
+            }
+
+            // Sử dụng AND để tìm sản phẩm chứa tất cả các từ khóa
+            $where[] = "(" . implode(' AND ', $searchConditions) . ")";
+        }
     }
 
     // Lọc sản phẩm đang giảm giá
