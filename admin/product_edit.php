@@ -17,7 +17,7 @@ $error = '';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$id) redirect('products.php');
 
-// Load product
+// Load dữ liệu sản phẩm hiện tại
 $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
 $stmt->execute([$id]);
 $product = $stmt->fetch();
@@ -39,13 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_new = isset($_POST['is_new']) ? 1 : 0;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
-    if (empty($slug)) {
-        $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
-        $slug = trim($slug, '-');
-    }
-
-
-    // handle image upload
+    // Xử lý upload ảnh
     $imagePath = $product['image']; // keep existing by default
     if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../images/product/';

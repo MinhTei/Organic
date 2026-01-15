@@ -30,13 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
     $name = sanitize($_POST['name']);
     $slug = sanitize($_POST['slug']);
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-
-    // Sinh slug phía server nếu chưa có
-    if (empty($slug)) {
-        $slug = preg_replace('/[^a-z0-9\-]+/i', '-', strtolower($name));
-        $slug = trim($slug, '-');
-    }
-
     // Xử lý upload icon (ảnh) nếu có
     $iconPath = '';
     if (!empty($_FILES['icon']['name']) && $_FILES['icon']['error'] === UPLOAD_ERR_OK) {
@@ -89,11 +82,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_category'])) {
 // Xử lý xóa danh mục
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $stmt = $conn->prepare("DELETE FROM categories WHERE id = ?");
-    if ($stmt->execute([$id])) {
-        $success = 'Xóa danh mục thành công!';
+
+    // Kiểm tra xem danh mục có sản phẩm không
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM products WHERE category_id = ?");
+    $stmt->execute([$id]);
+    $productCount = $stmt->fetchColumn();
+
+    if ($productCount > 0) {
+        // Danh mục có sản phẩm, không được xóa
+        $error = "Không thể xóa danh mục này vì có {$productCount} sản phẩm thuộc danh mục. Vui lòng xóa hết sản phẩm trước khi xóa danh mục.";
     } else {
-        $error = 'Không thể xóa danh mục này.';
+        // Danh mục không có sản phẩm, có thể xóa
+        $stmt = $conn->prepare("DELETE FROM categories WHERE id = ?");
+        if ($stmt->execute([$id])) {
+            $success = 'Xóa danh mục thành công!';
+        } else {
+            $error = 'Không thể xóa danh mục này.';
+        }
     }
 }
 
@@ -320,7 +325,7 @@ $pageTitle = 'Quản lý Danh mục';
 
     <script>
         function deleteCategory(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa danh mục này?\nLưu ý: Các sản phẩm thuộc danh mục này sẽ không có danh mục.')) {
+            if (confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
                 window.location.href = '?delete=' + id;
             }
         }
@@ -328,10 +333,10 @@ $pageTitle = 'Quản lý Danh mục';
 
     <script>
         // Auto-generate slug from name for convenience
-            function slugify(text) {
+        function slugify(text) {
             return text.toString().toLowerCase() // Chuyển thành chữ thường
                 .normalize('NFKD') // Chuẩn hóa Unicode
-                .replace(/đ/g, 'd')// Thay đ bằng d
+                .replace(/đ/g, 'd') // Thay đ bằng d
                 .replace(/[\u0300-\u036f]/g, '') //Bỏ dấu
                 .replace(/[^a-z0-9]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
                 .replace(/^-+|-+$/g, ''); // Bỏ dấu gạch ngang ở đầu và cuối

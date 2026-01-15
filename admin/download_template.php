@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Kiểm tra quyền admin trước khi require config
+// Kiểm tra quyền admin trước khi tiếp tục
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     // Nếu chưa login, chuyển hướng
     require_once __DIR__ . '/../includes/config.php';
@@ -28,7 +28,7 @@ header('Expires: 0');
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-// Header columns - phải wrap với quotes để Excel nhận diện UTF-8 đúng
+// Header columns - phải wrap (dấu ngoặc '') với quotes (dấu ngoặc "") để Excel nhận diện UTF-8 đúng
 $headers = [
     'Tên sản phẩm',
     'Giá',
@@ -38,7 +38,8 @@ $headers = [
     'Tồn kho',
     'Mô tả',
     'Hữu cơ',
-    'Mới'
+    'Mới',
+    'Nổi bật',
 ];
 
 // Write header row - wrap tất cả fields với quotes vì có tiếng Việt
@@ -49,7 +50,9 @@ echo implode(',', $headerRow) . "\r\n";
 
 // Sample data
 $sampleData = [
-    ['Sầu riêng', 60000, '', 'Trái cây', 'kg', 30, 'Sầu riêng ri 6', 'yes', 'no'],
+    ['Sầu riêng', 60000, '', 'Trái cây', 'kg', 30, 'Sầu riêng ri 6', 'yes', 'no', 'yes'],
+    ['Cà chua', 30000, 25000, 'Rau củ quả', 'kg', 50, 'Cà chua bi đỏ', 'yes', 'yes', 'no'],
+    ['Mật ong hoa nhãn', 150000, '', 'Đồ uống', 'chai', 20, 'Mật ong nguyên chất từ hoa nhãn', 'yes', 'no', 'no'],
 ];
 
 // Write sample data - wrap fields có tiếng Việt với quotes
