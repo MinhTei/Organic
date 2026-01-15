@@ -11,7 +11,7 @@ $success = '';
 $error = '';
 $step = 'request'; // request, sent, reset
 
-// Handle password reset request
+//      Xử lý form gửi yêu cầu đặt lại mật khẩu
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
     $email = sanitize($_POST['email']);
     
@@ -20,21 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
     } else {
         $conn = getConnection();
         
-        // Check if email exists
+        //  Kiểm tra email có tồn tại không
         $stmt = $conn->prepare("SELECT id, name FROM users WHERE email = :email");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
         
         if ($user) {
-            // Generate reset token
+            //  Tạo token đặt lại mật khẩu và lưu vào database
             $token = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
             
-            // Delete old tokens for this email
+            //  Xóa các token cũ nếu có
             $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = :email");
             $stmt->execute([':email' => $email]);
             
-            // Insert new token
+            //  Lưu token mới
             $stmt = $conn->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (:email, :token, :expires_at)");
             $stmt->execute([
                 ':email' => $email,
@@ -42,10 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reset'])) {
                 ':expires_at' => $expiresAt
             ]);
             
-            // Create reset link
+            //  Tạo link đặt lại mật khẩu
             $resetLink = SITE_URL . "/reset_password.php?token=" . $token;
             
-            // Send email with reset link
+            //      Gửi email đặt lại mật khẩu
             $subject = "Đặt lại mật khẩu - " . SITE_NAME;
             $message = '
             <!DOCTYPE html>

@@ -9,11 +9,6 @@
  * - Liệt kê top sản phẩm bán chạy
  * - Lọc theo khoảng ngày
  * - Giao diện đồng bộ với các trang quản trị khác
- *
- * Hướng dẫn:
- * - Sử dụng sidebar chung (_sidebar.php)
- * - Header hiển thị avatar, tên admin, link về trang chủ
- * - Nếu không có dữ liệu, sẽ hiển thị dữ liệu mẫu để xem giao diện
  */
 
 require_once __DIR__ . '/../includes/config.php';
@@ -26,8 +21,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 $conn = getConnection();
 
 // Lấy khoảng ngày lọc thống kê (mặc định: từ đầu tháng đến hôm nay)
-$startDate = $_GET['start'] ?? date('Y-m-01'); // Ngày đầu tháng
-$endDate = $_GET['end'] ?? date('Y-m-d'); // Hôm nay
+$startDate = $_GET['start'] ?? date('Y-m-01'); 
+$endDate = $_GET['end'] ?? date('Y-m-d'); 
 
 // Thống kê doanh thu theo ngày
 $revenueStmt = $conn->prepare("
@@ -87,6 +82,29 @@ $statusStmt = $conn->prepare("
 ");
 $statusStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
 $orderStatus = $statusStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+// Lấy top 10 khách hàng mua hàng nhiều nhất
+// $topCustomersStmt = $conn->prepare("
+//     SELECT 
+//         u.id,
+//         u.name,
+//         u.email,
+//         u.phone,
+//         u.membership,
+//         COUNT(o.id) as total_orders,
+//         SUM(o.total_amount) as total_spent,
+//         MAX(o.created_at) as last_order_date
+//     FROM users u
+//     JOIN orders o ON u.id = o.user_id
+//     WHERE o.created_at BETWEEN ? AND ?
+//     AND o.status != 'cancelled'
+//     AND u.role = 'customer'
+//     GROUP BY u.id, u.name, u.email, u.phone, u.membership
+//     ORDER BY total_spent DESC
+//     LIMIT 10
+// ");
+// $topCustomersStmt->execute([$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+// $topCustomers = $topCustomersStmt->fetchAll();
 
 $pageTitle = 'Thống kê & Báo cáo';
 
@@ -275,6 +293,7 @@ $pageTitle = 'Thống kê & Báo cáo';
                     </div>
                 </div>
             </div>
+            
 
             <!-- Top Products -->
             <div class="bg-white rounded-lg sm:rounded-xl border border-gray-200 p-3 sm:p-6">
@@ -311,7 +330,7 @@ $pageTitle = 'Thống kê & Báo cáo';
     </div>
 
     <script>
-    // Export report dropdown logic
+    //  Ẩn/hiện dropdown xuất báo cáo
     document.addEventListener('DOMContentLoaded', function() {
         const exportBtn = document.getElementById('exportBtn');
         const exportDropdown = document.getElementById('exportDropdown');
@@ -327,14 +346,14 @@ $pageTitle = 'Thống kê & Báo cáo';
         }
     });
 
-    // Dummy export functions (to be implemented)
+    //  Hàm xuất báo cáo
     function exportReport(format) {
         const startDate = document.querySelector('input[name="start"]').value;
         const endDate = document.querySelector('input[name="end"]').value;
         window.location.href = `export_report.php?format=${format}&start=${startDate}&end=${endDate}`;
     }
-    // Revenue Chart
-    // Ensure revenue values are numeric and compute a sensible suggested max so the line doesn't appear as a near-vertical line
+    //  Biểu đồ doanh thu 
+    //  Đảm bảo dữ liệu đúng định dạng số
     const revenueLabels = <?= json_encode(array_column($revenueData, 'date')) ?>;
     const revenueValues = <?= json_encode(array_map('floatval', array_column($revenueData, 'revenue'))) ?>;
     const maxRevenue = <?= json_encode((float) (count($revenueData) ? max(array_map(function($r){ return isset($r['revenue']) ? (float)$r['revenue'] : 0; }, $revenueData)) : 0)) ?>;
@@ -374,7 +393,7 @@ $pageTitle = 'Thống kê & Báo cáo';
         }
     });
 
-    // Order Status Chart
+    //  Biểu đồ trạng thái đơn hàng
     const statusCtx = document.getElementById('statusChart').getContext('2d');
     const statusData = <?= json_encode($orderStatus) ?>;
     new Chart(statusCtx, {

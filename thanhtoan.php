@@ -21,23 +21,25 @@ require_once __DIR__ . '/includes/settings_helper.php';
 $success = '';
 $error = '';
 
-// Check if cart is empty
+// Kiểm tra giỏ hàng
 if (empty($_SESSION['cart'])) {
     redirect(SITE_URL . '/cart.php');
 }
 
-// Check login status
+// Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
     redirect(SITE_URL . '/auth.php?redirect=thanhtoan');
 }
 
-// Get cart items
+//  Lấy thông tin giỏ hàng
 $conn = getConnection();
 $cartItems = [];
 $subtotal = 0;
 $userId = $_SESSION['user_id'];
 
+// Lấy chi tiết sản phẩm trong giỏ hàng băgf khóa
 $ids = array_keys($_SESSION['cart']);
+// Tạo chuỗi dấu hỏi cho prepared statement 
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
 $stmt = $conn->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
@@ -58,7 +60,7 @@ foreach ($products as $product) {
     ];
 }
 
-// Get user info and saved addresses
+//  Lấy thông tin người dùng và địa chỉ đã lưu
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
@@ -67,7 +69,7 @@ $stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE user_id = ? ORDER
 $stmt->execute([$userId]);
 $savedAddresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Shipping fee
+//  Tính phí vận chuyển
 $shippingFee = (int) getSystemSetting('default_shipping_fee', 25000);
 $freeShippingThreshold = (int) getSystemSetting('free_shipping_threshold', 500000);
 $isFreeShipping = $subtotal >= $freeShippingThreshold;
@@ -75,7 +77,7 @@ if ($isFreeShipping) {
     $shippingFee = 0;
 }
 
-// Coupon discount
+//  Xử lý mã giảm giá
 $discountAmount = 0;
 $couponCode = '';
 $couponError = '';
@@ -93,7 +95,7 @@ if (isset($_POST['apply_coupon'])) {
                 if ($coupon['usage_limit'] && $coupon['used_count'] >= $coupon['usage_limit']) {
                     $couponError = 'Mã giảm giá đã hết lượt sử dụng.';
                 } else {
-                    if ($coupon['discount_type'] === 'percentage') {
+                    if ($coupon['discount_type'] === 'percentage') { 
                         $discountAmount = ($subtotal * $coupon['discount_value']) / 100;
                         if ($coupon['max_discount'] && $discountAmount > $coupon['max_discount']) {
                             $discountAmount = $coupon['max_discount'];
@@ -112,14 +114,14 @@ if (isset($_POST['apply_coupon'])) {
     }
 }
 
-// Remove coupon
+//      Xóa mã giảm giá
 if (isset($_POST['remove_coupon'])) {
     unset($_SESSION['applied_coupon']);
     $couponCode = '';
     $discountAmount = 0;
 }
 
-// Apply saved coupon
+//      Áp dụng coupon từ session nếu có
 if (isset($_SESSION['applied_coupon']) && empty($couponCode)) {
     $couponCode = $_SESSION['applied_coupon'];
     $stmt = $conn->prepare("SELECT * FROM coupons WHERE code = :code AND is_active = 1");
@@ -138,15 +140,15 @@ if (isset($_SESSION['applied_coupon']) && empty($couponCode)) {
     }
 }
 
-// Calculate final total
+//  Tính tổng cuối cùng
 $total = $subtotal + $shippingFee - $discountAmount;
 
-// Process order
+//  Xử lý đặt hàng
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $addressType = $_POST['address_type'] ?? '';
     $savedAddressId = (int)($_POST['saved_address_id'] ?? 0);
 
-    // Determine which fields to use
+    //  Lấy thông tin giao hàng
     $name = '';
     $phone = '';
     $email = '';
@@ -156,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $city = '';
 
     if ($addressType === 'saved') {
-        // Use saved address
+        //  Sử dụng địa chỉ đã lưu
         if ($savedAddressId <= 0) {
             $error = 'Vui lòng chọn địa chỉ giao hàng.';
         } else {
@@ -167,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             if (!$selectedAddr) {
                 $error = 'Địa chỉ giao hàng không hợp lệ.';
             } else {
-                // Get data from hidden inputs (sent by JavaScript) or fallback to database
+                //      Lấy thông tin từ địa chỉ đã lưu, ưu tiên dữ liệu từ form nếu có
                 $name = sanitize($_POST['name_saved'] ?? '') ?: $selectedAddr['name'];
                 $phone = sanitize($_POST['phone_saved'] ?? '') ?: $selectedAddr['phone'];
                 $address = sanitize($_POST['address_saved'] ?? '') ?: $selectedAddr['address'];
@@ -176,14 +178,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 $city = sanitize($_POST['city_saved'] ?? '') ?: ($selectedAddr['city'] ?? 'TP. Hồ Chí Minh');
                 $email = sanitize($_POST['email_saved'] ?? '') ?: ($user['email'] ?? '');
 
-                // Fallback: if email still empty, use account email
+                //  Nếu email form rỗng, dùng email tài khoản
                 if (empty($email)) {
                     $email = $user['email'] ?? '';
                 }
             }
         }
     } elseif ($addressType === 'new') {
-        // Use new address from form
+        //  Nhập địa chỉ mới
         $name = sanitize($_POST['name'] ?? '');
         $phone = sanitize($_POST['phone'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
@@ -214,10 +216,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         try {
             $conn->beginTransaction();
 
-            // Generate order code
+            //  Tạo mã đơn hàng
             $orderCode = 'ORD' . date('Ymd') . rand(1000, 9999);
 
-            // Create order
+            //  Thêm đơn hàng vào bảng orders
             $sql = "INSERT INTO orders (
                 user_id, order_code, total_amount, discount_amount, shipping_fee, 
                 final_amount, status, payment_method, payment_status,
@@ -252,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
             $orderId = $conn->lastInsertId();
 
-            // Create order items
+            //    Thêm sản phẩm vào order_items
             $sql = "INSERT INTO order_items (order_id, product_id, product_name, product_image, quantity, unit_price, total_price) 
                     VALUES (:order_id, :product_id, :product_name, :product_image, :quantity, :unit_price, :total_price)";
             $stmt = $conn->prepare($sql);
@@ -268,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     ':total_price' => $item['total']
                 ]);
 
-                // Update product stock
+                //  Cập nhật tồn kho
                 $updateStock = $conn->prepare("UPDATE products SET stock = stock - :qty WHERE id = :id");
                 $updateStock->execute([':qty' => $item['quantity'], ':id' => $item['product']['id']]);
             }
@@ -276,27 +278,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             // Note: Địa chỉ mới chỉ được dùng tạm thời, không lưu vào customer_addresses
             // Nếu khách muốn lưu, họ phải tự thêm ở trang user_info.php
 
-            // Update coupon usage
+            //  Cập nhật số lần sử dụng mã giảm giá
             if ($couponCode) {
                 $stmt = $conn->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE code = :code");
                 $stmt->execute([':code' => $couponCode]);
             }
 
-            // Clear cart from database (within transaction)
+            //  Xóa giỏ hàng của người dùng trong database
             $conn->prepare("DELETE FROM carts WHERE user_id = ?")->execute([$userId]);
 
             $conn->commit();
 
-            // Clear cart from session
+            //  Xóa giỏ hàng và mã giảm giá khỏi session
             unset($_SESSION['cart']);
             unset($_SESSION['applied_coupon']);
 
-            // Send order confirmation email
+            //  Gửi email xác nhận đơn hàng
             if (!empty($email)) {
                 sendOrderConfirmationEmail($email, $name, $orderId, $total);
             }
 
-            // Redirect to success page
+            //  Chuyển hướng đến trang thành công
             $_SESSION['order_success'] = [
                 'order_id' => $orderId,
                 'order_code' => $orderCode,

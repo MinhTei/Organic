@@ -7,7 +7,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// Check if user is logged in
+//  Kiểm tra đăng nhập
 if (!isset($_SESSION['user_id'])) {
     redirect(SITE_URL . '/auth.php');
 }
@@ -16,7 +16,7 @@ $userId = $_SESSION['user_id'];
 $success = '';
 $error = '';
 
-// Get user data
+//  Lấy thông tin người dùng
 $conn = getConnection();
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
@@ -32,12 +32,12 @@ $stmt = $conn->prepare("SELECT * FROM customer_addresses WHERE user_id = ? ORDER
 $stmt->execute([$userId]);
 $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Handle avatar delete (separate from profile update)
+//  Xử lý xóa ảnh đại diện
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_avatar'])) {
     try {
         $conn->beginTransaction();
 
-        // Delete old avatar file if exists and is a local file
+        //  Xóa file avatar cũ nếu tồn tại và là file local
         if (!empty($user['avatar']) && strpos($user['avatar'], 'images/avatars/') === 0) {
             $oldFile = __DIR__ . '/' . $user['avatar'];
             if (is_file($oldFile)) {
@@ -45,13 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_avatar'])) {
             }
         }
 
-        // Clear avatar column in DB
+        //  Cập nhật cột avatar về NULL
         $stmt = $conn->prepare("UPDATE users SET avatar = NULL WHERE id = :id");
         $stmt->execute([':id' => $userId]);
 
         $conn->commit();
 
-        // Update local $user for immediate display
+        //  Cập nhật mảng $user cục bộ để hiển thị ngay lập tức
         $user['avatar'] = null;
         $success = 'Đã xóa ảnh đại diện.';
     } catch (Exception $ex) {
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_avatar'])) {
     }
 }
 
-// Handle profile update
+//  Xử lý cập nhật thông tin cá nhân
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $name = sanitize($_POST['name']);
     $phone = sanitize($_POST['phone']);
@@ -73,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     } elseif (!empty($phone) && !preg_match('/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/', $phone)) {
         $error = 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng (0XXXXXXXXXX hoặc +84XXXXXXXXX).';
     } else {
-        // Start transaction to update profile (and avatar if provided)
+        //  Cập nhật thông tin người dùng
         try {
             $conn->beginTransaction();
 
-            // Handle avatar upload if present
+            //  Xử lý tải lên ảnh đại diện nếu có
             if (!empty($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $file = $_FILES['avatar'];
                 $allowed = ['image/jpeg', 'image/png', 'image/gif'];
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                     throw new Exception('Định dạng ảnh không được hỗ trợ. Vui lòng chọn JPG/PNG/GIF.');
                 }
 
-                // Ensure target directory exists
+                //  Lưu file vào thư mục avatars
                 $uploadDir = __DIR__ . '/images/avatars';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
@@ -118,10 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                     throw new Exception('Không thể lưu ảnh tải lên. Vui lòng kiểm tra quyền ghi của thư mục hoặc cấu hình PHP.');
                 }
 
-                // Build relative path to store in DB (web-accessible)
+                //  Cập nhật đường dẫn avatar trong database
                 $avatarPath = 'images/avatars/' . $filename;
 
-                // Delete old avatar file if exists and is a local file
+                //  Xóa file avatar cũ nếu tồn tại và là file local
                 if (!empty($user['avatar']) && strpos($user['avatar'], 'images/avatars/') === 0) {
                     $oldFile = __DIR__ . '/' . $user['avatar'];
                     if (is_file($oldFile)) {
@@ -129,14 +129,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                     }
                 }
 
-                // Update avatar column
+                //  Cập nhật cột avatar
                 $stmt = $conn->prepare("UPDATE users SET avatar = :avatar WHERE id = :id");
                 $stmt->execute([':avatar' => $avatarPath, ':id' => $userId]);
-                // Update local $user array for immediate display
+                //  Cập nhật mảng $user cục bộ để hiển thị ngay lập tức
                 $user['avatar'] = $avatarPath;
             }
 
-            // Update other profile fields
+            //  Cập nhật các thông tin khác
             $stmt = $conn->prepare("UPDATE users SET name = :name, phone = :phone, birthdate = :birthdate WHERE id = :id");
             $stmt->execute([':name' => $name, ':phone' => $phone, ':birthdate' => $birthdate, ':id' => $userId]);
 
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     }
 }
 
-// Handle password change
+//  Xử lý đổi mật khẩu
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $currentPassword = $_POST['current_password'] ?? '';
     $newPassword = $_POST['new_password'] ?? '';
@@ -169,9 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     } elseif (strlen($newPassword) < 6) {
         $error = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
     } else {
-        // Verify current password
+        //  Kiểm tra mật khẩu hiện tại
         if (password_verify($currentPassword, $user['password'])) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("UPDATE users SET password = :password WHERE id = :id");
             $stmt->execute([':password' => $hashedPassword, ':id' => $userId]);
             $success = 'Đổi mật khẩu thành công!';
@@ -181,13 +181,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     }
 }
 
-// Handle logout
+//  Xử lý đăng xuất
 if (isset($_GET['logout'])) {
     session_destroy();
     redirect(SITE_URL . '/auth.php');
 }
 
-// Get user orders
+//  Lấy 5 đơn hàng gần đây nhất
 $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 5");
 $stmt->execute([':user_id' => $userId]);
 $orders = $stmt->fetchAll();

@@ -12,7 +12,7 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'login';
 $success = '';
 $error = '';
 
-// Handle Login
+//  Đăneg nhập
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $email = sanitize($_POST['email']);
     $password = $_POST['password'];
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     }
 }
 
-// Handle Registration
+//  Đăng ký
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $name = sanitize($_POST['name']);
     $email = sanitize($_POST['email']);
