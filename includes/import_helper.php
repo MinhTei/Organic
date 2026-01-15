@@ -171,8 +171,8 @@ function processProductRows($rows, $categoryId = null)
             $description = sanitize((string)($row[$headerMap['description']] ?? ''));
             $is_organic = isset($headerMap['is_organic']) ? (strtolower(trim((string)$row[$headerMap['is_organic']] ?? 'yes')) === 'yes' ? 1 : 0) : 1;
             $is_new = isset($headerMap['is_new']) ? (strtolower(trim((string)$row[$headerMap['is_new']] ?? 'no')) === 'yes' ? 1 : 0) : 0;
-            $imagePath = ''; // import doesn't handle image uploads; leave empty
-            $is_featured = 0; // default to not featured
+            $imagePath = ''; // Không hỗ trợ import ảnh qua file Excel/CSV
+            $is_featured = isset($headerMap['is_featured']) ? (strtolower(trim((string)$row[$headerMap['is_featured']] ?? 'no')) === 'yes' ? 1 : 0) : 0;
 
             // Kiểm tra dữ liệu bắt buộc
             if (empty($name)) {
