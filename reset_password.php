@@ -11,7 +11,7 @@ $error = '';
 $validToken = false;
 $email = '';
 
-// Get and validate token
+//  Lấy token từ URL
 $token = isset($_GET['token']) ? sanitize($_GET['token']) : '';
 
 if (empty($token)) {
@@ -19,7 +19,7 @@ if (empty($token)) {
 } else {
     $conn = getConnection();
     
-    // Check if token exists and not expired
+    //  Kiểm tra token hợp lệ và chưa hết hạn
     $stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = :token AND expires_at > NOW()");
     $stmt->execute([':token' => $token]);
     $reset = $stmt->fetch();
@@ -32,12 +32,12 @@ if (empty($token)) {
     }
 }
 
-// Handle password reset
+//  Xử lý form đặt lại mật khẩu
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password']) && $validToken) {
     $password = $_POST['password'];
     $confirmPassword = $_POST['confirm_password'];
     
-    // Validation
+    //  Kiểm tra mật khẩu
     if (empty($password)) {
         $error = 'Vui lòng nhập mật khẩu mới.';
     } elseif (strlen($password) < 6) {
@@ -47,15 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password']) && 
     } else {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
-        // Update user password
+        // Cập nhật mật khẩu mới cho người dùng
         $stmt = $conn->prepare("UPDATE users SET password = :password WHERE email = :email");
         if ($stmt->execute([':password' => $hashedPassword, ':email' => $email])) {
-            // Delete used token
+            //  Xóa token sau khi đặt lại mật khẩu thành công
             $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = :email");
             $stmt->execute([':email' => $email]);
             
             $success = 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập với mật khẩu mới.';
-            $validToken = false; // Prevent form from showing again
+            $validToken = false; //     Không cho phép sử dụng lại token
         } else {
             $error = 'Có lỗi xảy ra, vui lòng thử lại.';
         }
