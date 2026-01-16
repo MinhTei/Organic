@@ -383,7 +383,7 @@ include __DIR__ . '/includes/header.php';
                             <?php if (empty($savedAddresses)): ?>
                                 <p style="color: var(--muted-light); font-size: clamp(0.75rem, 1.5vw, 0.9rem);">Bạn chưa lưu địa chỉ nào. <a href="<?= SITE_URL ?>/user_info.php?tab=addresses" style="color: var(--primary);">Thêm địa chỉ</a></p>
                             <?php else: ?>
-                                <select name="saved_address_id" id="saved_address_id" onchange="updateAddressDisplay()" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); margin-top: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
+                                <select name="saved_address_id" id="saved_address_id" onchange="updateAddressType()" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); margin-top: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     <?php foreach ($savedAddresses as $addr): ?>
                                         <option value="<?= $addr['id'] ?>"
                                             data-ward="<?= sanitize($addr['ward'] ?? '') ?>"
@@ -426,7 +426,7 @@ include __DIR__ . '/includes/header.php';
                                 <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     Họ và tên <span style="color: var(--danger);">*</span>
                                 </label>
-                                <input type="text" name="name" placeholder="Nhập tên người nhận" required minlength="3" maxlength="100"
+                                <input type="text" name="name" placeholder="Nhập tên người nhận" minlength="3" maxlength="100"
                                     style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                             </div>
 
@@ -434,7 +434,7 @@ include __DIR__ . '/includes/header.php';
                                 <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                     Số điện thoại <span style="color: var(--danger);">*</span>
                                 </label>
-                                <input type="text" name="phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" required minlength="10" maxlength="13"
+                                <input type="text" name="phone" placeholder="0xxxxxxxxxx hoặc +84xxxxxxxxx" minlength="10" maxlength="13"
                                     style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                             </div>
                         </div>
@@ -449,21 +449,25 @@ include __DIR__ . '/includes/header.php';
                             <label style="display: block; font-weight: 600; margin-bottom: clamp(0.35rem, 0.75vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                                 Địa chỉ <span style="color: var(--danger);">*</span>
                             </label>
-                            <input type="text" name="address" placeholder="Số nhà, tên đường" required minlength="5" maxlength="255"
+                            <input type="text" name="address" placeholder="Số nhà, tên đường" minlength="5" maxlength="255"
                                 style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.875rem, 2vw, 1rem);">
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(0.5rem, 1vw, 1rem);">
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Quận/Huyện</label>
-                                <select name="district" id="new_address_district" onchange="updateNewAddressWards()" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                    Quận/Huyện <span style="color: var(--danger);">*</span>
+                                </label>
+                                <select name="district" id="new_address_district" onchange="updateNewAddressWards()" required style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                     <option value="">-- Chọn quận --</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">Phường/Xã</label>
-                                <select name="ward" id="new_address_ward" style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                <label style="display: block; font-weight: 600; margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
+                                    Phường/Xã <span style="color: var(--danger);">*</span>
+                                </label>
+                                <select name="ward" id="new_address_ward" required style="width: 100%; padding: clamp(0.5rem, 1vw, 0.75rem); border: 1px solid var(--border-light); border-radius: clamp(0.35rem, 1vw, 0.5rem); font-size: clamp(0.75rem, 1.5vw, 0.875rem);">
                                     <option value="">-- Chọn phường/xã --</option>
                                 </select>
                             </div>
@@ -821,21 +825,34 @@ include __DIR__ . '/includes/header.php';
             // Thêm required cho các input trong new address form
             document.querySelector('input[name="name"]').setAttribute('required', 'required');
             document.querySelector('input[name="phone"]').setAttribute('required', 'required');
-            document.querySelector('input[name="email"]').setAttribute('required', 'required');
             document.querySelector('input[name="address"]').setAttribute('required', 'required');
+            document.querySelector('select[name="district"]').setAttribute('required', 'required');
+            document.querySelector('select[name="ward"]').setAttribute('required', 'required');
+
+            // Xóa required từ hidden inputs (shipping-info)
+            document.querySelector('input[name="name_display"]').removeAttribute('required');
+            document.querySelector('input[name="phone_display"]').removeAttribute('required');
+            document.querySelector('input[name="address_display"]').removeAttribute('required');
 
             // Clear the form inputs - để trống tất cả để người dùng tự nhập
             document.querySelector('input[name="name"]').value = '';
             document.querySelector('input[name="phone"]').value = '';
             document.querySelector('input[name="email"]').value = '';
             document.querySelector('input[name="address"]').value = '';
-            document.querySelector('input[name="ward"]').value = '';
-            document.querySelector('input[name="district"]').value = '';
-            document.querySelector('input[name="city"]').value = ''; // Để trống, không mặc định TP. Hồ Chí Minh
+            document.querySelector('select[name="ward"]').value = '';
+            document.querySelector('select[name="district"]').value = '';
+            document.querySelector('input[name="city"]').value = 'TP. Hồ Chí Minh';
             document.querySelector('textarea[name="note"]').value = '';
         } else {
             newAddressForm.style.display = 'none';
             shippingInfo.style.display = 'block';
+
+            // Xóa required từ form nhập địa chỉ khi ẩn nó
+            document.querySelector('input[name="name"]').removeAttribute('required');
+            document.querySelector('input[name="phone"]').removeAttribute('required');
+            document.querySelector('input[name="address"]').removeAttribute('required');
+            document.querySelector('select[name="district"]').removeAttribute('required');
+            document.querySelector('select[name="ward"]').removeAttribute('required');
 
             // Khi sử dụng địa chỉ đã lưu, set email từ tài khoản
             const emailInput = document.querySelector('input[name="email"]');

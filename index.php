@@ -16,13 +16,13 @@ if ($search) {
     $result = getProducts(['search' => $search, 'limit' => 12, 'page' => 1]);
     $searchProducts = $result['products'];
 } else {
-    // Get featured products
+    // Lấy sản phẩm nổi bật mặc định (8 sản phẩm)
     $featuredProducts = getFeaturedProducts(8);
 }
 
 // Get categories
 $categories = getCategories();
-// Get new products (Nông sản tươi mới)
+// hiển thị sản phẩm mới nhất (8 sản phẩm)
 $newProducts = getProducts(['is_new' => 1, 'limit' => 8])['products'];
 
 // Admin-selected featured products (hiển thị riêng)

@@ -245,7 +245,7 @@ $pageTitle = 'Quản lý Đơn hàng';
                                         <?= formatPrice($order['total_amount']) ?>
                                     </td>
                                     <td class="py-2 sm:py-4 px-3 sm:px-4">
-                                        <?php if ($order['status'] === 'cancelled'): ?>
+                                        <?php if ($order['status'] === 'cancelled' || $order['status'] === 'delivered'): ?>
                                             <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold <?= $statusColors[$order['status']] ?>" style="opacity: 0.5; cursor: not-allowed;">
                                                 <?= $statusLabels[$order['status']] ?>
                                             </span>
